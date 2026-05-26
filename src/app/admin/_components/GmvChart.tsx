@@ -10,7 +10,17 @@ const PAD_X = 50;
 const PAD_TOP = 40;
 const PAD_BOTTOM = 20;
 const CHART_H = VIEW_H - PAD_TOP - PAD_BOTTOM; // 140
-const Y_MAX = 40_000_000;
+
+export interface GmvDataPoint {
+  month: string;
+  gmv: number;
+  fee: number;
+}
+
+export interface GmvChartProps {
+  /** Monthly GMV series (oldest first, newest last). If undefined or empty, falls back to mock. */
+  monthlyData?: GmvDataPoint[];
+}
 
 function xFor(i: number, n: number): number {
   if (n <= 1) return PAD_X;
@@ -18,30 +28,66 @@ function xFor(i: number, n: number): number {
   return PAD_X + i * step;
 }
 
-function yFor(value: number): number {
-  const ratio = Math.min(1, value / Y_MAX);
+function yFor(value: number, yMax: number): number {
+  if (yMax <= 0) return PAD_TOP + CHART_H;
+  const ratio = Math.min(1, value / yMax);
   return PAD_TOP + (1 - ratio) * CHART_H;
 }
 
-function buildLinePath(values: number[]): string {
+function buildLinePath(values: number[], yMax: number): string {
   return values
-    .map((v, i) => `${i === 0 ? 'M' : 'L'} ${xFor(i, values.length).toFixed(1)} ${yFor(v).toFixed(1)}`)
+    .map(
+      (v, i) =>
+        `${i === 0 ? 'M' : 'L'} ${xFor(i, values.length).toFixed(1)} ${yFor(v, yMax).toFixed(1)}`,
+    )
     .join(' ');
 }
 
-function buildAreaPath(values: number[]): string {
-  const top = buildLinePath(values);
+function buildAreaPath(values: number[], yMax: number): string {
+  const top = buildLinePath(values, yMax);
   const lastX = xFor(values.length - 1, values.length);
   const baseY = PAD_TOP + CHART_H;
   return `${top} L ${lastX.toFixed(1)} ${baseY} L ${PAD_X} ${baseY} Z`;
 }
 
-export function GmvChart() {
-  const months = GMV_HISTORY.map((p) => p.month);
-  const gmv = GMV_HISTORY.map((p) => p.gmv);
-  const fee = GMV_HISTORY.map((p) => p.fee);
+/**
+ * Round up to a "nice" power-of-ten-ish number so the Y-axis ticks land on round values.
+ */
+function niceCeil(value: number): number {
+  if (value <= 0) return 1_000_000;
+  const exp = Math.floor(Math.log10(value));
+  const step = Math.pow(10, exp);
+  return Math.ceil(value / step) * step;
+}
 
-  const gridLines = [10_000_000, 20_000_000, 30_000_000, 40_000_000];
+function buildGridLines(yMax: number): number[] {
+  if (yMax <= 0) return [];
+  const step = yMax / 4;
+  return [step, step * 2, step * 3, step * 4];
+}
+
+function formatTick(value: number): string {
+  if (value >= 100_000_000) return `₩${(value / 100_000_000).toFixed(1)}억`;
+  if (value >= 1_000_000) {
+    const m = value / 1_000_000;
+    return `₩${m % 1 === 0 ? m.toFixed(0) : m.toFixed(1)}M`;
+  }
+  if (value >= 10_000) return `₩${(value / 10_000).toFixed(0)}만`;
+  return `₩${value.toLocaleString()}`;
+}
+
+export function GmvChart({ monthlyData }: GmvChartProps = {}) {
+  // Fallback to mock if DB returned no payments yet (demo state with empty DB).
+  const hasDbData = Array.isArray(monthlyData) && monthlyData.some((p) => p.gmv > 0);
+  const source: GmvDataPoint[] = hasDbData ? monthlyData! : GMV_HISTORY;
+
+  const months = source.map((p) => p.month);
+  const gmv = source.map((p) => p.gmv);
+  const fee = source.map((p) => p.fee);
+
+  const rawMax = Math.max(...gmv, ...fee, 0);
+  const yMax = niceCeil(rawMax * 1.1);
+  const gridLines = buildGridLines(yMax);
 
   return (
     <Panel title="GMV growth — last 6 months" ctaHref="/admin/revenue" cta="Full report">
@@ -84,26 +130,26 @@ export function GmvChart() {
             <line
               x1={PAD_X}
               x2={VIEW_W - PAD_X / 2}
-              y1={yFor(g)}
-              y2={yFor(g)}
+              y1={yFor(g, yMax)}
+              y2={yFor(g, yMax)}
               stroke="rgba(255,255,255,0.05)"
               strokeWidth={1}
             />
             <text
               x={PAD_X - 8}
-              y={yFor(g) + 3}
+              y={yFor(g, yMax) + 3}
               fontSize="10"
               fill="#71717A"
               textAnchor="end"
             >
-              ₩{g / 1_000_000}M
+              {formatTick(g)}
             </text>
           </g>
         ))}
 
-        <path d={buildAreaPath(gmv)} fill="url(#gmv-area)" />
+        <path d={buildAreaPath(gmv, yMax)} fill="url(#gmv-area)" />
         <path
-          d={buildLinePath(gmv)}
+          d={buildLinePath(gmv, yMax)}
           fill="none"
           stroke="#9B7EC8"
           strokeWidth={2}
@@ -111,7 +157,7 @@ export function GmvChart() {
           strokeLinejoin="round"
         />
         <path
-          d={buildLinePath(fee)}
+          d={buildLinePath(fee, yMax)}
           fill="none"
           stroke="#C4A8D8"
           strokeWidth={1.5}
@@ -122,7 +168,7 @@ export function GmvChart() {
           <circle
             key={`gmv-${i}`}
             cx={xFor(i, gmv.length)}
-            cy={yFor(v)}
+            cy={yFor(v, yMax)}
             r={3}
             fill="#0A0A0F"
             stroke="#B89AD8"
@@ -132,7 +178,7 @@ export function GmvChart() {
 
         {months.map((m, i) => (
           <text
-            key={m}
+            key={`${m}-${i}`}
             x={xFor(i, months.length)}
             y={VIEW_H - 4}
             textAnchor="middle"

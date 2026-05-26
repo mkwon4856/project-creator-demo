@@ -1,6 +1,6 @@
 'use client';
 
-import { CREATOR_TIERS } from '@/lib/mockAdmin';
+import { CREATOR_TIERS, type CreatorTierKey } from '@/lib/mockAdmin';
 
 import { Panel } from './Panel';
 
@@ -8,12 +8,33 @@ const RADIUS = 40;
 const STROKE = 14;
 const CIRC = 2 * Math.PI * RADIUS;
 
-export function TierDonut() {
-  const total = CREATOR_TIERS.reduce((sum, t) => sum + t.count, 0);
+export type TierCounts = Record<CreatorTierKey, number>;
+
+export interface TierDonutProps {
+  /** Per-tier creator counts. If undefined, falls back to mock. */
+  tierCounts?: TierCounts;
+}
+
+export function TierDonut({ tierCounts }: TierDonutProps = {}) {
+  // If tierCounts is provided but everything is zero, use mock as a fallback so the
+  // donut doesn't render as a flat circle in an empty demo DB.
+  const useDb =
+    tierCounts !== undefined &&
+    Object.values(tierCounts).some((n) => n > 0);
+
+  const buckets = CREATOR_TIERS.map((t) => ({
+    tier: t.tier,
+    label: t.label,
+    color: t.color,
+    count: useDb ? tierCounts![t.tier] : t.count,
+  }));
+
+  const total = buckets.reduce((sum, t) => sum + t.count, 0);
+  const safeTotal = total === 0 ? 1 : total;
 
   let offset = 0;
-  const segments = CREATOR_TIERS.map((t) => {
-    const ratio = t.count / total;
+  const segments = buckets.map((t) => {
+    const ratio = t.count / safeTotal;
     const length = ratio * CIRC;
     const seg = {
       tier: t.tier,
@@ -84,7 +105,7 @@ export function TierDonut() {
         </svg>
 
         <ul className="flex flex-col gap-2.5 flex-1 min-w-0">
-          {CREATOR_TIERS.map((t) => (
+          {buckets.map((t) => (
             <li key={t.tier} className="flex items-center gap-2.5 text-xs">
               <span
                 className="inline-block w-2.5 h-2.5 rounded-full shrink-0"

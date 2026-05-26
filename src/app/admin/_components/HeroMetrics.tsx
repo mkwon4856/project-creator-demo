@@ -3,7 +3,24 @@
 import { TrendingUp } from 'lucide-react';
 import type { ReactNode } from 'react';
 
-import { PLATFORM_METRICS } from '@/lib/mockAdmin';
+import { formatCompactKRW, PLATFORM_METRICS } from '@/lib/mockAdmin';
+
+export interface HeroMetricsProps {
+  /** GMV in KRW (won). If undefined, falls back to mock. */
+  gmv?: number;
+  /** Platform fee in KRW (won). If undefined, falls back to mock. */
+  platformFee?: number;
+  /** GMV growth vs previous month, percent (e.g. 24.8 → "+24.8%"). */
+  gmvGrowthPercent?: number;
+  /** Platform fee growth vs previous month, percent. */
+  feeGrowthPercent?: number;
+  /** Active campaigns count. */
+  activeCampaigns?: number;
+  /** Verified creators count (all creators on platform). */
+  verifiedCreators?: number;
+  /** When true, every value is treated as authoritative — no "+N this week" mock copy. */
+  fromDb?: boolean;
+}
 
 interface MetricSpec {
   label: string;
@@ -11,31 +28,6 @@ interface MetricSpec {
   delta: ReactNode;
   highlight?: 'gradient' | 'ube';
 }
-
-const METRICS: MetricSpec[] = [
-  {
-    label: 'Gross merchandise value',
-    value: '₩33.5M',
-    delta: `+${PLATFORM_METRICS.gmvGrowthPercent.toFixed(1)}% vs last month`,
-    highlight: 'gradient',
-  },
-  {
-    label: 'Platform fee (15%)',
-    value: '₩5.0M',
-    delta: `+${PLATFORM_METRICS.feeGrowthPercent.toFixed(1)}%`,
-    highlight: 'ube',
-  },
-  {
-    label: 'Active campaigns',
-    value: PLATFORM_METRICS.activeCampaigns.toString(),
-    delta: PLATFORM_METRICS.campaignsGrowth,
-  },
-  {
-    label: 'Verified creators',
-    value: PLATFORM_METRICS.verifiedCreators.toLocaleString(),
-    delta: PLATFORM_METRICS.creatorsGrowth,
-  },
-];
 
 function MetricCard({ spec }: { spec: MetricSpec }) {
   const isGradient = spec.highlight === 'gradient';
@@ -90,10 +82,54 @@ function MetricCard({ spec }: { spec: MetricSpec }) {
   );
 }
 
-export function HeroMetrics() {
+function formatPercent(n: number | undefined, fallback: number): string {
+  const v = typeof n === 'number' && Number.isFinite(n) ? n : fallback;
+  const sign = v >= 0 ? '+' : '';
+  return `${sign}${v.toFixed(1)}%`;
+}
+
+export function HeroMetrics({
+  gmv,
+  platformFee,
+  gmvGrowthPercent,
+  feeGrowthPercent,
+  activeCampaigns,
+  verifiedCreators,
+  fromDb = false,
+}: HeroMetricsProps = {}) {
+  const displayGmv = gmv ?? PLATFORM_METRICS.gmv;
+  const displayFee = platformFee ?? PLATFORM_METRICS.platformFee;
+  const displayActive = activeCampaigns ?? PLATFORM_METRICS.activeCampaigns;
+  const displayCreators = verifiedCreators ?? PLATFORM_METRICS.verifiedCreators;
+
+  const metrics: MetricSpec[] = [
+    {
+      label: 'Gross merchandise value',
+      value: formatCompactKRW(displayGmv),
+      delta: `${formatPercent(gmvGrowthPercent, PLATFORM_METRICS.gmvGrowthPercent)} vs last month`,
+      highlight: 'gradient',
+    },
+    {
+      label: 'Platform fee (15%)',
+      value: formatCompactKRW(displayFee),
+      delta: formatPercent(feeGrowthPercent, PLATFORM_METRICS.feeGrowthPercent),
+      highlight: 'ube',
+    },
+    {
+      label: 'Active campaigns',
+      value: displayActive.toLocaleString(),
+      delta: fromDb ? 'live now' : PLATFORM_METRICS.campaignsGrowth,
+    },
+    {
+      label: 'Verified creators',
+      value: displayCreators.toLocaleString(),
+      delta: fromDb ? 'on platform' : PLATFORM_METRICS.creatorsGrowth,
+    },
+  ];
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-      {METRICS.map((m) => (
+      {metrics.map((m) => (
         <MetricCard key={m.label} spec={m} />
       ))}
     </div>
