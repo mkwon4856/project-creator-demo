@@ -1,0 +1,197 @@
+import type {
+  CampaignMissions,
+  CampaignPlatform,
+  CampaignRates,
+  CampaignThumbnail,
+} from '@/lib/mockCampaigns';
+
+export type MissionId = keyof CampaignMissions;
+
+export interface MissionConfig {
+  enabled: boolean;
+  rates: CampaignRates;
+}
+
+export interface ContentGuidelines {
+  sponsorship: boolean;
+  gameplay: boolean;
+  noCompare: boolean;
+  matureOk: boolean;
+}
+
+/**
+ * Snapshot of the game selected in step 1. Captures the values needed to
+ * write a campaign row to the DB without re-resolving by id, so we don't
+ * care whether the source was the mock library or a DB game.
+ */
+export interface SelectedGame {
+  /** Original id if the game came from `mockCampaigns` — used as a select key only. */
+  sourceId?: string;
+  name: string;
+  developer: string;
+  genre: string;
+  thumbnail: CampaignThumbnail;
+  platform: CampaignPlatform[];
+}
+
+export interface WizardData {
+  game?: SelectedGame;
+  totalBudget: number;
+  recruitStart: string;
+  recruitEnd: string;
+  submitDeadline: string;
+  payoutDays: number;
+  missions: Record<MissionId, MissionConfig>;
+  brief: string;
+  hashtags: string[];
+  guidelines: ContentGuidelines;
+}
+
+export const initialData: WizardData = {
+  totalBudget: 4_000_000,
+  recruitStart: '2026-06-01',
+  recruitEnd: '2026-06-30',
+  submitDeadline: '2026-07-15',
+  payoutDays: 7,
+  missions: {
+    shortform: { enabled: true, rates: { A: 140, B: 70, C: 30, D: 10, E: 5 } },
+    longform: { enabled: true, rates: { A: 400, B: 200, C: 80, D: 30, E: 15 } },
+    live: { enabled: false, rates: { A: 0, B: 0, C: 0, D: 0, E: 0 } },
+  },
+  brief: '',
+  hashtags: ['#로스트소드', '#LostSword'],
+  guidelines: { sponsorship: true, gameplay: true, noCompare: true, matureOk: false },
+};
+
+export type WizardStep = 1 | 2 | 3 | 4 | 5;
+
+export const STEP_LABELS: Record<WizardStep, string> = {
+  1: 'Game',
+  2: 'Budget',
+  3: 'Missions & rates',
+  4: 'Brief',
+  5: 'Review',
+};
+
+export const TIERS = ['A', 'B', 'C', 'D', 'E'] as const;
+export type TierKey = (typeof TIERS)[number];
+
+export const TIER_DESCRIPTION: Record<TierKey, string> = {
+  A: '500K+',
+  B: '100K~',
+  C: '30K~',
+  D: '10K~',
+  E: '5K~',
+};
+
+export const MISSIONS_META: Record<MissionId, { label: string; description: string; iconKey: 'film' | 'video' | 'radio' }> = {
+  shortform: { label: 'Shortform video', description: 'Up to 90s · TikTok / Reels / YouTube Shorts', iconKey: 'film' },
+  longform: { label: 'Longform video', description: '8 minutes or longer · YouTube / SOOP', iconKey: 'video' },
+  live: { label: 'Live broadcast', description: '5+ hour live session · Chzzk / SOOP / YouTube', iconKey: 'radio' },
+};
+
+export const MARKET_AVG: Record<MissionId, CampaignRates> = {
+  shortform: { A: 135, B: 65, C: 28, D: 9, E: 4 },
+  longform: { A: 380, B: 190, C: 75, D: 28, E: 14 },
+  live: { A: 320, B: 160, C: 70, D: 22, E: 10 },
+};
+
+export const SUGGESTED_BUDGETS: ReadonlyArray<{ value: number; label: string; tag?: string }> = [
+  { value: 1_000_000, label: '₩1M' },
+  { value: 2_000_000, label: '₩2M' },
+  { value: 4_000_000, label: '₩4M', tag: 'Suggested for indie RPG' },
+  { value: 8_000_000, label: '₩8M' },
+  { value: 15_000_000, label: '₩15M+' },
+];
+
+export interface GuidelineSpec {
+  id: keyof ContentGuidelines;
+  title: string;
+  description: (checked: boolean) => string;
+}
+
+export const GUIDELINES: GuidelineSpec[] = [
+  {
+    id: 'sponsorship',
+    title: 'Disclose sponsorship at the start of the video',
+    description: () => 'Required by FTC and YouTube',
+  },
+  {
+    id: 'gameplay',
+    title: 'Show actual gameplay',
+    description: () => 'At least 70% of the runtime',
+  },
+  {
+    id: 'noCompare',
+    title: 'No comparisons with competitor games',
+    description: () => 'Stay focused on this title only',
+  },
+  {
+    id: 'matureOk',
+    title: 'Mature content allowed',
+    description: (checked) =>
+      checked
+        ? 'Mature themes and language are OK for this campaign'
+        : 'Off — keep content suitable for all ages',
+  },
+];
+
+export const BRIEF_TEMPLATES: ReadonlyArray<{ id: string; label: string; body: string }> = [
+  {
+    id: 'first-impressions',
+    label: '+ First impressions video',
+    body: '게임을 처음 켰을 때의 솔직한 인상을 5분 안에 정리해 주세요. 좋은 점 3가지, 아쉬운 점 1가지를 자연스러운 톤으로 풀어내면 좋습니다.',
+  },
+  {
+    id: 'tutorial',
+    label: '+ Tutorial walkthrough',
+    body: '신규 유저 입장에서 처음 1시간 동안 진행하는 모습을 풀어주세요. 막히는 구간이 있다면 그대로 보여주는 편이 도움이 됩니다.',
+  },
+  {
+    id: 'boss',
+    label: '+ Boss battle highlight',
+    body: '챕터 보스전 / 레이드 하이라이트 위주로 3~5분 클립을 만들어 주세요. 컨트롤이 돋보이는 구간을 슬로우/리플레이로 강조하면 좋습니다.',
+  },
+  {
+    id: 'character',
+    label: '+ Character review',
+    body: '대표 캐릭터 1~2명을 골라 외형, 스킬, 운영 팁을 소개해 주세요. 광고임을 자연스럽게 밝혀 주시면 됩니다.',
+  },
+  {
+    id: 'beginner',
+    label: "+ Beginner's guide",
+    body: '입문자가 알아야 할 핵심 포인트를 8분 내외 롱폼으로 정리해 주세요. 챕터 마커를 넣으면 시청 유지율이 올라갑니다.',
+  },
+];
+
+export function calcPlatformFee(total: number): number {
+  return Math.round(total * 0.15);
+}
+
+export function calcEstimatedCreators(data: WizardData): number {
+  const enabledMissions = (Object.entries(data.missions) as Array<[MissionId, MissionConfig]>)
+    .filter(([, m]) => m.enabled);
+  if (enabledMissions.length === 0) return 0;
+  const avgRate =
+    enabledMissions.reduce((sum, [, m]) => {
+      const tierAvg =
+        (m.rates.A + m.rates.B * 2 + m.rates.C * 3 + m.rates.D * 4 + m.rates.E * 5) / 15;
+      return sum + tierAvg;
+    }, 0) / enabledMissions.length;
+  if (avgRate <= 0) return 0;
+  return Math.max(1, Math.round(data.totalBudget / 10_000 / avgRate));
+}
+
+export function getRateBounds(data: WizardData): { highestA: number; lowestE: number } {
+  let highestA = 0;
+  let lowestE = Number.POSITIVE_INFINITY;
+  for (const m of Object.values(data.missions)) {
+    if (!m.enabled) continue;
+    if (m.rates.A > highestA) highestA = m.rates.A;
+    if (m.rates.E > 0 && m.rates.E < lowestE) lowestE = m.rates.E;
+  }
+  return {
+    highestA,
+    lowestE: lowestE === Number.POSITIVE_INFINITY ? 0 : lowestE,
+  };
+}
