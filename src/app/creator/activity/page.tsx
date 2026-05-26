@@ -454,30 +454,34 @@ export default function CreatorActivityPage() {
       )}
 
       <div className="border border-white/[0.06] rounded-lg overflow-hidden bg-bg-card">
-        <HeaderRow />
-        {filtered.length === 0 ? (
-          <div className="px-5 py-16 text-center">
-            <p className="text-sm text-text-primary mb-1">
-              {rows.length === 0
-                ? 'No activity yet.'
-                : 'No items match your filter.'}
-            </p>
-            <p className="text-xs text-text-secondary">
-              {rows.length === 0
-                ? 'Apply to a campaign to get started.'
-                : 'Try selecting a different status filter.'}
-            </p>
+        <div className="overflow-x-auto">
+          <div className="min-w-[760px]">
+            <HeaderRow />
+            {filtered.length === 0 ? (
+              <div className="px-5 py-16 text-center">
+                <p className="text-sm text-text-primary mb-1">
+                  {rows.length === 0
+                    ? 'No activity yet.'
+                    : 'No items match your filter.'}
+                </p>
+                <p className="text-xs text-text-secondary">
+                  {rows.length === 0
+                    ? 'Apply to a campaign to get started.'
+                    : 'Try selecting a different status filter.'}
+                </p>
+              </div>
+            ) : (
+              filtered.map((item, i) => (
+                <Row
+                  key={item.id}
+                  item={item}
+                  last={i === filtered.length - 1}
+                  onSubmit={setPending}
+                />
+              ))
+            )}
           </div>
-        ) : (
-          filtered.map((item, i) => (
-            <Row
-              key={item.id}
-              item={item}
-              last={i === filtered.length - 1}
-              onSubmit={setPending}
-            />
-          ))
-        )}
+        </div>
       </div>
 
       <SubmitUrlModal

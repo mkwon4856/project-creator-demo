@@ -1,6 +1,6 @@
 'use client';
 
-import { Bell, LogOut } from 'lucide-react';
+import { Bell, LogOut, Menu } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
@@ -59,6 +59,8 @@ export interface TopbarProps {
   badgeLabel?: string;
   /** Optional left-side extra content (e.g., breadcrumbs). */
   leftSlot?: ReactNode;
+  /** Mobile-only: show a hamburger button on the left and call this when tapped. */
+  onMenuToggle?: () => void;
 }
 
 function DemoBadge({ persona, label }: { persona: Persona; label?: string }) {
@@ -164,25 +166,38 @@ export function Topbar({
   onNotificationClick,
   badgeLabel,
   leftSlot,
+  onMenuToggle,
 }: TopbarProps) {
   return (
-    <header className="flex items-center justify-between px-8 py-4 border-b border-white/[0.06] bg-bg-base">
-      <div className="flex items-center gap-3 min-w-0">
-        <span className="text-base font-semibold tracking-tight">
+    <header className="flex items-center justify-between px-4 md:px-8 py-3 md:py-4 border-b border-white/[0.06] bg-bg-base gap-2">
+      <div className="flex items-center gap-2 md:gap-3 min-w-0">
+        {onMenuToggle && (
+          <button
+            type="button"
+            onClick={onMenuToggle}
+            aria-label="메뉴 열기"
+            className="md:hidden inline-flex w-9 h-9 items-center justify-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-bg-hover transition-colors duration-150 ease-out cursor-pointer"
+          >
+            <Menu size={20} aria-hidden />
+          </button>
+        )}
+        <span className="text-base font-semibold tracking-tight whitespace-nowrap">
           Project <span className="text-ube-bright">Creator</span>
         </span>
         <DemoBadge persona={persona} label={badgeLabel} />
         <PersonaSwitcher persona={persona} />
-        {leftSlot && <div className="ml-3 min-w-0">{leftSlot}</div>}
+        {leftSlot && <div className="ml-3 min-w-0 hidden md:block">{leftSlot}</div>}
       </div>
 
-      <div className="flex items-center gap-3">
-        <SizeToggle value={textSize} onChange={onTextSizeChange} />
-        <LanguageToggle value={locale} onChange={onLocaleChange} />
+      <div className="flex items-center gap-2 md:gap-3">
+        <div className="hidden md:flex items-center gap-3">
+          <SizeToggle value={textSize} onChange={onTextSizeChange} />
+          <LanguageToggle value={locale} onChange={onLocaleChange} />
+        </div>
         <NotificationBell count={notificationCount} onClick={onNotificationClick} />
-        <div className="flex items-center gap-2 pl-2">
+        <div className="flex items-center gap-2 pl-1 md:pl-2">
           <Avatar avatar={userAvatar} name={userName} />
-          <div className="flex flex-col leading-tight">
+          <div className="hidden sm:flex flex-col leading-tight">
             <span className="text-sm font-medium text-text-primary">{userName}</span>
             {userBadge && (
               <span className="text-[11px] text-text-muted">{userBadge}</span>

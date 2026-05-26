@@ -119,7 +119,7 @@ export default function CreatorSettingsPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <Input
             label="New password"
             type="password"

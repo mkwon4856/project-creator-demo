@@ -156,23 +156,27 @@ export function ActivityTable() {
 
   return (
     <>
-      <div
-        role="table"
-        aria-label="My activity"
-        className="border border-white/[0.06] rounded-lg overflow-hidden bg-bg-card"
-      >
-        <HeaderRow />
-        {loading ? (
-          <div className="px-5 py-12 text-center text-sm text-text-secondary">
-            Loading…
+      <div className="border border-white/[0.06] rounded-lg overflow-hidden bg-bg-card">
+        <div className="overflow-x-auto">
+          <div
+            role="table"
+            aria-label="My activity"
+            className="min-w-[760px]"
+          >
+            <HeaderRow />
+            {loading ? (
+              <div className="px-5 py-12 text-center text-sm text-text-secondary">
+                Loading…
+              </div>
+            ) : list.length === 0 ? (
+              <div className="px-5 py-12 text-center text-sm text-text-secondary">
+                No activity yet.
+              </div>
+            ) : (
+              list.map((a) => <ActivityRow key={a.id} activity={a} onSubmit={setPending} />)
+            )}
           </div>
-        ) : list.length === 0 ? (
-          <div className="px-5 py-12 text-center text-sm text-text-secondary">
-            No activity yet.
-          </div>
-        ) : (
-          list.map((a) => <ActivityRow key={a.id} activity={a} onSubmit={setPending} />)
-        )}
+        </div>
       </div>
 
       <SubmitUrlModal

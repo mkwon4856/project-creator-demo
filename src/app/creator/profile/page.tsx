@@ -348,7 +348,7 @@ export default function CreatorProfilePage() {
       <Card variant="default" padding="lg" className="mb-6">
         <SectionLabel>Basic Information</SectionLabel>
 
-        <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <Input
             label="Display name"
             type="text"
@@ -399,7 +399,7 @@ export default function CreatorProfilePage() {
       <Card variant="default" padding="lg" className="mb-6">
         <SectionLabel>Connected Platforms</SectionLabel>
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {(['youtube', 'soop', 'chzzk'] as const).map((key) => (
             <PlatformCard
               key={key}
@@ -416,7 +416,7 @@ export default function CreatorProfilePage() {
       <Card variant="default" padding="lg" className="mb-6">
         <SectionLabel>Stats</SectionLabel>
 
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <StatBox
             label="Subscribers"
             value={formatSubscribers(totalSubscribers)}

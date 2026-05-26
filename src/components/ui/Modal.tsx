@@ -87,7 +87,7 @@ function ModalRoot({
   return createPortal(
     <div
       onMouseDown={handleOverlayMouseDown}
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-10 bg-black/70 backdrop-blur-sm ui-anim-fade-in"
+      className="fixed inset-0 z-50 flex md:items-start justify-center md:overflow-y-auto md:p-10 bg-black/70 md:backdrop-blur-sm ui-anim-fade-in"
     >
       <div
         ref={dialogRef}
@@ -96,7 +96,7 @@ function ModalRoot({
         aria-label={ariaLabel}
         aria-labelledby={ariaLabelledBy}
         tabIndex={-1}
-        className="w-full my-auto bg-bg-card border border-white/10 rounded-xl shadow-[0_24px_80px_rgba(0,0,0,0.6)] flex flex-col max-h-[calc(100vh-80px)] overflow-hidden ui-anim-scale-in focus:outline-none"
+        className="w-full h-screen md:h-auto md:my-auto bg-bg-card border-0 md:border md:border-white/10 rounded-none md:rounded-xl shadow-[0_24px_80px_rgba(0,0,0,0.6)] flex flex-col max-h-screen md:max-h-[calc(100vh-80px)] overflow-hidden ui-anim-scale-in focus:outline-none"
         style={{ maxWidth: SIZE_MAX_WIDTH[size] }}
       >
         {children}

@@ -397,33 +397,37 @@ export default function CreatorEarningsPage() {
         </div>
 
         <div className="border border-white/[0.06] rounded-lg overflow-hidden bg-bg-card">
-          <HeaderRow />
-          {rows.length === 0 ? (
-            <div className="px-5 py-16 text-center">
-              <p className="text-sm text-text-primary mb-1">No earnings yet.</p>
-              <p className="text-xs text-text-secondary">
-                Apply to a campaign and submit content to start earning.
-              </p>
+          <div className="overflow-x-auto">
+            <div className="min-w-[820px]">
+              <HeaderRow />
+              {rows.length === 0 ? (
+                <div className="px-5 py-16 text-center">
+                  <p className="text-sm text-text-primary mb-1">No earnings yet.</p>
+                  <p className="text-xs text-text-secondary">
+                    Apply to a campaign and submit content to start earning.
+                  </p>
+                </div>
+              ) : (
+                rows.map((item, i) => {
+                  const payment = paymentBySubmission.get(item.id);
+                  // 실제 payments row가 있으면 그 수치를, 없으면 15% 가정으로 추정.
+                  const fee = payment
+                    ? payment.platform_fee
+                    : Math.round(item.reward * PLATFORM_FEE_RATE);
+                  const net = payment ? payment.amount : item.reward - fee;
+                  return (
+                    <Row
+                      key={item.id}
+                      item={item}
+                      last={i === rows.length - 1}
+                      fee={fee}
+                      net={net}
+                    />
+                  );
+                })
+              )}
             </div>
-          ) : (
-            rows.map((item, i) => {
-              const payment = paymentBySubmission.get(item.id);
-              // 실제 payments row가 있으면 그 수치를, 없으면 15% 가정으로 추정.
-              const fee = payment
-                ? payment.platform_fee
-                : Math.round(item.reward * PLATFORM_FEE_RATE);
-              const net = payment ? payment.amount : item.reward - fee;
-              return (
-                <Row
-                  key={item.id}
-                  item={item}
-                  last={i === rows.length - 1}
-                  fee={fee}
-                  net={net}
-                />
-              );
-            })
-          )}
+          </div>
         </div>
       </section>
     </WorkspaceLayout>

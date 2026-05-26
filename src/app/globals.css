@@ -108,6 +108,11 @@
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-.ui-anim-fade-in  { animation: ui-fade-in  0.2s ease-out both; }
-.ui-anim-scale-in { animation: ui-scale-in 0.2s ease-out both; }
-.ui-anim-toast-in { animation: ui-toast-in 0.18s ease-out both; }
+@keyframes ui-slide-in-left {
+  from { opacity: 0; transform: translateX(-100%); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.ui-anim-fade-in       { animation: ui-fade-in       0.2s ease-out both; }
+.ui-anim-scale-in      { animation: ui-scale-in      0.2s ease-out both; }
+.ui-anim-toast-in      { animation: ui-toast-in      0.18s ease-out both; }
+.ui-anim-slide-in-left { animation: ui-slide-in-left 0.22s ease-out both; }

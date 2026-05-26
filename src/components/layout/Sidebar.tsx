@@ -1,5 +1,6 @@
 'use client';
 
+import { X } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 export type CountVariant = 'default' | 'urgent';
@@ -26,6 +27,8 @@ export interface SidebarProps {
   width?: number;
   /** Notify parent of click for non-href items. Falls back to item.onClick. */
   onItemClick?: (item: SidebarItem) => void;
+  /** Optional close handler. When provided, renders a close button (e.g. for mobile overlay). */
+  onClose?: () => void;
 }
 
 function CountBadge({ count, variant = 'default' }: { count: number; variant?: CountVariant }) {
@@ -98,13 +101,26 @@ function ItemRow({ item, onItemClick }: { item: SidebarItem; onItemClick?: (i: S
   );
 }
 
-export function Sidebar({ sections, width = 240, onItemClick }: SidebarProps) {
+export function Sidebar({ sections, width = 240, onItemClick, onClose }: SidebarProps) {
   return (
     <aside
-      className="shrink-0 border-r border-white/[0.06] bg-bg-base"
+      className="shrink-0 border-r border-white/[0.06] bg-bg-base h-full overflow-y-auto"
       style={{ width }}
       aria-label="워크스페이스 사이드바"
     >
+      {onClose && (
+        <div className="flex items-center justify-between px-5 pt-4 pb-2">
+          <span className="text-sm font-medium text-text-primary">메뉴</span>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="메뉴 닫기"
+            className="inline-flex w-8 h-8 items-center justify-center rounded-md text-text-secondary hover:text-text-primary hover:bg-bg-hover transition-colors duration-150 ease-out cursor-pointer"
+          >
+            <X size={18} aria-hidden />
+          </button>
+        </div>
+      )}
       <nav className="py-5 flex flex-col gap-6">
         {sections.map((section) => (
           <div key={section.label} className="flex flex-col">
