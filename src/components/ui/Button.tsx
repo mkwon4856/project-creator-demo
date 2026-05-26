@@ -69,8 +69,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
     variant === 'launch'
       ? {
           background:
-            'linear-gradient(135deg, var(--ube), var(--ube-dark))',
-          boxShadow: '0 0 24px rgba(155,126,200,0.3)',
+            'linear-gradient(135deg, var(--ube-bright), var(--ube))',
+          boxShadow: '0 4px 16px rgba(155,126,200,0.45)',
         }
       : undefined;
 

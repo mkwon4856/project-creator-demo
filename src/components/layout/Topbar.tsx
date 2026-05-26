@@ -1,6 +1,7 @@
 'use client';
 
 import { Bell, LogOut } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { ReactNode } from 'react';
 
@@ -10,6 +11,38 @@ import { LanguageToggle, type Locale } from './LanguageToggle';
 import { SizeToggle, type TextSize } from './SizeToggle';
 
 export type Persona = 'studio' | 'creator' | 'admin';
+
+const PERSONA_LINKS: ReadonlyArray<{ key: Persona; label: string; href: string }> = [
+  { key: 'studio', label: '게임사', href: '/studio' },
+  { key: 'creator', label: '크리에이터', href: '/creator' },
+  { key: 'admin', label: '관리자', href: '/admin' },
+];
+
+function PersonaSwitcher({ persona }: { persona: Persona }) {
+  return (
+    <nav
+      aria-label="페르소나 전환 (데모용)"
+      className="hidden md:flex items-center gap-1 ml-4 text-xs"
+    >
+      {PERSONA_LINKS.map((p, i) => (
+        <span key={p.key} className="inline-flex items-center gap-1">
+          {i > 0 && <span className="text-text-muted">·</span>}
+          <Link
+            href={p.href}
+            className={
+              p.key === persona
+                ? 'text-ube-bright font-medium px-1.5 py-0.5 rounded'
+                : 'text-text-muted hover:text-text-secondary px-1.5 py-0.5 rounded transition-colors duration-150 ease-out'
+            }
+            aria-current={p.key === persona ? 'page' : undefined}
+          >
+            {p.label}
+          </Link>
+        </span>
+      ))}
+    </nav>
+  );
+}
 
 export interface TopbarProps {
   persona: Persona;
@@ -108,7 +141,9 @@ function NotificationBell({
     >
       <Bell size={16} aria-hidden />
       {hasCount && (
-        <span className="absolute top-1.5 right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-[10px] text-white font-semibold flex items-center justify-center leading-none">
+        <span
+          className="absolute top-1.5 right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-ube-bright text-[10px] text-white font-semibold flex items-center justify-center leading-none ring-1 ring-bg-base"
+        >
           {count! > 99 ? '99+' : count}
         </span>
       )}
@@ -137,6 +172,7 @@ export function Topbar({
           Project <span className="text-ube-bright">Creator</span>
         </span>
         <DemoBadge persona={persona} label={badgeLabel} />
+        <PersonaSwitcher persona={persona} />
         {leftSlot && <div className="ml-3 min-w-0">{leftSlot}</div>}
       </div>
 
