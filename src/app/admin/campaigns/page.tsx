@@ -241,8 +241,6 @@ export default function AdminCampaignsPage() {
       )
       .order('created_at', { ascending: false });
 
-    console.log('[ADMIN CAMPAIGNS] data:', data?.length, 'error:', error);
-
     if (error) {
       toast.error(`캠페인 조회 실패: ${error.message}`);
       setCampaigns([]);

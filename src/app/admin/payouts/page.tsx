@@ -232,8 +232,6 @@ export default function AdminPayoutsPage() {
       )
       .order('paid_at', { ascending: false });
 
-    console.log('[ADMIN PAYOUTS] data:', data?.length, 'error:', error);
-
     if (error) {
       toast.error(`정산 조회 실패: ${error.message}`);
       setPayouts([]);
@@ -327,7 +325,6 @@ export default function AdminPayoutsPage() {
   }, [payouts, statusFilter]);
 
   const handleMarkCompleted = async (paymentId: string) => {
-    console.log('[ADMIN PAYOUTS] mark completed:', paymentId);
     setBusyId(paymentId);
     try {
       const supabase = createBrowserSupabaseClient();
@@ -338,7 +335,6 @@ export default function AdminPayoutsPage() {
           paid_at: new Date().toISOString(),
         })
         .eq('id', paymentId);
-      console.log('[ADMIN PAYOUTS] update error:', error);
       if (error) {
         toast.error(`상태 변경 실패: ${error.message}`);
         return;

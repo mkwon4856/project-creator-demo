@@ -100,7 +100,6 @@ export function ApplyButton({
 
   const handleApply = async () => {
     if (!selected || !campaign || applying) return;
-    console.log('[APPLY] 시작', { campaignId: campaign.id, selectedMission: selected });
     setApplying(true);
 
     try {
@@ -109,7 +108,6 @@ export function ApplyButton({
       // 1. 현재 유저
       const { data: userData, error: userError } = await supabase.auth.getUser();
       const user = userData?.user;
-      console.log('[APPLY] user:', user?.id, 'error:', userError);
       if (!user) {
         toast.error('로그인이 필요합니다');
         return;
@@ -121,7 +119,6 @@ export function ApplyButton({
         .select('id, grade')
         .eq('user_id', user.id)
         .maybeSingle();
-      console.log('[APPLY] creator:', creator, 'error:', creatorError);
       if (!creator) {
         toast.error('크리에이터 프로필이 없습니다');
         return;
@@ -135,7 +132,6 @@ export function ApplyButton({
         .eq('type', selected)
         .eq('enabled', true)
         .maybeSingle();
-      console.log('[APPLY] mission:', mission, 'error:', missionError);
       if (!mission) {
         toast.error('미션을 찾을 수 없습니다 (이 캠페인은 DB에 없는 mock 캠페인일 수 있습니다)');
         return;
@@ -148,7 +144,6 @@ export function ApplyButton({
         .eq('creator_id', creator.id)
         .eq('mission_id', mission.id)
         .maybeSingle();
-      console.log('[APPLY] existing:', existing);
       if (existing) {
         toast.error('이미 지원한 미션입니다');
         return;
@@ -165,7 +160,6 @@ export function ApplyButton({
         })
         .select()
         .single();
-      console.log('[APPLY] application:', app, 'error:', appError);
       if (appError || !app) {
         toast.error(`지원 실패: ${appError?.message ?? 'unknown'}`);
         return;
@@ -180,7 +174,6 @@ export function ApplyButton({
         | 'rate_e';
       const rateManwon = (mission[gradeKey] as number) ?? 0;
       const reward = rateManwon * 10_000;
-      console.log('[APPLY] grade:', creator.grade, 'rateManwon:', rateManwon, 'reward(won):', reward);
 
       // 7. submission 생성 (status: making)
       const { data: sub, error: subError } = await supabase
@@ -195,7 +188,6 @@ export function ApplyButton({
         })
         .select()
         .single();
-      console.log('[APPLY] submission:', sub, 'error:', subError);
       if (subError) {
         toast.error(`제출 기록 생성 실패: ${subError.message}`);
         return;
@@ -204,7 +196,6 @@ export function ApplyButton({
       // 8. Zustand store에도 mirror (UI 즉시 반영 — alreadyApplied 등)
       applyToCampaign(campaign, selected);
 
-      console.log('[APPLY] 성공!');
       finalizeSuccess();
     } catch (err) {
       console.error('[APPLY] catch error:', err);

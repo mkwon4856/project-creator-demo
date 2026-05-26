@@ -306,8 +306,6 @@ export default function CreatorActivityPage() {
       .eq('creator_id', creator.id)
       .order('submitted_at', { ascending: false });
 
-    console.log('[ACTIVITY] queue:', data, 'error:', error);
-
     if (error) {
       toast.error(`활동 내역 조회 실패: ${error.message}`);
       setRows([]);

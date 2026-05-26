@@ -311,8 +311,6 @@ export default function StudioReviewPage() {
       .eq('campaigns.studio_id', studio.id)
       .order('submitted_at', { ascending: false });
 
-    console.log('[STUDIO REVIEW] queue:', data, 'error:', error);
-
     if (error) {
       toast.error(`제출물 조회 실패: ${error.message}`);
       setSubmissions([]);
@@ -416,7 +414,6 @@ export default function StudioReviewPage() {
   const pendingCount = submissions.filter((s) => s.status === 'review').length;
 
   const handleApprove = async (submissionId: string) => {
-    console.log('[STUDIO APPROVE] 시작', { submissionId });
     setBusyId(submissionId);
     try {
       const supabase = createBrowserSupabaseClient();
@@ -431,7 +428,6 @@ export default function StudioReviewPage() {
           reviewed_by: user?.id ?? null,
         })
         .eq('id', submissionId);
-      console.log('[STUDIO APPROVE] error:', error);
       if (error) {
         toast.error(`승인 실패: ${error.message}`);
         return;
@@ -449,7 +445,6 @@ export default function StudioReviewPage() {
   };
 
   const handleReject = async (submissionId: string) => {
-    console.log('[STUDIO REJECT] 시작', { submissionId });
     setBusyId(submissionId);
     try {
       const supabase = createBrowserSupabaseClient();
@@ -464,7 +459,6 @@ export default function StudioReviewPage() {
           reviewed_by: user?.id ?? null,
         })
         .eq('id', submissionId);
-      console.log('[STUDIO REJECT] error:', error);
       if (error) {
         toast.error(`거절 실패: ${error.message}`);
         return;

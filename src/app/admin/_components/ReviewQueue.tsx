@@ -233,8 +233,6 @@ export function ReviewQueue() {
       .in('status', ['review', 'approved'])
       .order('submitted_at', { ascending: false });
 
-    console.log('[REVIEW] queue:', data, 'error:', error);
-
     if (error) {
       toast.error(`검수 큐 조회 실패: ${error.message}`);
       setDbQueue(null);
@@ -325,7 +323,6 @@ export function ReviewQueue() {
     const reward = row.reward;
     if (!submissionId || !creatorId) return;
 
-    console.log('[APPROVE] 시작', { submissionId, creatorId, reward });
     setBusyId(submissionId);
 
     try {
@@ -333,8 +330,6 @@ export function ReviewQueue() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      console.log('[APPROVE] reviewer:', user?.id);
-
       const { error: subError } = await supabase
         .from('submissions')
         .update({
@@ -343,7 +338,6 @@ export function ReviewQueue() {
           reviewed_by: user?.id ?? null,
         })
         .eq('id', submissionId);
-      console.log('[APPROVE] submission update error:', subError);
       if (subError) {
         toast.error(`승인 실패: ${subError.message}`);
         return;
@@ -358,14 +352,12 @@ export function ReviewQueue() {
         status: 'completed',
         paid_at: new Date().toISOString(),
       });
-      console.log('[APPROVE] payment insert error:', payError);
       if (payError) {
         toast.error(`정산 기록 실패: ${payError.message}`);
         return;
       }
 
       toast.success('콘텐츠가 승인되었습니다');
-      console.log('[APPROVE] 성공!');
       await fetchQueue();
     } catch (err) {
       console.error('[APPROVE] catch error:', err);
@@ -387,7 +379,6 @@ export function ReviewQueue() {
     const submissionId = row.submissionId;
     if (!submissionId) return;
 
-    console.log('[REJECT] 시작', { submissionId });
     setBusyId(submissionId);
 
     try {
@@ -404,7 +395,6 @@ export function ReviewQueue() {
           reviewed_by: user?.id ?? null,
         })
         .eq('id', submissionId);
-      console.log('[REJECT] update error:', error);
       if (error) {
         toast.error(`반려 실패: ${error.message}`);
         return;

@@ -170,8 +170,6 @@ export default function AdminCreatorsPage() {
       .select('*')
       .order('subscribers', { ascending: false });
 
-    console.log('[ADMIN CREATORS] data:', data?.length, 'error:', error);
-
     if (error) {
       toast.error(`크리에이터 조회 실패: ${error.message}`);
       setCreators([]);

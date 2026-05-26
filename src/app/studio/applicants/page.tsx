@@ -228,8 +228,6 @@ export default function StudioApplicantsPage() {
       .eq('campaigns.studio_id', studio.id)
       .order('applied_at', { ascending: false });
 
-    console.log('[APPLICANTS] queue:', data, 'error:', error);
-
     if (error) {
       toast.error(`지원자 조회 실패: ${error.message}`);
       setApplicants([]);
@@ -326,7 +324,6 @@ export default function StudioApplicantsPage() {
   }, [applicants, campaignFilter]);
 
   const handleAccept = async (applicationId: string) => {
-    console.log('[ACCEPT] 시작', { applicationId });
     setBusyId(applicationId);
     try {
       const supabase = createBrowserSupabaseClient();
@@ -334,7 +331,6 @@ export default function StudioApplicantsPage() {
         .from('applications')
         .update({ status: 'accepted' })
         .eq('id', applicationId);
-      console.log('[ACCEPT] error:', error);
       if (error) {
         toast.error(`수락 실패: ${error.message}`);
         return;
@@ -350,7 +346,6 @@ export default function StudioApplicantsPage() {
   };
 
   const handleReject = async (applicationId: string) => {
-    console.log('[REJECT] 시작', { applicationId });
     setBusyId(applicationId);
     try {
       const supabase = createBrowserSupabaseClient();
@@ -358,7 +353,6 @@ export default function StudioApplicantsPage() {
         .from('applications')
         .update({ status: 'rejected' })
         .eq('id', applicationId);
-      console.log('[REJECT] error:', error);
       if (error) {
         toast.error(`거절 실패: ${error.message}`);
         return;

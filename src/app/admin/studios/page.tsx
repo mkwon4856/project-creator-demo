@@ -126,8 +126,6 @@ export default function AdminStudiosPage() {
       )
       .order('created_at', { ascending: false });
 
-    console.log('[ADMIN STUDIOS] data:', data?.length, 'error:', error);
-
     if (error) {
       toast.error(`스튜디오 조회 실패: ${error.message}`);
       setStudios([]);

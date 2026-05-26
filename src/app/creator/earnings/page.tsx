@@ -237,14 +237,6 @@ export default function CreatorEarningsPage() {
         .order('paid_at', { ascending: false }),
     ]);
 
-    console.log(
-      '[EARNINGS] submissions:',
-      submissionsRes.data,
-      'error:',
-      submissionsRes.error,
-    );
-    console.log('[EARNINGS] payments:', paymentsRes.data, 'error:', paymentsRes.error);
-
     if (submissionsRes.error) {
       toast.error(`정산 내역 조회 실패: ${submissionsRes.error.message}`);
     }

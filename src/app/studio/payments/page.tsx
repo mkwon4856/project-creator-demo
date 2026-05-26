@@ -203,19 +203,6 @@ export default function StudioPaymentsPage() {
         .eq('studio_id', studio.id),
     ]);
 
-    console.log(
-      '[STUDIO PAYMENTS] payments:',
-      paymentsRes.data,
-      'error:',
-      paymentsRes.error,
-    );
-    console.log(
-      '[STUDIO PAYMENTS] campaigns:',
-      campaignsRes.data,
-      'error:',
-      campaignsRes.error,
-    );
-
     if (paymentsRes.error) {
       toast.error(`정산 내역 조회 실패: ${paymentsRes.error.message}`);
     }
