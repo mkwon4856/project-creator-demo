@@ -1,8 +1,8 @@
 'use client';
 
-import { ArrowLeft, ArrowRight, Rocket, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, History, Rocket, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { Button, toast } from '@/components/ui';
 import type { Json } from '@/lib/db.types';
@@ -28,12 +28,74 @@ const HAS_SUPABASE_ENV =
   !!process.env.NEXT_PUBLIC_SUPABASE_URL &&
   !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
+/** localStorage key for the in-progress wizard draft. */
+const DRAFT_KEY = 'pc-campaign-draft';
+
+interface DraftPayload {
+  data: WizardData;
+  step: WizardStep;
+}
+
+function isValidStep(n: unknown): n is WizardStep {
+  return n === 1 || n === 2 || n === 3 || n === 4 || n === 5;
+}
+
+function clearDraft() {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.removeItem(DRAFT_KEY);
+  } catch {
+    // localStorage unavailable (private mode, quota, etc.)
+  }
+}
+
 export default function CampaignWizardPage() {
   const router = useRouter();
   const [step, setStep] = useState<WizardStep>(1);
   const [data, setData] = useState<WizardData>(initialData);
   const [confirmed, setConfirmed] = useState(false);
   const [launching, setLaunching] = useState(false);
+  /** True after the first client-side hydration effect runs. Until then we
+   *  must not write to localStorage so we don't overwrite a saved draft with
+   *  the initial defaults during mount. */
+  const [hydrated, setHydrated] = useState(false);
+  /** True when this mount restored from a persisted draft — used to show
+   *  an inline "이어서 작성" banner with a "새로 시작" reset button. */
+  const [restored, setRestored] = useState(false);
+
+  // 1) On mount, attempt to restore a previous draft from localStorage.
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(DRAFT_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved) as Partial<DraftPayload>;
+        if (parsed.data && typeof parsed.data === 'object') {
+          setData({ ...initialData, ...parsed.data });
+        }
+        if (isValidStep(parsed.step)) {
+          setStep(parsed.step);
+        }
+        setRestored(true);
+        toast.info('이전에 작성하던 캠페인이 있습니다. 이어서 작성합니다.');
+      }
+    } catch {
+      // Corrupt JSON / blocked storage — drop the draft and fall through.
+      clearDraft();
+    }
+    setHydrated(true);
+  }, []);
+
+  // 2) Persist the draft on any change. Gated on `hydrated` so the initial
+  //    render's defaults don't clobber the restored draft.
+  useEffect(() => {
+    if (!hydrated) return;
+    try {
+      const payload: DraftPayload = { data, step };
+      window.localStorage.setItem(DRAFT_KEY, JSON.stringify(payload));
+    } catch {
+      // Storage quota or unavailable — silent fallback.
+    }
+  }, [data, step, hydrated]);
 
   const updateData = (patch: Partial<WizardData>) => {
     setData((prev) => ({ ...prev, ...patch }));
@@ -49,7 +111,17 @@ export default function CampaignWizardPage() {
     setStep((prev) => (prev > 1 ? ((prev - 1) as WizardStep) : prev));
   };
 
+  // Save & exit — keep the draft so the user can resume on next visit.
   const exit = () => router.push('/studio');
+
+  const handleStartOver = () => {
+    clearDraft();
+    setData(initialData);
+    setStep(1);
+    setConfirmed(false);
+    setRestored(false);
+    toast.info('새 캠페인 작성을 시작합니다');
+  };
 
   const handleLaunch = async () => {
     if (launching || !data.game) return;
@@ -57,6 +129,7 @@ export default function CampaignWizardPage() {
 
     // Demo mode (no Supabase env): preserve the original behaviour.
     if (!HAS_SUPABASE_ENV) {
+      clearDraft();
       toast.success('🚀 Campaign launched! (demo) — funds reserved in escrow.');
       setTimeout(() => router.push('/studio'), 200);
       return;
@@ -142,6 +215,8 @@ export default function CampaignWizardPage() {
         toast.success('캠페인이 생성되었습니다!');
       }
 
+      // Successful (or at least the campaign row was created) — clear the draft.
+      clearDraft();
       router.push('/studio');
     } catch (err) {
       console.error('Launch error:', err);
@@ -174,6 +249,25 @@ export default function CampaignWizardPage() {
           Save &amp; exit
         </button>
       </header>
+
+      {restored && (
+        <div
+          role="status"
+          className="flex items-center justify-between gap-3 px-8 py-2.5 border-b border-white/[0.06] bg-ube-tint"
+        >
+          <span className="inline-flex items-center gap-1.5 text-xs text-ube-bright">
+            <History size={12} aria-hidden />
+            이전에 작성하던 캠페인을 이어서 작성합니다.
+          </span>
+          <button
+            type="button"
+            onClick={handleStartOver}
+            className="text-xs text-text-secondary hover:text-text-primary underline-offset-2 hover:underline cursor-pointer"
+          >
+            새로 시작
+          </button>
+        </div>
+      )}
 
       <Stepper current={step} onJump={(s) => setStep(s)} />
 
