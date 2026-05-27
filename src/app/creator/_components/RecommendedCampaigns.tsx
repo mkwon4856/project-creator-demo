@@ -11,8 +11,10 @@ import {
   formatRate,
   STATUS_LABELS,
   type Campaign,
+  type CampaignRates,
 } from '@/lib/mockCampaigns';
-import { CURRENT_CREATOR } from '@/lib/mockCreators';
+import { CURRENT_CREATOR, type CreatorGrade } from '@/lib/mockCreators';
+import { useCurrentCreator } from '@/lib/supabase/hooks';
 
 type FilterId =
   | 'all'
@@ -39,23 +41,88 @@ const STATUS_TO_PILL = {
   completed: 'completed',
 } as const;
 
-const MATCH_BY_INDEX: Record<number, number> = {
-  0: 94,
-  1: 88,
-};
-
 const MISSION_LABELS = {
   shortform: 'Shortform',
   longform: 'Longform',
   live: 'Live',
 } as const;
 
-function applyFilter(list: Campaign[], filter: FilterId): Campaign[] {
+export interface MatchCreator {
+  grade: CreatorGrade;
+  subscribers: number;
+  platforms: unknown;
+}
+
+export type ScoredCampaign = Campaign & { matchScore: number };
+
+function safeGrade(g: string | null | undefined): CreatorGrade {
+  if (g === 'A' || g === 'B' || g === 'C' || g === 'D' || g === 'E') return g;
+  return 'E';
+}
+
+/** Return platform type strings that have a non-empty URL in the jsonb array. */
+function connectedPlatformTypes(platforms: unknown): string[] {
+  if (!Array.isArray(platforms)) return [];
+  const types: string[] = [];
+  for (const item of platforms) {
+    if (!item || typeof item !== 'object') continue;
+    const p = item as { type?: unknown; url?: unknown };
+    if (typeof p.url === 'string' && p.url.trim().length > 0 && typeof p.type === 'string') {
+      types.push(p.type);
+    }
+  }
+  return types;
+}
+
+/**
+ * Score how well a campaign fits the creator (0–100).
+ * Weights: grade rate (40), open status (20), mission variety (15), platforms (25).
+ */
+export function calculateMatchScore(creator: MatchCreator, campaign: Campaign): number {
+  let score = 0;
+
+  const gradeKey = creator.grade as keyof CampaignRates;
+  const myRate = campaign.rates[gradeKey] ?? 0;
+  if (myRate > 0) score += 40;
+
+  if (campaign.status === 'live' || campaign.status === 'recruiting') {
+    score += 20;
+  }
+
+  const missionCount = [
+    campaign.missions.shortform,
+    campaign.missions.longform,
+    campaign.missions.live,
+  ].filter(Boolean).length;
+  score += missionCount * 5;
+
+  const creatorPlatforms = connectedPlatformTypes(creator.platforms);
+  if (creatorPlatforms.length > 0) score += 15;
+  if (creatorPlatforms.length >= 2) score += 10;
+
+  return Math.min(score, 100);
+}
+
+function sortByMatchAndRate(
+  items: ScoredCampaign[],
+  grade: CreatorGrade,
+): ScoredCampaign[] {
+  return [...items].sort((a, b) => {
+    if (b.matchScore !== a.matchScore) return b.matchScore - a.matchScore;
+    return (b.rates[grade] ?? 0) - (a.rates[grade] ?? 0);
+  });
+}
+
+function applyFilter(
+  list: ScoredCampaign[],
+  filter: FilterId,
+  grade: CreatorGrade,
+): ScoredCampaign[] {
   switch (filter) {
     case 'all':
       return list;
     case 'new':
-      return list.filter((c) => c.isNew);
+      return list.filter((c) => c.status === 'recruiting');
     case 'shortform':
       return list.filter((c) => c.missions.shortform);
     case 'live-ok':
@@ -64,8 +131,13 @@ function applyFilter(list: Campaign[], filter: FilterId): Campaign[] {
       return list.filter((c) => /RPG/i.test(c.genre));
     case 'casual':
       return list.filter((c) => /캐주얼|casual|힐링/i.test(c.genre));
-    case 'high-rate':
-      return [...list].sort((a, b) => b.rates[CURRENT_CREATOR.grade] - a.rates[CURRENT_CREATOR.grade]);
+    case 'high-rate': {
+      const withRates = list.map((c) => ({ c, rate: c.rates[grade] ?? 0 }));
+      withRates.sort((a, b) => b.rate - a.rate);
+      const topCount = Math.max(1, Math.ceil(withRates.length * 0.3));
+      const topIds = new Set(withRates.slice(0, topCount).map((x) => x.c.id));
+      return list.filter((c) => topIds.has(c.id));
+    }
     default:
       return list;
   }
@@ -83,6 +155,25 @@ function describeMissions(missions: Campaign['missions']): string {
   );
 }
 
+function MatchBadge({ score }: { score: number }) {
+  if (score >= 70) {
+    return (
+      <span className="absolute top-2 right-2 inline-flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-medium text-ube-bright bg-black/60 backdrop-blur-sm">
+        <Sparkles size={11} aria-hidden />
+        <span className="tabular-nums">{score}%</span>
+      </span>
+    );
+  }
+  if (score >= 50) {
+    return (
+      <span className="absolute top-2 right-2 text-[10px] font-medium tabular-nums text-text-secondary bg-black/50 backdrop-blur-sm px-1.5 py-0.5 rounded">
+        {score}%
+      </span>
+    );
+  }
+  return null;
+}
+
 function RecommendedCard({
   campaign,
   matchScore,
@@ -90,8 +181,8 @@ function RecommendedCard({
   onSelect,
 }: {
   campaign: Campaign;
-  matchScore?: number;
-  grade: typeof CURRENT_CREATOR.grade;
+  matchScore: number;
+  grade: CreatorGrade;
   onSelect?: (c: Campaign) => void;
 }) {
   const rate = campaign.rates[grade];
@@ -128,12 +219,7 @@ function RecommendedCard({
             {STATUS_LABELS[campaign.status]}
           </Pill>
         </div>
-        {typeof matchScore === 'number' && (
-          <span className="absolute top-2 right-2 inline-flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-medium text-ube-bright bg-black/60 backdrop-blur-sm">
-            <Sparkles size={11} aria-hidden />
-            <span className="tabular-nums">{matchScore}%</span>
-          </span>
-        )}
+        <MatchBadge score={matchScore} />
       </div>
 
       <div className="p-3 flex flex-col gap-2.5">
@@ -166,8 +252,24 @@ function RecommendedCard({
 
 export function RecommendedCampaigns() {
   const router = useRouter();
+  const { data: creatorRow } = useCurrentCreator();
   const [campaigns, setCampaigns] = useState<Campaign[]>(MOCK_CAMPAIGNS);
   const [filter, setFilter] = useState<FilterId>('all');
+
+  const creator: MatchCreator = useMemo(() => {
+    if (creatorRow) {
+      return {
+        grade: safeGrade(creatorRow.grade),
+        subscribers: creatorRow.subscribers ?? 0,
+        platforms: creatorRow.platforms,
+      };
+    }
+    return {
+      grade: CURRENT_CREATOR.grade,
+      subscribers: CURRENT_CREATOR.subscribers,
+      platforms: [],
+    };
+  }, [creatorRow]);
 
   useEffect(() => {
     let cancelled = false;
@@ -180,7 +282,18 @@ export function RecommendedCampaigns() {
     };
   }, []);
 
-  const filtered = useMemo(() => applyFilter(campaigns, filter), [campaigns, filter]);
+  const scoredAndSorted = useMemo(() => {
+    const scored: ScoredCampaign[] = campaigns.map((c) => ({
+      ...c,
+      matchScore: calculateMatchScore(creator, c),
+    }));
+    return sortByMatchAndRate(scored, creator.grade);
+  }, [campaigns, creator]);
+
+  const filtered = useMemo(
+    () => applyFilter(scoredAndSorted, filter, creator.grade),
+    [scoredAndSorted, filter, creator.grade],
+  );
 
   const handleSelect = (c: Campaign) => {
     router.push(`/campaigns/${c.id}`);
@@ -207,12 +320,12 @@ export function RecommendedCampaigns() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {filtered.map((c, i) => (
+          {filtered.map((c) => (
             <RecommendedCard
               key={c.id}
               campaign={c}
-              grade={CURRENT_CREATOR.grade}
-              matchScore={MATCH_BY_INDEX[i]}
+              grade={creator.grade}
+              matchScore={c.matchScore}
               onSelect={handleSelect}
             />
           ))}
