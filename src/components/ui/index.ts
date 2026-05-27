@@ -18,3 +18,6 @@ export type { BadgeProps, BadgeVariant, BadgeSize } from './Badge';
 
 export { ToastContainer, toast } from './Toast';
 export type { ToastVariant } from './Toast';
+
+export { EmptyState } from './EmptyState';
+export type { EmptyStateAction, EmptyStateProps } from './EmptyState';

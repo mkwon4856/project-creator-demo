@@ -1,8 +1,9 @@
 'use client';
 
+import { Compass } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
-import { Button, Pill } from '@/components/ui';
+import { Button, EmptyState, Pill } from '@/components/ui';
 import { SubmitUrlModal } from '@/components/creator/SubmitUrlModal';
 import {
   fetchMyActivities,
@@ -154,30 +155,41 @@ export function ActivityTable() {
       ? dbActivities
       : storeActivitiesToDisplay(storeActivities);
 
+  const isEmpty = !loading && list.length === 0;
+
   return (
     <>
-      <div className="border border-white/[0.06] rounded-lg overflow-hidden bg-bg-card">
-        <div className="overflow-x-auto">
-          <div
-            role="table"
-            aria-label="My activity"
-            className="min-w-[760px]"
-          >
-            <HeaderRow />
-            {loading ? (
-              <div className="px-5 py-12 text-center text-sm text-text-secondary">
-                Loading…
-              </div>
-            ) : list.length === 0 ? (
-              <div className="px-5 py-12 text-center text-sm text-text-secondary">
-                No activity yet.
-              </div>
-            ) : (
-              list.map((a) => <ActivityRow key={a.id} activity={a} onSubmit={setPending} />)
-            )}
+      {isEmpty ? (
+        <div className="border border-white/[0.06] rounded-lg bg-bg-card">
+          <EmptyState
+            icon={<Compass size={24} aria-hidden />}
+            title="아직 참여 중인 캠페인이 없어요"
+            description="프로필을 완성하고 캠페인에 지원해보세요. 완성도 80% 이상이면 승인률이 높아집니다."
+            primaryAction={{ label: '캠페인 탐색하기', href: '/creator' }}
+          />
+        </div>
+      ) : (
+        <div className="border border-white/[0.06] rounded-lg overflow-hidden bg-bg-card">
+          <div className="overflow-x-auto">
+            <div
+              role="table"
+              aria-label="My activity"
+              className="min-w-[760px]"
+            >
+              <HeaderRow />
+              {loading ? (
+                <div className="px-5 py-12 text-center text-sm text-text-secondary">
+                  Loading…
+                </div>
+              ) : (
+                list.map((a) => (
+                  <ActivityRow key={a.id} activity={a} onSubmit={setPending} />
+                ))
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       <SubmitUrlModal
         open={pending !== null}

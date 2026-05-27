@@ -4,6 +4,7 @@ import { PlaySquare, Radio, Tv, type LucideIcon } from 'lucide-react';
 import { useEffect, useId, useState } from 'react';
 
 import { WorkspaceLayout } from '@/components/layout';
+import { ProfileCompletion } from '@/components/creator/ProfileCompletion';
 import { Badge, Button, Card, Input, toast } from '@/components/ui';
 import type { CreatorGrade, Database, Json } from '@/lib/db.types';
 import { CURRENT_CREATOR, formatSubscribers } from '@/lib/mockCreators';
@@ -336,6 +337,21 @@ export default function CreatorProfilePage() {
           Manage your creator profile and connected platforms
         </p>
       </header>
+
+      {creator && (
+        <ProfileCompletion
+          displayName={displayName}
+          handle={handle}
+          bio={bio}
+          connectedPlatforms={
+            (platforms.youtube.url.trim() ? 1 : 0) +
+            (platforms.soop.url.trim() ? 1 : 0) +
+            (platforms.chzzk.url.trim() ? 1 : 0)
+          }
+          subscribers={totalSubscribers}
+          showEditLink={false}
+        />
+      )}
 
       {!creator && (
         <Card variant="default" padding="md" className="mb-6 border-amber-500/40">

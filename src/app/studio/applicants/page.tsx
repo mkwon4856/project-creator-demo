@@ -1,10 +1,10 @@
 'use client';
 
-import { Film, Radio, Video, type LucideIcon } from 'lucide-react';
+import { Film, Radio, Users, Video, type LucideIcon } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { WorkspaceLayout } from '@/components/layout';
-import { Badge, Button, Pill, toast } from '@/components/ui';
+import { Badge, Button, EmptyState, Pill, toast } from '@/components/ui';
 import type { ApplicationStatus, CreatorGrade, MissionType } from '@/lib/db.types';
 import { createClient as createBrowserSupabaseClient } from '@/lib/supabase/client';
 import { useCurrentStudio } from '@/lib/supabase/hooks';
@@ -440,28 +440,39 @@ export default function StudioApplicantsPage() {
         </div>
       )}
 
-      <div className="border border-white/[0.06] rounded-lg overflow-hidden bg-bg-card">
-        <HeaderRow />
-        {filtered.length === 0 ? (
-          <div className="px-5 py-16 text-center">
-            <p className="text-sm text-text-primary mb-1">No applicants yet.</p>
-            <p className="text-xs text-text-secondary">
-              Create a campaign to start receiving applications.
-            </p>
-          </div>
-        ) : (
-          filtered.map((item, i) => (
-            <Row
-              key={item.id}
-              item={item}
-              last={i === filtered.length - 1}
-              busy={busyId === item.id}
-              onAccept={handleAccept}
-              onReject={handleReject}
-            />
-          ))
-        )}
-      </div>
+      {applicants.length === 0 ? (
+        <div className="border border-white/[0.06] rounded-lg bg-bg-card">
+          <EmptyState
+            icon={<Users size={24} aria-hidden />}
+            title="아직 지원자가 없습니다"
+            description="캠페인을 만들면 크리에이터들이 지원합니다."
+            primaryAction={{ label: '캠페인 만들기', href: '/studio/new' }}
+          />
+        </div>
+      ) : (
+        <div className="border border-white/[0.06] rounded-lg overflow-hidden bg-bg-card">
+          <HeaderRow />
+          {filtered.length === 0 ? (
+            <div className="px-5 py-16 text-center">
+              <p className="text-sm text-text-primary mb-1">No applicants match your filters.</p>
+              <p className="text-xs text-text-secondary">
+                Try changing the campaign filter above.
+              </p>
+            </div>
+          ) : (
+            filtered.map((item, i) => (
+              <Row
+                key={item.id}
+                item={item}
+                last={i === filtered.length - 1}
+                busy={busyId === item.id}
+                onAccept={handleAccept}
+                onReject={handleReject}
+              />
+            ))
+          )}
+        </div>
+      )}
     </WorkspaceLayout>
   );
 }

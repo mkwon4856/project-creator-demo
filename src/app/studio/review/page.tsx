@@ -1,10 +1,17 @@
 'use client';
 
-import { ExternalLink, Film, Radio, Video, type LucideIcon } from 'lucide-react';
+import {
+  ExternalLink,
+  FileCheck,
+  Film,
+  Radio,
+  Video,
+  type LucideIcon,
+} from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { WorkspaceLayout } from '@/components/layout';
-import { Badge, Button, Pill, toast } from '@/components/ui';
+import { Badge, Button, EmptyState, Pill, toast } from '@/components/ui';
 import type {
   CampaignThumbnailJson,
   CreatorGrade,
@@ -584,34 +591,40 @@ export default function StudioReviewPage() {
         </div>
       )}
 
-      <div className="border border-white/[0.06] rounded-lg overflow-hidden bg-bg-card">
-        <HeaderRow />
-        {filtered.length === 0 ? (
-          <div className="px-5 py-16 text-center">
-            <p className="text-sm text-text-primary mb-1">
-              {submissions.length === 0
-                ? 'No submissions yet.'
-                : 'No submissions match your filters.'}
-            </p>
-            <p className="text-xs text-text-secondary">
-              {submissions.length === 0
-                ? 'Creators will submit content here once they finish their work.'
-                : 'Try changing the status or campaign filter above.'}
-            </p>
-          </div>
-        ) : (
-          filtered.map((item, i) => (
-            <Row
-              key={item.id}
-              item={item}
-              last={i === filtered.length - 1}
-              busy={busyId === item.id}
-              onApprove={handleApprove}
-              onReject={handleReject}
-            />
-          ))
-        )}
-      </div>
+      {submissions.length === 0 ? (
+        <div className="border border-white/[0.06] rounded-lg bg-bg-card">
+          <EmptyState
+            icon={<FileCheck size={24} aria-hidden />}
+            title="검수할 콘텐츠가 없습니다"
+            description="크리에이터가 콘텐츠를 제출하면 여기에 나타납니다."
+          />
+        </div>
+      ) : (
+        <div className="border border-white/[0.06] rounded-lg overflow-hidden bg-bg-card">
+          <HeaderRow />
+          {filtered.length === 0 ? (
+            <div className="px-5 py-16 text-center">
+              <p className="text-sm text-text-primary mb-1">
+                No submissions match your filters.
+              </p>
+              <p className="text-xs text-text-secondary">
+                Try changing the status or campaign filter above.
+              </p>
+            </div>
+          ) : (
+            filtered.map((item, i) => (
+              <Row
+                key={item.id}
+                item={item}
+                last={i === filtered.length - 1}
+                busy={busyId === item.id}
+                onApprove={handleApprove}
+                onReject={handleReject}
+              />
+            ))
+          )}
+        </div>
+      )}
     </WorkspaceLayout>
   );
 }

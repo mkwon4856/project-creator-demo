@@ -1,12 +1,17 @@
 'use client';
 
 import { ArrowRight } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { WorkspaceLayout } from '@/components/layout';
+import { ProfileCompletion } from '@/components/creator/ProfileCompletion';
+import {
+  WelcomeModal,
+  WELCOME_SEEN_KEY,
+} from '@/components/onboarding/WelcomeModal';
+import type { Database } from '@/lib/db.types';
 import { CURRENT_CREATOR, type Creator, type CreatorGrade } from '@/lib/mockCreators';
 import { useCurrentCreator } from '@/lib/supabase/hooks';
-import type { Database } from '@/lib/db.types';
 
 import { ActivityTable } from './_components/ActivityTable';
 import { CreatorProfileBar } from './_components/CreatorProfileBar';
@@ -37,6 +42,22 @@ function rowToCreator(row: CreatorRow): Creator {
   };
 }
 
+/**
+ * Count platform entries in the creators.platforms JSON array that have a
+ * non-empty URL. Returns 0 when the field is null or malformed.
+ */
+function countConnectedPlatforms(raw: unknown): number {
+  if (!Array.isArray(raw)) return 0;
+  let count = 0;
+  for (const item of raw) {
+    if (item && typeof item === 'object') {
+      const url = (item as { url?: unknown }).url;
+      if (typeof url === 'string' && url.trim().length > 0) count += 1;
+    }
+  }
+  return count;
+}
+
 function SectionHeader({
   title,
   href,
@@ -64,6 +85,26 @@ function SectionHeader({
 
 export default function CreatorWorkspacePage() {
   const { data: row, loading } = useCurrentCreator();
+  const [showWelcome, setShowWelcome] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!window.localStorage.getItem(WELCOME_SEEN_KEY)) {
+      setShowWelcome(true);
+    }
+  }, []);
+
+  const closeWelcome = () => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(WELCOME_SEEN_KEY, 'true');
+    }
+    setShowWelcome(false);
+  };
+
+  const connectedPlatforms = useMemo(
+    () => countConnectedPlatforms(row?.platforms),
+    [row?.platforms],
+  );
 
   if (loading) {
     return (
@@ -86,6 +127,16 @@ export default function CreatorWorkspacePage() {
     >
       <CreatorProfileBar creator={creator} />
 
+      {row && (
+        <ProfileCompletion
+          displayName={row.display_name}
+          handle={row.handle}
+          bio={row.bio ?? ''}
+          connectedPlatforms={connectedPlatforms}
+          subscribers={row.subscribers ?? 0}
+        />
+      )}
+
       <section className="mb-9">
         <SectionHeader title="Earnings overview" href="/creator/earnings" />
         <EarningsOverview />
@@ -100,6 +151,13 @@ export default function CreatorWorkspacePage() {
         <SectionHeader title="My activity" href="/creator/activity" />
         <ActivityTable />
       </section>
+
+      <WelcomeModal
+        open={showWelcome}
+        role="creator"
+        userName={creator.name}
+        onClose={closeWelcome}
+      />
     </WorkspaceLayout>
   );
 }

@@ -1,11 +1,15 @@
 'use client';
 
-import { Plus } from 'lucide-react';
+import { Plus, Rocket } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 
 import { WorkspaceLayout } from '@/components/layout';
-import { Button } from '@/components/ui';
+import {
+  WelcomeModal,
+  WELCOME_SEEN_KEY,
+} from '@/components/onboarding/WelcomeModal';
+import { Button, EmptyState } from '@/components/ui';
 import { fetchMyCampaigns, transformDbCampaign } from '@/lib/api/campaigns';
 import { CAMPAIGNS as MOCK_CAMPAIGNS, type Campaign } from '@/lib/mockCampaigns';
 import { useCurrentStudio } from '@/lib/supabase/hooks';
@@ -20,6 +24,7 @@ export default function StudioMyCampaignsPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>(MOCK_CAMPAIGNS);
   const [status, setStatus] = useState<StatusFilter>('all');
   const [search, setSearch] = useState('');
+  const [showWelcome, setShowWelcome] = useState(false);
 
   useEffect(() => {
     if (loading || !studio) return;
@@ -32,6 +37,20 @@ export default function StudioMyCampaignsPage() {
       cancelled = true;
     };
   }, [loading, studio]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!window.localStorage.getItem(WELCOME_SEEN_KEY)) {
+      setShowWelcome(true);
+    }
+  }, []);
+
+  const closeWelcome = () => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(WELCOME_SEEN_KEY, 'true');
+    }
+    setShowWelcome(false);
+  };
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -86,14 +105,28 @@ export default function StudioMyCampaignsPage() {
           </Button>
         </header>
 
-        <CampaignToolbar
-          status={status}
-          onStatusChange={setStatus}
-          search={search}
-          onSearchChange={setSearch}
-        />
+        {campaigns.length > 0 && (
+          <CampaignToolbar
+            status={status}
+            onStatusChange={setStatus}
+            search={search}
+            onSearchChange={setSearch}
+          />
+        )}
 
-        {filtered.length === 0 ? (
+        {campaigns.length === 0 ? (
+          <EmptyState
+            icon={<Rocket size={24} aria-hidden />}
+            title="아직 캠페인이 없습니다"
+            description="첫 캠페인을 만들고 크리에이터들의 지원을 받아보세요. 평균 3일 안에 지원자가 모입니다."
+            primaryAction={{ label: '캠페인 만들기', href: '/studio/new' }}
+            secondaryAction={{
+              label: '다른 캠페인 둘러보기',
+              href: '/studio/explore',
+            }}
+            tip="상세한 게임 소개와 가이드라인을 작성하면 더 좋은 콘텐츠를 받을 수 있어요."
+          />
+        ) : filtered.length === 0 ? (
           <div className="rounded-lg border border-dashed border-white/10 px-6 py-16 text-center text-sm text-text-secondary">
             No campaigns match your filters.
           </div>
@@ -105,6 +138,13 @@ export default function StudioMyCampaignsPage() {
           </div>
         )}
       </div>
+
+      <WelcomeModal
+        open={showWelcome}
+        role="studio"
+        userName={studio?.name ?? '게임사'}
+        onClose={closeWelcome}
+      />
     </WorkspaceLayout>
   );
 }
