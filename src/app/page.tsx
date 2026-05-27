@@ -486,8 +486,22 @@ function FinalCTA() {
 // ─────────────────────────────────────────────────────────────
 function FooterBar() {
   return (
-    <footer className="py-6 border-t border-white/[0.06] flex flex-wrap justify-between items-center gap-2">
+    <footer className="py-6 border-t border-white/[0.06] flex flex-wrap justify-between items-center gap-3">
       <Logo size="sm" />
+      <nav aria-label="Legal" className="flex items-center gap-4 text-xs text-text-secondary">
+        <Link
+          href="/terms"
+          className="hover:text-text-primary transition-colors duration-150 ease-out"
+        >
+          Terms
+        </Link>
+        <Link
+          href="/privacy"
+          className="hover:text-text-primary transition-colors duration-150 ease-out"
+        >
+          Privacy
+        </Link>
+      </nav>
       <span className="text-xs text-text-secondary">
         © 2025 Project Creator. All rights reserved.
       </span>
