@@ -1,7 +1,16 @@
 'use client';
 
-import { Film, Link2, Radio, Video, type LucideIcon } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Film,
+  Link2,
+  Radio,
+  Video,
+  XCircle,
+  type LucideIcon,
+} from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { Button, Input, Modal, toast } from '@/components/ui';
 import { submitContentUrl, type DisplayActivity } from '@/lib/api/submissions';
@@ -25,6 +34,114 @@ const URL_PLACEHOLDERS: Record<ActivityMission, string> = {
   live: 'https://chzzk.naver.com/live/...',
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// URL validation
+// ─────────────────────────────────────────────────────────────────────────────
+
+type ValidationSeverity = 'idle' | 'success' | 'warning' | 'error';
+
+interface UrlValidation {
+  /** True if the URL is structurally valid enough to submit. */
+  valid: boolean;
+  severity: ValidationSeverity;
+  /** Recognized platform name when severity === 'success'. */
+  platform?: string;
+  /** Human-readable feedback (success / warning / error). */
+  message?: string;
+}
+
+/**
+ * Recognize whether the given URL belongs to a supported platform.
+ * Order matters: more specific patterns (YouTube Shorts) come before
+ * generic ones (YouTube). "Other https" is allowed but warns the user.
+ */
+export function validateContentUrl(rawUrl: string): UrlValidation {
+  const trimmed = rawUrl.trim();
+
+  if (!trimmed) {
+    return { valid: false, severity: 'idle' };
+  }
+
+  // YouTube Shorts (must come before generic YouTube)
+  if (/^https?:\/\/(www\.)?youtube\.com\/shorts\/.+/i.test(trimmed)) {
+    return { valid: true, severity: 'success', platform: 'YouTube Shorts' };
+  }
+
+  // YouTube (watch, /channel, /@handle, /playlist, embed) + youtu.be
+  if (/^https?:\/\/(www\.)?(youtube\.com|youtu\.be)\/.+/i.test(trimmed)) {
+    return { valid: true, severity: 'success', platform: 'YouTube' };
+  }
+
+  // SOOP (rebrand of AfreecaTV) — both domains accepted
+  if (/^https?:\/\/(www\.|play\.|vod\.|ch\.)?(soop\.co\.kr|sooplive\.co\.kr|afreecatv\.com)\/.+/i.test(trimmed)) {
+    return { valid: true, severity: 'success', platform: 'SOOP' };
+  }
+
+  // Chzzk (Naver)
+  if (/^https?:\/\/(www\.)?chzzk\.naver\.com\/.+/i.test(trimmed)) {
+    return { valid: true, severity: 'success', platform: 'Chzzk' };
+  }
+
+  // TikTok
+  if (/^https?:\/\/(www\.|vm\.|m\.)?tiktok\.com\/.+/i.test(trimmed)) {
+    return { valid: true, severity: 'success', platform: 'TikTok' };
+  }
+
+  // Generic https(http) URL — allowed with a warning so creators with niche
+  // platforms aren't blocked, but they get a clear nudge.
+  if (/^https?:\/\/[^\s]+\..+/i.test(trimmed)) {
+    return {
+      valid: true,
+      severity: 'warning',
+      platform: 'Other',
+      message: '지원 플랫폼(YouTube, SOOP, Chzzk, TikTok) URL을 권장합니다',
+    };
+  }
+
+  return {
+    valid: false,
+    severity: 'error',
+    message: '올바른 URL을 입력해주세요 (https://로 시작)',
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+const FEEDBACK_ICON: Record<Exclude<ValidationSeverity, 'idle'>, LucideIcon> = {
+  success: CheckCircle2,
+  warning: AlertTriangle,
+  error: XCircle,
+};
+
+const FEEDBACK_CLASS: Record<Exclude<ValidationSeverity, 'idle'>, string> = {
+  success: 'text-green-400',
+  warning: 'text-amber-400',
+  error: 'text-red-400',
+};
+
+function ValidationFeedback({ result }: { result: UrlValidation }) {
+  if (result.severity === 'idle') return null;
+  const Icon = FEEDBACK_ICON[result.severity];
+  const cls = FEEDBACK_CLASS[result.severity];
+
+  const text =
+    result.severity === 'success'
+      ? `${result.platform} 링크 확인됨`
+      : (result.message ?? '');
+
+  return (
+    <p
+      className={`text-[11px] inline-flex items-center gap-1.5 ${cls}`}
+      role={result.severity === 'error' ? 'alert' : 'status'}
+    >
+      <Icon size={12} aria-hidden />
+      <span>{text}</span>
+    </p>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 export interface SubmitUrlModalProps {
   open: boolean;
   activity: DisplayActivity | null;
@@ -44,16 +161,23 @@ export function SubmitUrlModal({
 }: SubmitUrlModalProps) {
   const storeSubmitUrl = useAppStore((s) => s.submitUrl);
   const [url, setUrl] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (open) {
       setUrl('');
-      setError(null);
+      setSubmitError(null);
       setSubmitting(false);
     }
   }, [open]);
+
+  // Live recognition. We avoid showing feedback for very short input so users
+  // don't see noise while they're still typing the protocol.
+  const validation = useMemo<UrlValidation>(() => {
+    if (url.trim().length < 6) return { valid: false, severity: 'idle' };
+    return validateContentUrl(url);
+  }, [url]);
 
   if (!activity) {
     return (
@@ -77,14 +201,15 @@ export function SubmitUrlModal({
   const handleSubmit = async () => {
     if (submitting) return;
     const trimmed = url.trim();
-    if (!trimmed) {
-      setError('URL을 입력해주세요');
+
+    // Re-run validation at submit time as a safety net (covers the case
+    // where validation had not been computed yet because of the length gate).
+    const result = validateContentUrl(trimmed);
+    if (!result.valid) {
+      setSubmitError(result.message ?? '올바른 URL을 입력해주세요');
       return;
     }
-    if (!/^https?:\/\/.+/i.test(trimmed)) {
-      setError('http:// 또는 https://로 시작하는 URL이어야 합니다');
-      return;
-    }
+    setSubmitError(null);
 
     setSubmitting(true);
     try {
@@ -109,13 +234,20 @@ export function SubmitUrlModal({
         storeSubmitUrl(activity.storeActivityId, trimmed);
       }
 
-      toast.success('제출 완료! 관리자 검수를 기다려주세요');
+      const successSuffix =
+        validation.severity === 'success' && validation.platform
+          ? ` (${validation.platform})`
+          : '';
+      toast.success(`제출 완료${successSuffix}! 관리자 검수를 기다려주세요`);
       onClose();
       onSubmitted?.();
     } finally {
       setSubmitting(false);
     }
   };
+
+  const submitDisabled =
+    submitting || !url.trim() || (validation.severity !== 'idle' && !validation.valid);
 
   return (
     <Modal
@@ -140,27 +272,30 @@ export function SubmitUrlModal({
 
       <Modal.Body>
         <div className="flex flex-col gap-3">
-          <Input
-            label="콘텐츠 URL"
-            placeholder={placeholder}
-            value={url}
-            onChange={(e) => {
-              setUrl(e.target.value);
-              if (error) setError(null);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') void handleSubmit();
-            }}
-            icon={<Link2 size={14} />}
-            error={error ?? undefined}
-            helper={
-              error
-                ? undefined
-                : '업로드 후 게시된 영상/방송 URL을 그대로 붙여넣어주세요'
-            }
-            autoFocus
-            disabled={submitting}
-          />
+          <div className="flex flex-col gap-1.5">
+            <Input
+              label="콘텐츠 URL"
+              placeholder={placeholder}
+              value={url}
+              onChange={(e) => {
+                setUrl(e.target.value);
+                if (submitError) setSubmitError(null);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') void handleSubmit();
+              }}
+              icon={<Link2 size={14} />}
+              error={submitError ?? undefined}
+              helper={
+                submitError
+                  ? undefined
+                  : 'YouTube, SOOP, Chzzk, TikTok URL을 붙여넣어주세요'
+              }
+              autoFocus
+              disabled={submitting}
+            />
+            <ValidationFeedback result={validation} />
+          </div>
 
           <div className="rounded-[var(--radius-md)] bg-bg-elevated border border-white/[0.06] p-3 flex flex-col gap-1">
             <span className="text-[10px] font-semibold uppercase tracking-wider text-text-secondary">
@@ -182,7 +317,7 @@ export function SubmitUrlModal({
           variant="primary"
           size="md"
           onClick={handleSubmit}
-          disabled={submitting}
+          disabled={submitDisabled}
           loading={submitting}
         >
           {submitting ? 'Submitting…' : 'Submit'}
