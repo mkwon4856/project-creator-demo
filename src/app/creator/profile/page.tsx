@@ -38,7 +38,7 @@ const PLATFORM_META: Record<PlatformKey, PlatformMeta> = {
     urlPlaceholder: 'https://sooplive.co.kr/...',
   },
   chzzk: {
-    label: 'Chzzk',
+    label: '치지직',
     icon: Tv,
     urlPlaceholder: 'https://chzzk.naver.com/...',
   },
@@ -111,13 +111,13 @@ function ConnectedPill({ connected }: { connected: boolean }) {
   if (connected) {
     return (
       <span className="inline-flex items-center bg-green-500/15 text-green-400 text-[10px] font-medium px-2 py-0.5 rounded-full leading-none">
-        Connected
+        연결됨
       </span>
     );
   }
   return (
     <span className="inline-flex items-center bg-bg-hover text-text-muted text-[10px] font-medium px-2 py-0.5 rounded-full leading-none">
-      Not connected
+      미연결
     </span>
   );
 }
@@ -145,14 +145,14 @@ function PlatformCard({
         <ConnectedPill connected={connected} />
       </div>
       <Input
-        label="Channel URL"
+        label="채널 URL"
         type="url"
         placeholder={meta.urlPlaceholder}
         value={value.url}
         onChange={(e) => onChange({ ...value, url: e.target.value })}
       />
       <Input
-        label="Subscribers"
+        label="구독자"
         type="number"
         min={0}
         inputMode="numeric"
@@ -233,11 +233,11 @@ export default function CreatorProfilePage() {
       return;
     }
     if (!displayName.trim()) {
-      toast.error('Display name을 입력해주세요');
+      toast.error('활동명을 입력해주세요');
       return;
     }
     if (!handle.trim()) {
-      toast.error('Handle을 입력해주세요');
+      toast.error('핸들을 입력해주세요');
       return;
     }
 
@@ -312,14 +312,14 @@ export default function CreatorProfilePage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-bg-base flex items-center justify-center">
-        <span className="text-text-secondary text-sm">Loading…</span>
+        <span className="text-text-secondary text-sm">불러오는 중…</span>
       </div>
     );
   }
 
   const userName = creator?.display_name || CURRENT_CREATOR.name;
   const userAvatar = CURRENT_CREATOR.emoji;
-  const userBadge = `${currentGrade}-tier`;
+  const userBadge = `${currentGrade}티어`;
 
   const canSave = Boolean(creator) && !saving;
 
@@ -332,9 +332,9 @@ export default function CreatorProfilePage() {
       sidebarSections={getCreatorSidebar('profile')}
     >
       <header className="mb-6">
-        <h1 className="text-xl font-medium text-text-primary leading-tight">Profile</h1>
+        <h1 className="text-xl font-medium text-text-primary leading-tight">프로필</h1>
         <p className="text-sm text-text-secondary mt-1">
-          Manage your creator profile and connected platforms
+          크리에이터 프로필과 연결된 플랫폼을 관리하세요
         </p>
       </header>
 
@@ -362,18 +362,18 @@ export default function CreatorProfilePage() {
       )}
 
       <Card variant="default" padding="lg" className="mb-6">
-        <SectionLabel>Basic Information</SectionLabel>
+        <SectionLabel>기본 정보</SectionLabel>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <Input
-            label="Display name"
+            label="활동명"
             type="text"
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
             placeholder="채널/활동명"
           />
           <Input
-            label="Handle"
+            label="핸들"
             type="text"
             value={handle}
             onChange={(e) => setHandle(e.target.value)}
@@ -384,7 +384,7 @@ export default function CreatorProfilePage() {
 
         <div className="mb-4 flex flex-col gap-1.5">
           <label htmlFor={bioId} className="text-xs font-medium text-text-secondary">
-            Bio
+            소개
           </label>
           <textarea
             id={bioId}
@@ -397,9 +397,9 @@ export default function CreatorProfilePage() {
         </div>
 
         <div className="flex items-center gap-3 pt-2 border-t border-white/[0.06] mt-2">
-          <span className="text-xs font-medium text-text-secondary">Grade</span>
+          <span className="text-xs font-medium text-text-secondary">등급</span>
           <Badge variant="ube" size="sm">
-            {currentGrade}-tier
+            {currentGrade}티어
           </Badge>
           {computedGrade !== currentGrade && (
             <span className="text-[11px] text-amber-300">
@@ -413,7 +413,7 @@ export default function CreatorProfilePage() {
       </Card>
 
       <Card variant="default" padding="lg" className="mb-6">
-        <SectionLabel>Connected Platforms</SectionLabel>
+        <SectionLabel>연결된 플랫폼</SectionLabel>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {(['youtube', 'soop', 'chzzk'] as const).map((key) => (
@@ -430,20 +430,20 @@ export default function CreatorProfilePage() {
       </Card>
 
       <Card variant="default" padding="lg" className="mb-6">
-        <SectionLabel>Stats</SectionLabel>
+        <SectionLabel>통계</SectionLabel>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <StatBox
-            label="Subscribers"
+            label="구독자"
             value={formatSubscribers(totalSubscribers)}
             sub="플랫폼 합산"
           />
-          <StatBox label="Avg views" value={formatSubscribers(avgViews)} sub="per video" />
-          <StatBox label="Rating" value={rating.toFixed(1)} sub="out of 5.0" />
+          <StatBox label="평균 조회수" value={formatSubscribers(avgViews)} sub="영상당" />
+          <StatBox label="평점" value={rating.toFixed(1)} sub="5.0 만점" />
           <StatBox
-            label="Completed"
+            label="완료"
             value={completedCampaigns.toString()}
-            sub="campaigns"
+            sub="캠페인"
           />
         </div>
       </Card>
@@ -456,7 +456,7 @@ export default function CreatorProfilePage() {
           disabled={!canSave}
           loading={saving}
         >
-          {saving ? 'Saving…' : 'Save changes'}
+          {saving ? '저장 중…' : '변경사항 저장'}
         </Button>
       </div>
     </WorkspaceLayout>

@@ -44,9 +44,9 @@ export default function StudioExplorePage() {
   return (
     <WorkspaceLayout
       persona="studio"
-      userName="Pulse Games"
+      userName="테스트 게임사 1"
       userAvatar="🎮"
-      userBadge="Studio"
+      userBadge="게임사"
       sidebarSections={getStudioSidebar('explore')}
       notificationCount={3}
     >
@@ -54,13 +54,13 @@ export default function StudioExplorePage() {
         <header className="flex items-end justify-between gap-4 flex-wrap">
           <div className="flex flex-col gap-1.5">
             <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-ube-bright">
-              Studio · Explore
+              게임사 · 둘러보기
             </span>
             <h1 className="text-[22px] font-medium leading-tight text-text-primary">
-              Browse all campaigns
+              전체 캠페인 둘러보기
             </h1>
             <p className="text-sm text-text-secondary">
-              See what other studios are spending — set your budget competitively.
+              다른 게임사들의 예산 집행 현황을 확인하고 경쟁력 있게 예산을 설정하세요.
             </p>
           </div>
         </header>
@@ -70,12 +70,12 @@ export default function StudioExplorePage() {
           onStatusChange={setStatus}
           search={search}
           onSearchChange={setSearch}
-          searchPlaceholder="Search studios, genres…"
+          searchPlaceholder="게임사, 장르 검색…"
         />
 
         {filtered.length === 0 ? (
           <div className="rounded-lg border border-dashed border-white/10 px-6 py-16 text-center text-sm text-text-secondary">
-            No campaigns match your filters.
+            필터에 맞는 캠페인이 없습니다.
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">

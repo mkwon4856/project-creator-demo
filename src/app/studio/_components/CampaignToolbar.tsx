@@ -9,10 +9,10 @@ import type { CampaignStatus } from '@/lib/mockCampaigns';
 export type StatusFilter = 'all' | CampaignStatus;
 
 const STATUS_TABS: ReadonlyArray<{ id: StatusFilter; label: string }> = [
-  { id: 'all', label: 'All' },
-  { id: 'live', label: 'Live' },
-  { id: 'recruiting', label: 'Recruiting' },
-  { id: 'completed', label: 'Completed' },
+  { id: 'all', label: '전체' },
+  { id: 'live', label: '진행중' },
+  { id: 'recruiting', label: '모집중' },
+  { id: 'completed', label: '완료' },
 ];
 
 export interface CampaignToolbarProps {
@@ -28,7 +28,7 @@ export function CampaignToolbar({
   onStatusChange,
   search,
   onSearchChange,
-  searchPlaceholder = 'Search campaigns…',
+  searchPlaceholder = '캠페인 검색…',
 }: CampaignToolbarProps) {
   return (
     <div className="flex items-center justify-between gap-4 flex-wrap">
@@ -59,7 +59,7 @@ export function CampaignToolbar({
           onChange={(e: ChangeEvent<HTMLInputElement>) => onSearchChange(e.target.value)}
           placeholder={searchPlaceholder}
           className="flex-1 min-w-0 bg-transparent border-none outline-none text-sm text-text-primary placeholder:text-text-muted"
-          aria-label="Search campaigns"
+          aria-label="캠페인 검색"
         />
       </label>
     </div>

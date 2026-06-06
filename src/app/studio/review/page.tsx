@@ -32,9 +32,9 @@ const GRID =
   'grid-cols-[40px_1.3fr_1fr_0.8fr_1.2fr_0.7fr_0.8fr_0.7fr_180px]';
 
 const MISSION_META: Record<MissionType, { label: string; icon: LucideIcon }> = {
-  shortform: { label: 'Shortform', icon: Film },
-  longform: { label: 'Longform', icon: Video },
-  live: { label: 'Live', icon: Radio },
+  shortform: { label: '숏폼', icon: Film },
+  longform: { label: '롱폼', icon: Video },
+  live: { label: '라이브', icon: Radio },
 };
 
 const DEFAULT_THUMBNAIL = { from: '#1a0a3e', to: '#4a1a6e', emoji: '🎮' };
@@ -42,11 +42,11 @@ const DEFAULT_THUMBNAIL = { from: '#1a0a3e', to: '#4a1a6e', emoji: '🎮' };
 type StatusFilter = 'all' | SubmissionStatus;
 
 const STATUS_FILTERS: { id: StatusFilter; label: string }[] = [
-  { id: 'all', label: 'All' },
-  { id: 'review', label: 'In review' },
-  { id: 'approved', label: 'Approved' },
-  { id: 'rejected', label: 'Rejected' },
-  { id: 'paid', label: 'Paid' },
+  { id: 'all', label: '전체' },
+  { id: 'review', label: '검수 중' },
+  { id: 'approved', label: '승인됨' },
+  { id: 'rejected', label: '거절됨' },
+  { id: 'paid', label: '정산 완료' },
 ];
 
 interface Submission {
@@ -72,13 +72,13 @@ interface Submission {
 function getTimeAgo(dateStr: string | null): string {
   if (!dateStr) return '—';
   const diff = Date.now() - new Date(dateStr).getTime();
-  if (diff < 60_000) return 'Just now';
+  if (diff < 60_000) return '방금 전';
   const mins = Math.floor(diff / 60_000);
-  if (mins < 60) return `${mins}m ago`;
+  if (mins < 60) return `${mins}분 전`;
   const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return `${hours}시간 전`;
   const days = Math.floor(hours / 24);
-  if (days < 30) return `${days}d ago`;
+  if (days < 30) return `${days}일 전`;
   return new Date(dateStr).toLocaleDateString();
 }
 
@@ -162,14 +162,14 @@ function HeaderRow() {
       className={`grid ${GRID} items-center gap-3 px-5 py-3 bg-bg-elevated text-[11px] uppercase tracking-wider text-text-secondary`}
     >
       <span aria-hidden />
-      <span>Campaign</span>
-      <span>Creator</span>
-      <span>Mission</span>
-      <span>Content</span>
-      <span>Submitted</span>
-      <span>Reward</span>
-      <span>Status</span>
-      <span className="text-right">Action</span>
+      <span>캠페인</span>
+      <span>크리에이터</span>
+      <span>미션</span>
+      <span>콘텐츠</span>
+      <span>제출일</span>
+      <span>보상</span>
+      <span>상태</span>
+      <span className="text-right">작업</span>
     </div>
   );
 }
@@ -266,7 +266,7 @@ function Row({
         {item.status === 'review' ? (
           <>
             <Button variant="ghost" size="sm" disabled={busy} onClick={() => onReject(item.id)}>
-              Reject
+              거절
             </Button>
             <Button
               variant="primary"
@@ -274,7 +274,7 @@ function Row({
               disabled={busy}
               onClick={() => onApprove(item.id)}
             >
-              Approve
+              승인
             </Button>
           </>
         ) : (
@@ -381,12 +381,12 @@ export default function StudioReviewPage() {
         contentUrl: raw.content_url ?? '',
         campaign: {
           id: campaign?.id ?? '',
-          name: campaign?.name ?? 'Unknown campaign',
+          name: campaign?.name ?? '알 수 없는 캠페인',
           developer: campaign?.developer ?? '',
           thumbnail: thumbnailFromJson(campaign?.thumbnail),
         },
         creator: {
-          displayName: creator?.display_name ?? 'Unknown',
+          displayName: creator?.display_name ?? '알 수 없음',
           handle: creator?.handle ?? '',
           grade,
         },
@@ -485,7 +485,7 @@ export default function StudioReviewPage() {
   if (studioLoading || loading) {
     return (
       <div className="min-h-screen bg-bg-base flex items-center justify-center">
-        <span className="text-text-secondary text-sm">Loading…</span>
+        <span className="text-text-secondary text-sm">불러오는 중…</span>
       </div>
     );
   }
@@ -493,26 +493,26 @@ export default function StudioReviewPage() {
   return (
     <WorkspaceLayout
       persona="studio"
-      userName={studio?.name ?? 'Pulse Games'}
+      userName={studio?.name ?? '테스트 게임사 1'}
       userAvatar="🎮"
-      userBadge="Studio"
+      userBadge="게임사"
       sidebarSections={getStudioSidebar('review')}
       notificationCount={3}
     >
       <header className="mb-6 flex items-end justify-between gap-3 flex-wrap">
         <div>
           <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-ube-bright">
-            Studio · Content review
+            게임사 · 콘텐츠 검수
           </span>
           <h1 className="text-[22px] font-medium text-text-primary leading-tight mt-1.5">
-            Content review
+            콘텐츠 검수
           </h1>
           <p className="text-sm text-text-secondary mt-1">
-            Review submitted content from creators
+            크리에이터가 제출한 콘텐츠를 검수하세요
           </p>
         </div>
         <span className="text-sm font-medium text-red-400 tabular-nums">
-          {pendingCount} pending
+          대기 {pendingCount}건
         </span>
       </header>
 
@@ -527,7 +527,7 @@ export default function StudioReviewPage() {
         <div className="flex flex-col gap-3 mb-4">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-[11px] uppercase tracking-wider text-text-muted mr-1">
-              Status
+              상태
             </span>
             {STATUS_FILTERS.map((f) => {
               const count =
@@ -556,13 +556,13 @@ export default function StudioReviewPage() {
 
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-[11px] uppercase tracking-wider text-text-muted mr-1">
-              Campaign
+              캠페인
             </span>
             <FilterPill
               active={campaignFilter === 'all'}
               onClick={() => setCampaignFilter('all')}
             >
-              All campaigns
+              전체 캠페인
               <span className="ml-1.5 text-text-muted tabular-nums">
                 {submissions.length}
               </span>
@@ -605,10 +605,10 @@ export default function StudioReviewPage() {
           {filtered.length === 0 ? (
             <div className="px-5 py-16 text-center">
               <p className="text-sm text-text-primary mb-1">
-                No submissions match your filters.
+                필터에 맞는 제출물이 없습니다.
               </p>
               <p className="text-xs text-text-secondary">
-                Try changing the status or campaign filter above.
+                위의 상태 또는 캠페인 필터를 변경해보세요.
               </p>
             </div>
           ) : (

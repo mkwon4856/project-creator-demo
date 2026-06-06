@@ -28,9 +28,9 @@ const GRID =
   'grid-cols-[1.5fr_0.9fr_0.8fr_0.8fr_0.9fr_0.9fr_0.9fr_0.9fr]';
 
 const MISSION_META: Record<MissionType, { label: string; icon: LucideIcon }> = {
-  shortform: { label: 'Shortform', icon: Film },
-  longform: { label: 'Longform', icon: Video },
-  live: { label: 'Live', icon: Radio },
+  shortform: { label: '숏폼', icon: Film },
+  longform: { label: '롱폼', icon: Video },
+  live: { label: '라이브', icon: Radio },
 };
 
 interface EarningRow {
@@ -53,7 +53,7 @@ interface MonthBucket {
 function formatShortDate(s: string | null): string {
   if (!s) return '—';
   const d = new Date(s);
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return d.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
 }
 
 function StatusPill({ status }: { status: SubmissionStatus }) {
@@ -130,14 +130,14 @@ function HeaderRow() {
       role="row"
       className={`grid ${GRID} items-center gap-3 px-5 py-3 bg-bg-elevated text-[11px] uppercase tracking-wider text-text-secondary`}
     >
-      <span>Campaign</span>
-      <span>Mission</span>
-      <span>Submitted</span>
-      <span>Approved</span>
-      <span className="text-right">Amount</span>
-      <span className="text-right">Fee (15%)</span>
-      <span className="text-right">Net</span>
-      <span>Status</span>
+      <span>캠페인</span>
+      <span>미션</span>
+      <span>제출일</span>
+      <span>승인일</span>
+      <span className="text-right">금액</span>
+      <span className="text-right">수수료 (15%)</span>
+      <span className="text-right">실수령</span>
+      <span>상태</span>
     </div>
   );
 }
@@ -286,7 +286,7 @@ export default function CreatorEarningsPage() {
         reward: raw.reward,
         submittedAt: raw.submitted_at,
         reviewedAt: raw.reviewed_at,
-        campaignName: campaign?.name ?? 'Unknown campaign',
+        campaignName: campaign?.name ?? '알 수 없는 캠페인',
         developer: campaign?.developer ?? '',
         mission: missionType,
       };
@@ -317,7 +317,7 @@ export default function CreatorEarningsPage() {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
       buckets.push({
         key: `${d.getFullYear()}-${d.getMonth()}`,
-        label: d.toLocaleDateString('en-US', { month: 'short' }),
+        label: d.toLocaleDateString('ko-KR', { month: 'short' }),
         amount: 0,
       });
     }
@@ -334,14 +334,14 @@ export default function CreatorEarningsPage() {
   if (creatorLoading || loading) {
     return (
       <div className="min-h-screen bg-bg-base flex items-center justify-center">
-        <span className="text-text-secondary text-sm">Loading…</span>
+        <span className="text-text-secondary text-sm">불러오는 중…</span>
       </div>
     );
   }
 
   const userName = creator?.display_name || CURRENT_CREATOR.name;
   const userAvatar = CURRENT_CREATOR.emoji;
-  const userBadge = `${creator?.grade ?? CURRENT_CREATOR.grade}-tier`;
+  const userBadge = `${creator?.grade ?? CURRENT_CREATOR.grade}티어`;
 
   return (
     <WorkspaceLayout
@@ -353,13 +353,13 @@ export default function CreatorEarningsPage() {
     >
       <header className="mb-6">
         <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-ube-bright">
-          Creator · Earnings
+          크리에이터 · 수익
         </span>
         <h1 className="text-[22px] font-medium text-text-primary leading-tight mt-1.5">
-          Earnings
+          수익
         </h1>
         <p className="text-sm text-text-secondary mt-1">
-          Track your income from campaigns
+          캠페인으로 얻은 수입을 확인하세요
         </p>
       </header>
 
@@ -377,9 +377,9 @@ export default function CreatorEarningsPage() {
       <section className="mb-9">
         <div className="flex items-end justify-between gap-3 mb-4">
           <h2 className="text-base font-medium text-text-primary leading-tight">
-            Monthly earnings
+            월별 수익
           </h2>
-          <span className="text-[11px] text-text-secondary">Last 6 months · paid only</span>
+          <span className="text-[11px] text-text-secondary">최근 6개월 · 정산 완료만</span>
         </div>
         <Card variant="default" padding="lg">
           <MonthlyChart data={monthlyData} />
@@ -389,10 +389,10 @@ export default function CreatorEarningsPage() {
       <section className="mb-12">
         <div className="flex items-end justify-between gap-3 mb-4">
           <h2 className="text-base font-medium text-text-primary leading-tight">
-            Settlement history
+            정산 내역
           </h2>
           <span className="text-[11px] text-text-secondary tabular-nums">
-            {rows.length} {rows.length === 1 ? 'record' : 'records'}
+            {rows.length}건
           </span>
         </div>
 
@@ -402,9 +402,9 @@ export default function CreatorEarningsPage() {
               <HeaderRow />
               {rows.length === 0 ? (
                 <div className="px-5 py-16 text-center">
-                  <p className="text-sm text-text-primary mb-1">No earnings yet.</p>
+                  <p className="text-sm text-text-primary mb-1">아직 수익이 없어요.</p>
                   <p className="text-xs text-text-secondary">
-                    Apply to a campaign and submit content to start earning.
+                    캠페인에 지원하고 콘텐츠를 제출하면 수익이 시작돼요.
                   </p>
                 </div>
               ) : (

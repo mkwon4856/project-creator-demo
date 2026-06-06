@@ -12,17 +12,17 @@ import { createClient as createBrowserSupabaseClient } from '@/lib/supabase/clie
 
 const MISSION_META: Record<ActivityMission, { label: string; icon: LucideIcon; description: string }> = {
   shortform: {
-    label: 'Shortform',
+    label: '숏폼',
     icon: Film,
     description: '60초 이하 쇼츠 · YouTube Shorts / Reels',
   },
   longform: {
-    label: 'Longform',
+    label: '롱폼',
     icon: Video,
     description: '5분 이상 리뷰 · YouTube 풀영상',
   },
   live: {
-    label: 'Live',
+    label: '라이브',
     icon: Radio,
     description: '치지직 / 트위치 라이브 방송',
   },
@@ -219,25 +219,25 @@ export function ApplyButton({
           ? '이미 지원함'
           : availableMissions.length === 0
             ? '미션 없음'
-            : (children ?? 'Apply for this campaign')}
+            : (children ?? '이 캠페인에 지원하기')}
       </Button>
 
       <Modal
         open={open}
         onClose={() => setOpen(false)}
         size="sm"
-        ariaLabel={`Apply to ${campaign.name}`}
+        ariaLabel={`${campaign.name} 지원`}
       >
         <Modal.Hero>
           <div className="flex flex-col gap-1">
             <span className="text-[10px] font-semibold uppercase tracking-wider text-text-secondary">
-              Apply to campaign
+              캠페인 지원
             </span>
             <h2 className="text-base font-medium text-text-primary leading-tight">
               {campaign.name}
             </h2>
             <p className="text-[12px] text-text-secondary">
-              {campaign.developer} · 내 등급 <span className="text-ube-bright">{grade}-tier</span>
+              {campaign.developer} · 내 등급 <span className="text-ube-bright">{grade}티어</span>
             </p>
           </div>
         </Modal.Hero>
@@ -288,7 +288,7 @@ export function ApplyButton({
                   </div>
                   <div className="flex flex-col items-end flex-shrink-0">
                     <span className="text-[10px] uppercase tracking-wider text-text-secondary">
-                      Your rate
+                      내 단가
                     </span>
                     <span className="text-sm font-medium text-ube-bright tabular-nums">
                       {formatRate(rate)}
@@ -312,7 +312,7 @@ export function ApplyButton({
 
         <Modal.Footer>
           <Button variant="ghost" size="md" onClick={() => setOpen(false)}>
-            Cancel
+            취소
           </Button>
           <Button
             variant="primary"
@@ -321,7 +321,7 @@ export function ApplyButton({
             disabled={!selected || applying}
             loading={applying}
           >
-            {applying ? 'Applying…' : 'Apply'}
+            {applying ? '지원 중…' : '지원하기'}
           </Button>
         </Modal.Footer>
       </Modal>

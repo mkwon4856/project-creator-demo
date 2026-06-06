@@ -66,15 +66,15 @@ function StatusPill({ status }: { status: QueueStatus }) {
 }
 
 function getTimeAgo(dateStr: string | null): string {
-  if (!dateStr) return 'Just now';
+  if (!dateStr) return '방금 전';
   const diff = Date.now() - new Date(dateStr).getTime();
-  if (diff < 60_000) return 'Just now';
+  if (diff < 60_000) return '방금 전';
   const mins = Math.floor(diff / 60_000);
-  if (mins < 60) return `${mins}m ago`;
+  if (mins < 60) return `${mins}분 전`;
   const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return `${hours}시간 전`;
   const days = Math.floor(hours / 24);
-  return `${days}d ago`;
+  return `${days}일 전`;
 }
 
 function thumbnailFromJson(json: unknown): { from: string; to: string; emoji: string } {
@@ -114,12 +114,12 @@ function HeaderRow() {
       className={`grid ${GRID} items-center gap-3 px-5 py-3 bg-bg-elevated text-[11px] uppercase tracking-wider text-text-secondary`}
     >
       <span aria-hidden />
-      <span>Campaign</span>
-      <span>Creator</span>
-      <span>Mission</span>
-      <span>Submitted</span>
-      <span>Status</span>
-      <span className="text-right">Reward · Action</span>
+      <span>캠페인</span>
+      <span>크리에이터</span>
+      <span>미션</span>
+      <span>제출</span>
+      <span>상태</span>
+      <span className="text-right">보상 · 작업</span>
     </div>
   );
 }
@@ -169,7 +169,7 @@ function Row({
         </span>
         <div className="flex flex-col min-w-0">
           <span className="text-xs font-medium text-text-primary truncate">{item.creatorName}</span>
-          <span className="text-[10px] text-text-secondary">{item.creatorGrade}-tier</span>
+          <span className="text-[10px] text-text-secondary">{item.creatorGrade}티어</span>
         </div>
       </div>
 
@@ -187,10 +187,10 @@ function Row({
           {formatCompactKRW(item.reward)}
         </span>
         <Button variant="ghost" size="sm" disabled={busy} onClick={() => onReject(item)}>
-          Reject
+          반려
         </Button>
         <Button variant="primary" size="sm" disabled={busy} onClick={() => onApprove(item)}>
-          {item.status === 'approved' ? 'Pay' : 'Approve'}
+          {item.status === 'approved' ? '지급' : '승인'}
         </Button>
       </div>
     </div>
@@ -290,10 +290,10 @@ export function ReviewQueue() {
           status: queueStatus,
           submissionId: raw.id,
           creatorId: raw.creator_id,
-          campaignName: campaign?.name ?? 'Unknown',
+          campaignName: campaign?.name ?? '알 수 없음',
           developer: campaign?.developer ?? '',
           thumbnail: thumbnailFromJson(campaign?.thumbnail),
-          creatorName: creator?.display_name ?? 'Unknown',
+          creatorName: creator?.display_name ?? '알 수 없음',
           creatorEmoji: DEFAULT_CREATOR_EMOJI,
           creatorGrade: grade,
           mission: missionType,
@@ -420,22 +420,22 @@ export function ReviewQueue() {
 
   return (
     <Panel
-      title="Content review queue"
+      title="콘텐츠 검수 큐"
       ctaHref="/admin/review"
-      cta="View all"
+      cta="전체 보기"
       rightSlot={
         <span className="text-[11px] font-medium text-red-400 tabular-nums">
-          {loading ? '…' : `${queue.length} pending`}
+          {loading ? '…' : `${queue.length}건 대기`}
         </span>
       }
       bodyClassName=""
     >
       <HeaderRow />
       {loading ? (
-        <div className="px-5 py-12 text-center text-sm text-text-secondary">Loading…</div>
+        <div className="px-5 py-12 text-center text-sm text-text-secondary">불러오는 중…</div>
       ) : queue.length === 0 ? (
         <div className="px-5 py-12 text-center text-sm text-text-secondary">
-          Nothing in the queue.
+          검수 큐가 비어 있습니다.
         </div>
       ) : (
         queue.map((item, i) => (

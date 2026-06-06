@@ -11,6 +11,7 @@ import { createClient as createBrowserSupabaseClient } from '@/lib/supabase/clie
 import { useCurrentProfile } from '@/lib/supabase/hooks';
 
 import { getAdminSidebar } from '../_config/sidebar';
+import { useAdminBadgeCounts } from '../_hooks/useAdminBadgeCounts';
 
 type CreatorRow = Database['public']['Tables']['creators']['Row'];
 
@@ -24,17 +25,17 @@ const GRID =
 type GradeFilter = 'all' | CreatorGrade;
 
 const GRADE_FILTERS: { id: GradeFilter; label: string }[] = [
-  { id: 'all', label: 'All' },
-  { id: 'A', label: 'A-tier' },
-  { id: 'B', label: 'B-tier' },
-  { id: 'C', label: 'C-tier' },
-  { id: 'D', label: 'D-tier' },
-  { id: 'E', label: 'E-tier' },
+  { id: 'all', label: '전체' },
+  { id: 'A', label: 'A티어' },
+  { id: 'B', label: 'B티어' },
+  { id: 'C', label: 'C티어' },
+  { id: 'D', label: 'D티어' },
+  { id: 'E', label: 'E티어' },
 ];
 
 function formatJoinedDate(iso: string): string {
   const d = new Date(iso);
-  return d.toLocaleDateString('en-US', {
+  return d.toLocaleDateString('ko-KR', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
@@ -84,15 +85,15 @@ function HeaderRow() {
       role="row"
       className={`grid ${GRID} items-center gap-3 px-5 py-3 bg-bg-elevated text-[11px] uppercase tracking-wider text-text-secondary`}
     >
-      <span>Creator</span>
-      <span>Handle</span>
-      <span>Grade</span>
-      <span className="text-right">Subscribers</span>
-      <span className="text-right">Avg views</span>
-      <span className="text-right">Rating</span>
-      <span className="text-right">Campaigns</span>
-      <span className="text-center">Verified</span>
-      <span>Joined</span>
+      <span>크리에이터</span>
+      <span>핸들</span>
+      <span>등급</span>
+      <span className="text-right">구독자</span>
+      <span className="text-right">평균 조회수</span>
+      <span className="text-right">평점</span>
+      <span className="text-right">캠페인</span>
+      <span className="text-center">인증</span>
+      <span>가입일</span>
     </div>
   );
 }
@@ -153,6 +154,7 @@ function Row({ item, last }: { item: CreatorRow; last: boolean }) {
 
 export default function AdminCreatorsPage() {
   const { data: profile, loading: profileLoading } = useCurrentProfile();
+  const badgeCounts = useAdminBadgeCounts();
   const [creators, setCreators] = useState<CreatorRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [gradeFilter, setGradeFilter] = useState<GradeFilter>('all');
@@ -216,7 +218,7 @@ export default function AdminCreatorsPage() {
   if (profileLoading || loading) {
     return (
       <div className="min-h-screen bg-bg-base flex items-center justify-center">
-        <span className="text-text-secondary text-sm">Loading…</span>
+        <span className="text-text-secondary text-sm">불러오는 중…</span>
       </div>
     );
   }
@@ -229,18 +231,21 @@ export default function AdminCreatorsPage() {
       persona="admin"
       userName={adminName}
       userAvatar={initials}
-      userBadge="Admin"
-      sidebarSections={getAdminSidebar('creators')}
-      notificationCount={5}
+      userBadge="관리자"
+      sidebarSections={getAdminSidebar('creators', {
+        review: badgeCounts.review,
+        payouts: badgeCounts.payouts,
+      })}
+      notificationCount={badgeCounts.notification}
     >
       <header className="mb-6">
         <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-ube-bright">
-          Admin · Directory
+          관리자 · 디렉터리
         </span>
         <h1 className="text-[22px] font-medium text-text-primary leading-tight mt-1.5">
-          Creators
+          크리에이터
         </h1>
-        <p className="text-sm text-text-secondary mt-1">Manage registered creators</p>
+        <p className="text-sm text-text-secondary mt-1">등록된 크리에이터 관리</p>
       </header>
 
       <div className="flex items-center gap-3 flex-wrap mb-4">
@@ -268,7 +273,7 @@ export default function AdminCreatorsPage() {
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by name or handle"
+            placeholder="이름 또는 핸들로 검색"
             icon={<Search size={14} aria-hidden />}
           />
         </div>
@@ -280,13 +285,13 @@ export default function AdminCreatorsPage() {
           <div className="px-5 py-16 text-center">
             <p className="text-sm text-text-primary mb-1">
               {creators.length === 0
-                ? 'No creators found.'
-                : 'No creators match your filter.'}
+                ? '크리에이터가 없습니다.'
+                : '필터에 맞는 크리에이터가 없습니다.'}
             </p>
             <p className="text-xs text-text-secondary">
               {creators.length === 0
-                ? 'Creators will appear here once they sign up.'
-                : 'Try a different grade or search query.'}
+                ? '크리에이터가 가입하면 여기에 표시됩니다.'
+                : '다른 등급이나 검색어를 시도해 보세요.'}
             </p>
           </div>
         ) : (

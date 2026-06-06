@@ -104,26 +104,26 @@ export function HeroMetrics({
 
   const metrics: MetricSpec[] = [
     {
-      label: 'Gross merchandise value',
+      label: '총 거래액 (GMV)',
       value: formatCompactKRW(displayGmv),
-      delta: `${formatPercent(gmvGrowthPercent, PLATFORM_METRICS.gmvGrowthPercent)} vs last month`,
+      delta: `전월 대비 ${formatPercent(gmvGrowthPercent, PLATFORM_METRICS.gmvGrowthPercent)}`,
       highlight: 'gradient',
     },
     {
-      label: 'Platform fee (15%)',
+      label: '플랫폼 수수료 (15%)',
       value: formatCompactKRW(displayFee),
       delta: formatPercent(feeGrowthPercent, PLATFORM_METRICS.feeGrowthPercent),
       highlight: 'ube',
     },
     {
-      label: 'Active campaigns',
+      label: '활성 캠페인',
       value: displayActive.toLocaleString(),
-      delta: fromDb ? 'live now' : PLATFORM_METRICS.campaignsGrowth,
+      delta: fromDb ? '현재 진행중' : PLATFORM_METRICS.campaignsGrowth,
     },
     {
-      label: 'Verified creators',
+      label: '인증 크리에이터',
       value: displayCreators.toLocaleString(),
-      delta: fromDb ? 'on platform' : PLATFORM_METRICS.creatorsGrowth,
+      delta: fromDb ? '플랫폼 전체' : PLATFORM_METRICS.creatorsGrowth,
     },
   ];
 

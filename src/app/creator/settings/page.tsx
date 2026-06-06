@@ -80,13 +80,13 @@ export default function CreatorSettingsPage() {
   if (creatorLoading || profileLoading) {
     return (
       <div className="min-h-screen bg-bg-base flex items-center justify-center">
-        <span className="text-text-secondary text-sm">Loading…</span>
+        <span className="text-text-secondary text-sm">불러오는 중…</span>
       </div>
     );
   }
 
   const userName = creator?.display_name || CURRENT_CREATOR.name;
-  const userBadge = `${creator?.grade ?? CURRENT_CREATOR.grade}-tier`;
+  const userBadge = `${creator?.grade ?? CURRENT_CREATOR.grade}티어`;
 
   return (
     <WorkspaceLayout
@@ -98,19 +98,19 @@ export default function CreatorSettingsPage() {
     >
       <header className="mb-6">
         <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-ube-bright">
-          Creator · Settings
+          크리에이터 · 설정
         </span>
         <h1 className="text-[22px] font-medium text-text-primary leading-tight mt-1.5">
-          Settings
+          설정
         </h1>
-        <p className="text-sm text-text-secondary mt-1">Manage your account</p>
+        <p className="text-sm text-text-secondary mt-1">계정을 관리하세요</p>
       </header>
 
       <Card variant="default" padding="lg" className="mb-6">
-        <SectionLabel>Account</SectionLabel>
+        <SectionLabel>계정</SectionLabel>
 
         <div className="mb-5 pb-5 border-b border-white/[0.06]">
-          <div className="text-xs font-medium text-text-secondary mb-1.5">Email</div>
+          <div className="text-xs font-medium text-text-secondary mb-1.5">이메일</div>
           <div className="text-sm text-text-primary tabular-nums">
             {profile?.email ?? '—'}
           </div>
@@ -121,19 +121,19 @@ export default function CreatorSettingsPage() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <Input
-            label="New password"
+            label="새 비밀번호"
             type="password"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
-            placeholder="At least 6 characters"
+            placeholder="6자 이상"
             helper="6자 이상 입력"
           />
           <Input
-            label="Confirm password"
+            label="비밀번호 확인"
             type="password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            placeholder="Re-enter password"
+            placeholder="비밀번호 재입력"
           />
         </div>
 
@@ -145,7 +145,7 @@ export default function CreatorSettingsPage() {
             disabled={changingPassword || !newPassword || !confirmPassword}
             loading={changingPassword}
           >
-            {changingPassword ? 'Updating…' : 'Save password'}
+            {changingPassword ? '변경 중…' : '비밀번호 저장'}
           </Button>
         </div>
       </Card>
@@ -155,14 +155,14 @@ export default function CreatorSettingsPage() {
         padding="lg"
         className="mb-6 border-blue-500/20 bg-blue-500/[0.03]"
       >
-        <SectionLabel>Profile</SectionLabel>
+        <SectionLabel>프로필</SectionLabel>
         <div className="flex items-center justify-between gap-4">
           <div>
             <div className="text-sm font-medium text-text-primary">
-              Edit creator profile
+              크리에이터 프로필 수정
             </div>
             <div className="text-[11px] text-text-secondary mt-0.5">
-              Display name, handle, bio, 연결된 플랫폼을 수정하려면 프로필 페이지로
+              활동명, 핸들, 소개, 연결된 플랫폼을 수정하려면 프로필 페이지로
               이동하세요
             </div>
           </div>
@@ -171,7 +171,7 @@ export default function CreatorSettingsPage() {
             size="sm"
             onClick={() => router.push('/creator/profile')}
           >
-            Open profile
+            프로필 열기
           </Button>
         </div>
       </Card>
@@ -181,11 +181,11 @@ export default function CreatorSettingsPage() {
         padding="lg"
         className="mb-12 border-red-500/30"
       >
-        <SectionLabel>Danger Zone</SectionLabel>
+        <SectionLabel>위험 구역</SectionLabel>
 
         <div className="flex items-center justify-between gap-4 py-3 border-b border-white/[0.06]">
           <div>
-            <div className="text-sm font-medium text-text-primary">Log out</div>
+            <div className="text-sm font-medium text-text-primary">로그아웃</div>
             <div className="text-[11px] text-text-secondary mt-0.5">
               로그아웃하고 로그인 페이지로 돌아갑니다
             </div>
@@ -197,19 +197,19 @@ export default function CreatorSettingsPage() {
             onClick={handleLogout}
             disabled={loggingOut}
           >
-            {loggingOut ? 'Logging out…' : 'Log out'}
+            {loggingOut ? '로그아웃 중…' : '로그아웃'}
           </Button>
         </div>
 
         <div className="flex items-center justify-between gap-4 pt-3">
           <div>
-            <div className="text-sm font-medium text-red-400">Delete account</div>
+            <div className="text-sm font-medium text-red-400">계정 삭제</div>
             <div className="text-[11px] text-text-secondary mt-0.5">
               계정과 모든 데이터를 영구 삭제합니다 (복구 불가)
             </div>
           </div>
           <Button variant="ghost" size="sm" disabled>
-            Coming soon
+            준비 중
           </Button>
         </div>
       </Card>

@@ -66,11 +66,11 @@ export const initialData: WizardData = {
 export type WizardStep = 1 | 2 | 3 | 4 | 5;
 
 export const STEP_LABELS: Record<WizardStep, string> = {
-  1: 'Game',
-  2: 'Budget',
-  3: 'Missions & rates',
-  4: 'Brief',
-  5: 'Review',
+  1: '게임',
+  2: '예산',
+  3: '미션 & 단가',
+  4: '브리프',
+  5: '검토',
 };
 
 export const TIERS = ['A', 'B', 'C', 'D', 'E'] as const;
@@ -85,9 +85,9 @@ export const TIER_DESCRIPTION: Record<TierKey, string> = {
 };
 
 export const MISSIONS_META: Record<MissionId, { label: string; description: string; iconKey: 'film' | 'video' | 'radio' }> = {
-  shortform: { label: 'Shortform video', description: 'Up to 90s · TikTok / Reels / YouTube Shorts', iconKey: 'film' },
-  longform: { label: 'Longform video', description: '8 minutes or longer · YouTube / SOOP', iconKey: 'video' },
-  live: { label: 'Live broadcast', description: '5+ hour live session · Chzzk / SOOP / YouTube', iconKey: 'radio' },
+  shortform: { label: '숏폼 영상', description: '최대 90초 · TikTok / Reels / YouTube Shorts', iconKey: 'film' },
+  longform: { label: '롱폼 영상', description: '8분 이상 · YouTube / SOOP', iconKey: 'video' },
+  live: { label: '라이브 방송', description: '5시간 이상 라이브 · 치지직 / SOOP / YouTube', iconKey: 'radio' },
 };
 
 export const MARKET_AVG: Record<MissionId, CampaignRates> = {
@@ -99,7 +99,7 @@ export const MARKET_AVG: Record<MissionId, CampaignRates> = {
 export const SUGGESTED_BUDGETS: ReadonlyArray<{ value: number; label: string; tag?: string }> = [
   { value: 1_000_000, label: '₩1M' },
   { value: 2_000_000, label: '₩2M' },
-  { value: 4_000_000, label: '₩4M', tag: 'Suggested for indie RPG' },
+  { value: 4_000_000, label: '₩4M', tag: '인디 RPG 추천' },
   { value: 8_000_000, label: '₩8M' },
   { value: 15_000_000, label: '₩15M+' },
 ];
@@ -113,53 +113,53 @@ export interface GuidelineSpec {
 export const GUIDELINES: GuidelineSpec[] = [
   {
     id: 'sponsorship',
-    title: 'Disclose sponsorship at the start of the video',
-    description: () => 'Required by FTC and YouTube',
+    title: '영상 시작 부분에 광고임을 고지',
+    description: () => 'FTC 및 YouTube 정책상 필수',
   },
   {
     id: 'gameplay',
-    title: 'Show actual gameplay',
-    description: () => 'At least 70% of the runtime',
+    title: '실제 게임플레이 노출',
+    description: () => '전체 길이의 70% 이상',
   },
   {
     id: 'noCompare',
-    title: 'No comparisons with competitor games',
-    description: () => 'Stay focused on this title only',
+    title: '경쟁 게임과 비교 금지',
+    description: () => '이 게임에만 집중',
   },
   {
     id: 'matureOk',
-    title: 'Mature content allowed',
+    title: '성인 콘텐츠 허용',
     description: (checked) =>
       checked
-        ? 'Mature themes and language are OK for this campaign'
-        : 'Off — keep content suitable for all ages',
+        ? '이 캠페인에서는 성인 주제와 언어 사용이 가능합니다'
+        : '꺼짐 — 전체 이용가 콘텐츠로 유지',
   },
 ];
 
 export const BRIEF_TEMPLATES: ReadonlyArray<{ id: string; label: string; body: string }> = [
   {
     id: 'first-impressions',
-    label: '+ First impressions video',
+    label: '+ 첫인상 영상',
     body: '게임을 처음 켰을 때의 솔직한 인상을 5분 안에 정리해 주세요. 좋은 점 3가지, 아쉬운 점 1가지를 자연스러운 톤으로 풀어내면 좋습니다.',
   },
   {
     id: 'tutorial',
-    label: '+ Tutorial walkthrough',
+    label: '+ 튜토리얼 플레이',
     body: '신규 유저 입장에서 처음 1시간 동안 진행하는 모습을 풀어주세요. 막히는 구간이 있다면 그대로 보여주는 편이 도움이 됩니다.',
   },
   {
     id: 'boss',
-    label: '+ Boss battle highlight',
+    label: '+ 보스전 하이라이트',
     body: '챕터 보스전 / 레이드 하이라이트 위주로 3~5분 클립을 만들어 주세요. 컨트롤이 돋보이는 구간을 슬로우/리플레이로 강조하면 좋습니다.',
   },
   {
     id: 'character',
-    label: '+ Character review',
+    label: '+ 캐릭터 리뷰',
     body: '대표 캐릭터 1~2명을 골라 외형, 스킬, 운영 팁을 소개해 주세요. 광고임을 자연스럽게 밝혀 주시면 됩니다.',
   },
   {
     id: 'beginner',
-    label: "+ Beginner's guide",
+    label: '+ 초보자 가이드',
     body: '입문자가 알아야 할 핵심 포인트를 8분 내외 롱폼으로 정리해 주세요. 챕터 마커를 넣으면 시청 유지율이 올라갑니다.',
   },
 ];

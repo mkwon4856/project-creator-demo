@@ -14,7 +14,7 @@ export interface StepperProps {
 export function Stepper({ current, onJump }: StepperProps) {
   return (
     <nav
-      aria-label="Wizard progress"
+      aria-label="작성 진행 상황"
       className="flex items-center justify-center px-8 py-5 border-b border-white/[0.06] bg-bg-elevated"
     >
       <ol className="flex items-center gap-0">

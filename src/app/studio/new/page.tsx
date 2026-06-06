@@ -130,7 +130,7 @@ export default function CampaignWizardPage() {
     // Demo mode (no Supabase env): preserve the original behaviour.
     if (!HAS_SUPABASE_ENV) {
       clearDraft();
-      toast.success('🚀 Campaign launched! (demo) — funds reserved in escrow.');
+      toast.success('🚀 캠페인이 시작되었습니다! (데모) — 예산이 에스크로에 예치되었습니다.');
       setTimeout(() => router.push('/studio'), 200);
       return;
     }
@@ -152,7 +152,7 @@ export default function CampaignWizardPage() {
         .eq('user_id', user.id)
         .maybeSingle();
       if (studioErr || !studio) {
-        toast.error('Studio 프로필이 없습니다. Studio 계정으로 가입해주세요.');
+        toast.error('게임사 프로필이 없습니다. 게임사 계정으로 가입해주세요.');
         return;
       }
 
@@ -237,7 +237,7 @@ export default function CampaignWizardPage() {
         <span className="text-base font-semibold tracking-tight">
           Project <span className="text-ube-bright">Creator</span>
           <span className="ml-2 text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-ube/10 text-ube-bright align-middle">
-            New campaign
+            새 캠페인
           </span>
         </span>
         <button
@@ -246,7 +246,7 @@ export default function CampaignWizardPage() {
           className="inline-flex items-center gap-1.5 text-xs text-text-secondary hover:text-text-primary transition-colors duration-150 ease-out cursor-pointer"
         >
           <X size={13} aria-hidden />
-          Save &amp; exit
+          저장 후 나가기
         </button>
       </header>
 
@@ -293,11 +293,11 @@ export default function CampaignWizardPage() {
         <div className="min-w-[120px]">
           {step > 1 && (
             <Button variant="ghost" size="md" icon={<ArrowLeft size={14} />} onClick={goBack}>
-              Back
+              이전
             </Button>
           )}
         </div>
-        <span className="text-xs text-text-secondary tabular-nums">Step {step} of 5</span>
+        <span className="text-xs text-text-secondary tabular-nums">{step} / 5 단계</span>
         <div className="min-w-[120px] flex justify-end">
           {step < 5 ? (
             <Button
@@ -308,7 +308,7 @@ export default function CampaignWizardPage() {
               disabled={continueDisabled}
               onClick={goNext}
             >
-              Continue
+              다음
             </Button>
           ) : (
             <Button
@@ -319,7 +319,7 @@ export default function CampaignWizardPage() {
               loading={launching}
               onClick={handleLaunch}
             >
-              {launching ? 'Launching…' : 'Launch campaign'}
+              {launching ? '시작하는 중…' : '캠페인 시작'}
             </Button>
           )}
         </div>

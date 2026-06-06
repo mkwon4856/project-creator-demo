@@ -33,9 +33,9 @@ const GRID =
   'grid-cols-[40px_1.4fr_0.7fr_1.2fr_0.7fr_0.9fr_0.8fr_140px]';
 
 const MISSION_META: Record<MissionType, { label: string; icon: LucideIcon }> = {
-  shortform: { label: 'Shortform', icon: Film },
-  longform: { label: 'Longform', icon: Video },
-  live: { label: 'Live', icon: Radio },
+  shortform: { label: '숏폼', icon: Film },
+  longform: { label: '롱폼', icon: Video },
+  live: { label: '라이브', icon: Radio },
 };
 
 const DEFAULT_THUMBNAIL = { from: '#1a0a3e', to: '#4a1a6e', emoji: '🎮' };
@@ -43,12 +43,12 @@ const DEFAULT_THUMBNAIL = { from: '#1a0a3e', to: '#4a1a6e', emoji: '🎮' };
 type StatusFilter = 'all' | SubmissionStatus;
 
 const STATUS_FILTERS: { id: StatusFilter; label: string }[] = [
-  { id: 'all', label: 'All' },
-  { id: 'making', label: 'Making' },
-  { id: 'review', label: 'In review' },
-  { id: 'approved', label: 'Approved' },
-  { id: 'paid', label: 'Paid' },
-  { id: 'rejected', label: 'Rejected' },
+  { id: 'all', label: '전체' },
+  { id: 'making', label: '제작 중' },
+  { id: 'review', label: '검수 중' },
+  { id: 'approved', label: '승인됨' },
+  { id: 'paid', label: '정산 완료' },
+  { id: 'rejected', label: '반려됨' },
 ];
 
 interface ActivityRow {
@@ -67,14 +67,14 @@ interface ActivityRow {
 function getTimeAgo(dateStr: string | null): string {
   if (!dateStr) return '—';
   const diff = Date.now() - new Date(dateStr).getTime();
-  if (diff < 60_000) return 'Just now';
+  if (diff < 60_000) return '방금 전';
   const mins = Math.floor(diff / 60_000);
-  if (mins < 60) return `${mins}m ago`;
+  if (mins < 60) return `${mins}분 전`;
   const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return `${hours}시간 전`;
   const days = Math.floor(hours / 24);
-  if (days < 30) return `${days}d ago`;
-  return new Date(dateStr).toLocaleDateString();
+  if (days < 30) return `${days}일 전`;
+  return new Date(dateStr).toLocaleDateString('ko-KR');
 }
 
 function thumbnailFromJson(json: unknown): { from: string; to: string; emoji: string } {
@@ -157,13 +157,13 @@ function HeaderRow() {
       className={`grid ${GRID} items-center gap-3 px-5 py-3 bg-bg-elevated text-[11px] uppercase tracking-wider text-text-secondary`}
     >
       <span aria-hidden />
-      <span>Campaign</span>
-      <span>Mission</span>
-      <span>Content</span>
-      <span>Submitted</span>
-      <span>Status</span>
-      <span className="text-right">Reward</span>
-      <span className="text-right">Action</span>
+      <span>캠페인</span>
+      <span>미션</span>
+      <span>콘텐츠</span>
+      <span>제출일</span>
+      <span>상태</span>
+      <span className="text-right">보상</span>
+      <span className="text-right">작업</span>
     </div>
   );
 }
@@ -239,7 +239,7 @@ function Row({
       <div className="flex items-center justify-end">
         {item.status === 'making' ? (
           <Button variant="primary" size="sm" onClick={() => onSubmit(item)}>
-            Submit URL
+            URL 제출
           </Button>
         ) : item.status === 'review' ? (
           <span className="text-[11px] text-amber-400">검수 중</span>
@@ -357,7 +357,7 @@ export default function CreatorActivityPage() {
         submittedAt: raw.submitted_at,
         contentUrl: raw.content_url ?? '',
         campaignId: raw.campaign_id,
-        campaignName: campaign?.name ?? 'Unknown campaign',
+        campaignName: campaign?.name ?? '알 수 없는 캠페인',
         developer: campaign?.developer ?? '',
         thumbnail: thumbnailFromJson(campaign?.thumbnail),
         mission: missionType,
@@ -394,14 +394,14 @@ export default function CreatorActivityPage() {
   if (creatorLoading || loading) {
     return (
       <div className="min-h-screen bg-bg-base flex items-center justify-center">
-        <span className="text-text-secondary text-sm">Loading…</span>
+        <span className="text-text-secondary text-sm">불러오는 중…</span>
       </div>
     );
   }
 
   const userName = creator?.display_name || CURRENT_CREATOR.name;
   const userAvatar = CURRENT_CREATOR.emoji;
-  const userBadge = `${creator?.grade ?? CURRENT_CREATOR.grade}-tier`;
+  const userBadge = `${creator?.grade ?? CURRENT_CREATOR.grade}티어`;
 
   return (
     <WorkspaceLayout
@@ -414,13 +414,13 @@ export default function CreatorActivityPage() {
     >
       <header className="mb-6">
         <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-ube-bright">
-          Creator · My activity
+          크리에이터 · 내 활동
         </span>
         <h1 className="text-[22px] font-medium text-text-primary leading-tight mt-1.5">
-          My activity
+          내 활동
         </h1>
         <p className="text-sm text-text-secondary mt-1">
-          All your campaign applications and submissions
+          내 캠페인 지원·제출 내역 전체
         </p>
       </header>
 
@@ -461,13 +461,13 @@ export default function CreatorActivityPage() {
               <div className="px-5 py-16 text-center">
                 <p className="text-sm text-text-primary mb-1">
                   {rows.length === 0
-                    ? 'No activity yet.'
-                    : 'No items match your filter.'}
+                    ? '아직 활동이 없어요.'
+                    : '필터에 맞는 항목이 없어요.'}
                 </p>
                 <p className="text-xs text-text-secondary">
                   {rows.length === 0
-                    ? 'Apply to a campaign to get started.'
-                    : 'Try selecting a different status filter.'}
+                    ? '캠페인에 지원하고 시작해보세요.'
+                    : '다른 상태 필터를 선택해보세요.'}
                 </p>
               </div>
             ) : (

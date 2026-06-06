@@ -25,99 +25,102 @@ export type AdminRouteId =
   | 'analytics'
   | 'settings';
 
-export function getAdminSidebar(activeId: AdminRouteId): SidebarSection[] {
+export function getAdminSidebar(
+  activeId: AdminRouteId,
+  counts?: { review?: number; payouts?: number },
+): SidebarSection[] {
   const isActive = (id: AdminRouteId) => activeId === id;
 
   return [
     {
-      label: 'Operations',
+      label: '운영',
       items: [
         {
           id: 'overview',
           icon: <LayoutDashboard size={16} />,
-          label: 'Overview',
+          label: '개요',
           href: '/admin',
           active: isActive('overview'),
         },
         {
           id: 'review',
           icon: <FileCheck size={16} />,
-          label: 'Content review',
+          label: '콘텐츠 검수',
           href: '/admin/review',
-          count: 8,
-          countVariant: 'urgent',
+          ...(counts?.review
+            ? { count: counts.review, countVariant: 'urgent' as const }
+            : {}),
           active: isActive('review'),
         },
         {
           id: 'disputes',
           icon: <Flag size={16} />,
-          label: 'Disputes',
+          label: '분쟁',
           href: '/admin/disputes',
-          count: 2,
           active: isActive('disputes'),
         },
         {
           id: 'payouts',
           icon: <Receipt size={16} />,
-          label: 'Payouts',
+          label: '정산 지급',
           href: '/admin/payouts',
-          count: 5,
+          ...(counts?.payouts ? { count: counts.payouts } : {}),
           active: isActive('payouts'),
         },
       ],
     },
     {
-      label: 'Directory',
+      label: '디렉터리',
       items: [
         {
           id: 'studios',
           icon: <Building2 size={16} />,
-          label: 'Studios',
+          label: '게임사',
           href: '/admin/studios',
           active: isActive('studios'),
         },
         {
           id: 'creators',
           icon: <Users size={16} />,
-          label: 'Creators',
+          label: '크리에이터',
           href: '/admin/creators',
           active: isActive('creators'),
         },
         {
           id: 'campaigns',
           icon: <Megaphone size={16} />,
-          label: 'Campaigns',
+          label: '캠페인',
           href: '/admin/campaigns',
           active: isActive('campaigns'),
         },
       ],
     },
     {
-      label: 'Insights',
+      label: '인사이트',
       items: [
         {
           id: 'revenue',
           icon: <LineChart size={16} />,
-          label: 'Revenue',
+          label: '매출',
           href: '/admin/revenue',
           active: isActive('revenue'),
         },
         {
           id: 'analytics',
           icon: <PieChart size={16} />,
-          label: 'Analytics',
+          label: '분석',
           href: '/admin/analytics',
           active: isActive('analytics'),
         },
       ],
     },
     {
-      label: 'System',
+      label: '시스템',
       items: [
         {
           id: 'settings',
           icon: <Settings size={16} />,
-          label: 'Settings',
+          label: '설정',
           href: '/admin/settings',
           active: isActive('settings'),
         },

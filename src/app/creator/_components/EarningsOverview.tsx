@@ -52,30 +52,30 @@ export function EarningsOverview() {
     valueClass: string;
   }> = [
     {
-      label: 'This month',
+      label: '이번 달',
       value: formatMoney(stats.thisMonth),
-      sub: `${stats.thisMonthPaidCount} paid · ${stats.thisMonthReviewCount} in review`,
+      sub: `${stats.thisMonthPaidCount}건 지급 · ${stats.thisMonthReviewCount}건 검토중`,
       variant: 'featured',
       valueClass: 'text-ube-bright',
     },
     {
-      label: 'Pending',
+      label: '정산 대기',
       value: formatMoney(stats.pending),
-      sub: stats.pending > 0 ? 'Awaiting approval' : 'No pending items',
+      sub: stats.pending > 0 ? '승인 대기 중' : '대기 항목 없음',
       variant: 'default',
       valueClass: 'text-text-primary',
     },
     {
-      label: 'All-time',
+      label: '전체 기간',
       value: formatMoney(stats.allTime),
-      sub: `From ${totalCampaigns} campaigns`,
+      sub: `${totalCampaigns}개 캠페인`,
       variant: 'default',
       valueClass: 'text-green-400',
     },
     {
-      label: 'Avg per campaign',
+      label: '캠페인당 평균',
       value: formatMoney(stats.avg),
-      sub: 'Per paid submission',
+      sub: '지급 건당',
       variant: 'default',
       valueClass: 'text-text-primary',
     },

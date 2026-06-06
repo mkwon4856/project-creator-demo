@@ -65,11 +65,21 @@ export function CampaignCard({ campaign, footer = 'joined', onClick }: CampaignC
           background: `linear-gradient(135deg, ${campaign.thumbnail.from}, ${campaign.thumbnail.to})`,
         }}
       >
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-4xl leading-none drop-shadow-[0_4px_12px_rgba(0,0,0,0.4)]">
-            {campaign.thumbnail.emoji}
-          </span>
-        </div>
+        {campaign.thumbnail.imageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={campaign.thumbnail.imageUrl}
+            alt={campaign.name}
+            className="absolute inset-0 w-full h-full object-cover"
+            loading="lazy"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-4xl leading-none drop-shadow-[0_4px_12px_rgba(0,0,0,0.4)]">
+              {campaign.thumbnail.emoji}
+            </span>
+          </div>
+        )}
         <div className="absolute top-2 left-2 flex items-center gap-1.5">
           <Pill
             variant="status"
@@ -80,7 +90,7 @@ export function CampaignCard({ campaign, footer = 'joined', onClick }: CampaignC
           </Pill>
           {campaign.isNew && (
             <Badge variant="ube-glow" size="xs">
-              NEW
+              신규
             </Badge>
           )}
         </div>
@@ -109,14 +119,14 @@ export function CampaignCard({ campaign, footer = 'joined', onClick }: CampaignC
           ))}
           {moreCount > 0 && (
             <Badge variant="neutral" size="xs">
-              +{moreCount} more
+              +{moreCount}개 더
             </Badge>
           )}
         </div>
 
         <div className="flex flex-col gap-1">
           <div className="flex items-baseline justify-between">
-            <span className="text-[10px] uppercase tracking-[0.06em] text-text-muted">Budget</span>
+            <span className="text-[10px] uppercase tracking-[0.06em] text-text-muted">예산</span>
             <span className="text-[11px] tabular-nums text-text-secondary">
               <span className="text-text-primary font-medium">{formatBudget(campaign.spentBudget)}</span>
               <span className="text-text-muted"> / {formatBudget(campaign.totalBudget)}</span>
@@ -137,7 +147,7 @@ export function CampaignCard({ campaign, footer = 'joined', onClick }: CampaignC
         <div className="pt-1 border-t border-white/[0.06]">
           {footer === 'joined' ? (
             <div className="flex items-center justify-between text-[11px]">
-              <span className="text-text-muted">Joined</span>
+              <span className="text-text-muted">참여</span>
               <span className="tabular-nums text-text-secondary">
                 <span className="text-text-primary font-medium">{campaign.joined}</span>
                 <span className="text-text-muted"> / {campaign.target}</span>
@@ -146,7 +156,7 @@ export function CampaignCard({ campaign, footer = 'joined', onClick }: CampaignC
           ) : (
             <div className="flex items-center gap-1.5 text-[10px] text-text-secondary">
               <Lock size={11} aria-hidden />
-              <span>Creator list private</span>
+              <span>크리에이터 목록 비공개</span>
             </div>
           )}
         </div>

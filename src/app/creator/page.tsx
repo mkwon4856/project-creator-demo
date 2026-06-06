@@ -61,7 +61,7 @@ function countConnectedPlatforms(raw: unknown): number {
 function SectionHeader({
   title,
   href,
-  cta = 'See all',
+  cta = '전체 보기',
 }: {
   title: string;
   href?: string;
@@ -109,7 +109,7 @@ export default function CreatorWorkspacePage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-bg-base flex items-center justify-center">
-        <span className="text-text-secondary text-sm">Loading…</span>
+        <span className="text-text-secondary text-sm">불러오는 중…</span>
       </div>
     );
   }
@@ -121,7 +121,7 @@ export default function CreatorWorkspacePage() {
       persona="creator"
       userName={creator.name}
       userAvatar={creator.emoji}
-      userBadge={`${creator.grade}-tier`}
+      userBadge={`${creator.grade}티어`}
       sidebarSections={getCreatorSidebar('browse')}
       notificationCount={3}
     >
@@ -138,17 +138,17 @@ export default function CreatorWorkspacePage() {
       )}
 
       <section className="mb-9">
-        <SectionHeader title="Earnings overview" href="/creator/earnings" />
+        <SectionHeader title="수익 현황" href="/creator/earnings" />
         <EarningsOverview />
       </section>
 
       <section className="mb-9">
-        <SectionHeader title="Recommended for you" href="/creator/discover" />
+        <SectionHeader title="추천 캠페인" href="/creator/discover" />
         <RecommendedCampaigns />
       </section>
 
       <section className="mb-9">
-        <SectionHeader title="My activity" href="/creator/activity" />
+        <SectionHeader title="내 활동" href="/creator/activity" />
         <ActivityTable />
       </section>
 

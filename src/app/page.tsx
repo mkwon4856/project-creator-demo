@@ -39,9 +39,9 @@ function Logo({ size = 'md' }: { size?: 'sm' | 'md' }) {
 function NavBar() {
   const router = useRouter();
   const navLinks: ReadonlyArray<{ label: string; href: string }> = [
-    { label: 'For game studios', href: '#studios' },
-    { label: 'For creators', href: '#creators' },
-    { label: 'Pricing', href: '#' },
+    { label: '게임사', href: '#studios' },
+    { label: '크리에이터', href: '#creators' },
+    { label: '요금제', href: '#' },
   ];
   return (
     <nav className="flex items-center justify-between py-5">
@@ -59,10 +59,10 @@ function NavBar() {
       </div>
       <div className="flex items-center gap-2">
         <Button variant="ghost" size="md" onClick={() => router.push('/login')}>
-          Log in
+          로그인
         </Button>
         <Button variant="primary" size="md" onClick={() => router.push('/signup')}>
-          Get started
+          시작하기
         </Button>
       </div>
     </nav>
@@ -83,18 +83,18 @@ function HeroSection() {
     <section className="text-center py-20 max-w-[640px] mx-auto">
       <span className="inline-flex items-center gap-1.5 bg-bg-card border border-white/10 rounded-full px-4 py-1.5 text-xs text-text-secondary">
         <Globe size={14} className="text-ube-bright" aria-hidden />
-        Game creator marketing, globally
+        게임 크리에이터 마케팅, 전 세계로
       </span>
 
       <h1 className="text-4xl font-medium tracking-tight leading-[1.2] mt-5">
-        Connect your game with{' '}
-        <span className="text-ube-bright">the right creators</span>
+        내 게임을 위한{' '}
+        <span className="text-ube-bright">최적의 크리에이터</span>를 만나보세요
       </h1>
 
       <p className="text-base text-text-secondary leading-relaxed mt-4 mb-8">
-        Run influencer campaigns at any scale — from 5K micro creators to
-        top-tier streamers. Manage briefs, track content, and settle payments
-        in one place.
+        구독자 5천 명의 마이크로 크리에이터부터 최상위 스트리머까지, 어떤 규모의
+        인플루언서 캠페인도 운영하세요. 브리프 관리, 콘텐츠 추적, 정산까지 한곳에서
+        해결합니다.
       </p>
 
       <div className="flex flex-wrap items-center justify-center gap-3">
@@ -103,7 +103,7 @@ function HeroSection() {
           size="lg"
           onClick={() => router.push('/studio')}
         >
-          Start a campaign
+          캠페인 시작하기
         </Button>
         <Button
           variant="ghost"
@@ -111,7 +111,7 @@ function HeroSection() {
           icon={<Play size={16} />}
           onClick={scrollToHow}
         >
-          See how it works
+          작동 방식 보기
         </Button>
       </div>
     </section>
@@ -123,9 +123,9 @@ function HeroSection() {
 // ─────────────────────────────────────────────────────────────
 function StatsBar() {
   const stats: ReadonlyArray<{ value: string; label: string }> = [
-    { value: '20+', label: 'Verified creators' },
-    { value: '6', label: 'Active campaigns' },
-    { value: 'YouTube · SOOP · Chzzk', label: 'Supported platforms' },
+    { value: '20+', label: '인증 크리에이터' },
+    { value: '6', label: '진행 중 캠페인' },
+    { value: 'YouTube · SOOP · 치지직', label: '지원 플랫폼' },
   ];
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 border border-white/[0.06] rounded-lg overflow-hidden mt-6">
@@ -189,21 +189,21 @@ interface HowStep {
 const HOW_STEPS: ReadonlyArray<HowStep> = [
   {
     icon: LayoutGrid,
-    step: 'Step 1',
-    title: 'Create a campaign',
-    desc: 'Set your game, budget, and mission types. Choose which creator tiers to invite.',
+    step: '1단계',
+    title: '캠페인 만들기',
+    desc: '게임, 예산, 미션 유형을 설정하고 초대할 크리에이터 등급을 선택하세요.',
   },
   {
     icon: Users,
-    step: 'Step 2',
-    title: 'Creators apply',
-    desc: 'Matched creators browse and apply. Review profiles and approve — or let auto-match handle it.',
+    step: '2단계',
+    title: '크리에이터 지원',
+    desc: '매칭된 크리에이터가 캠페인을 둘러보고 지원합니다. 프로필을 검토해 승인하거나 자동 매칭에 맡기세요.',
   },
   {
     icon: BarChart3,
-    step: 'Step 3',
-    title: 'Track and pay',
-    desc: 'Content goes live. Monitor views and engagement. Approve and settle in one click.',
+    step: '3단계',
+    title: '추적하고 정산',
+    desc: '콘텐츠가 공개됩니다. 조회수와 참여도를 확인하고, 클릭 한 번으로 승인·정산하세요.',
   },
 ];
 
@@ -211,9 +211,9 @@ function HowItWorks() {
   return (
     <section id="how" className="py-14">
       <SectionHeader
-        eyebrow="HOW IT WORKS"
-        title="Three steps to launch"
-        subtitle="From brief to payment — no spreadsheets, no back-and-forth emails."
+        eyebrow="이용 방법"
+        title="시작까지 단 3단계"
+        subtitle="브리프부터 정산까지 — 스프레드시트도, 주고받는 이메일도 필요 없어요."
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -335,9 +335,9 @@ function WhoItsFor() {
   return (
     <section className="py-14 border-t border-white/[0.06]">
       <SectionHeader
-        eyebrow="WHO IT'S FOR"
-        title="Built for two sides"
-        subtitle="Whether you're launching a game or growing your channel — this platform works for you."
+        eyebrow="대상"
+        title="양쪽 모두를 위한 플랫폼"
+        subtitle="게임을 출시하든 채널을 키우든 — 이 플랫폼은 당신을 위해 작동합니다."
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -346,15 +346,15 @@ function WhoItsFor() {
           iconBg="bg-ube/15"
           iconColor="text-ube-bright"
           Icon={Gamepad2}
-          title="Game studios"
-          badge="Indie to AAA"
+          title="게임사"
+          badge="인디부터 AAA까지"
           bullets={[
-            'Launch campaigns without an agency',
-            'Access 5K+ subscriber creators overlooked elsewhere',
-            'Real-time content tracking and ROI visibility',
-            'Transparent pricing — no hidden fees',
+            '에이전시 없이 직접 캠페인을 시작하세요',
+            '다른 곳에서 놓치는 구독자 5천 명 이상 크리에이터까지',
+            '실시간 콘텐츠 추적과 ROI 가시성',
+            '투명한 요금제 — 숨은 비용 없음',
           ]}
-          cta="Start as a game studio"
+          cta="게임사로 시작하기"
           ctaVariant="primary"
           onCta={() => router.push('/studio')}
         />
@@ -363,15 +363,15 @@ function WhoItsFor() {
           iconBg="bg-green-500/15"
           iconColor="text-green-400"
           Icon={Video}
-          title="Creators"
-          badge="5K subscribers and above"
+          title="크리에이터"
+          badge="구독자 5천 명 이상"
           bullets={[
-            'Find game campaigns that match your content',
-            'See your rate upfront — no negotiation guesswork',
-            'Submit content and get paid automatically',
-            'Works on YouTube, SOOP, and Chzzk',
+            '내 콘텐츠에 맞는 게임 캠페인을 찾으세요',
+            '단가를 미리 확인 — 협상 눈치 게임은 그만',
+            '콘텐츠를 제출하면 자동으로 정산',
+            'YouTube, SOOP, 치지직 모두 지원',
           ]}
-          cta="Join as a creator"
+          cta="크리에이터로 시작하기"
           ctaClass="bg-green-500 hover:bg-green-600 text-white border-0 focus-visible:ring-green-400/60"
           onCta={() => router.push('/creator')}
         />
@@ -392,23 +392,23 @@ interface DiffPoint {
 const DIFF_POINTS: ReadonlyArray<DiffPoint> = [
   {
     icon: UsersRound,
-    title: 'Micro creator access',
-    desc: 'Reach creators from 5K subscribers — the tier most platforms ignore.',
+    title: '마이크로 크리에이터 접근',
+    desc: '대부분의 플랫폼이 외면하는 구독자 5천 명 규모 크리에이터까지 닿습니다.',
   },
   {
     icon: PlaySquare,
-    title: 'Korean platform native',
-    desc: 'SOOP and Chzzk alongside YouTube — the first to support all three.',
+    title: '국내 플랫폼 네이티브',
+    desc: 'YouTube와 함께 SOOP, 치지직까지 — 세 플랫폼을 모두 지원하는 최초의 서비스.',
   },
   {
     icon: Eye,
-    title: 'Full transparency',
-    desc: 'No agency black box. See every creator, every piece of content, every payment.',
+    title: '완전한 투명성',
+    desc: '에이전시 블랙박스는 없습니다. 모든 크리에이터, 모든 콘텐츠, 모든 정산을 확인하세요.',
   },
   {
     icon: Globe,
-    title: 'Global from day one',
-    desc: 'Campaigns across regions. Payouts in local currencies. No geographic limits.',
+    title: '시작부터 글로벌',
+    desc: '지역을 넘나드는 캠페인. 현지 통화로 정산. 지리적 제약 없음.',
   },
 ];
 
@@ -416,9 +416,9 @@ function WhyUs() {
   return (
     <section className="py-14 border-t border-white/[0.06]">
       <SectionHeader
-        eyebrow="WHY US"
-        title="What makes this different"
-        subtitle="Built specifically for the gaming creator market — not a general influencer tool."
+        eyebrow="차별점"
+        title="무엇이 다른가요"
+        subtitle="범용 인플루언서 툴이 아니라, 게임 크리에이터 시장만을 위해 만들었습니다."
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -456,10 +456,10 @@ function FinalCTA() {
   return (
     <section className="py-16 text-center border-t border-white/[0.06]">
       <h2 className="text-2xl font-medium tracking-tight text-text-primary">
-        Ready to launch your first campaign?
+        첫 캠페인을 시작할 준비가 되셨나요?
       </h2>
       <p className="text-sm text-text-secondary mt-3 mb-7">
-        Free to get started. No credit card required.
+        무료로 시작하세요. 신용카드가 필요 없습니다.
       </p>
       <div className="flex flex-wrap items-center justify-center gap-3">
         <Button
@@ -467,14 +467,14 @@ function FinalCTA() {
           size="lg"
           onClick={() => router.push('/studio')}
         >
-          Start as a game studio
+          게임사로 시작하기
         </Button>
         <Button
           variant="ghost"
           size="lg"
           onClick={() => router.push('/creator')}
         >
-          Join as a creator
+          크리에이터로 시작하기
         </Button>
       </div>
     </section>
@@ -488,18 +488,18 @@ function FooterBar() {
   return (
     <footer className="py-6 border-t border-white/[0.06] flex flex-wrap justify-between items-center gap-3">
       <Logo size="sm" />
-      <nav aria-label="Legal" className="flex items-center gap-4 text-xs text-text-secondary">
+      <nav aria-label="법적 고지" className="flex items-center gap-4 text-xs text-text-secondary">
         <Link
           href="/terms"
           className="hover:text-text-primary transition-colors duration-150 ease-out"
         >
-          Terms
+          이용약관
         </Link>
         <Link
           href="/privacy"
           className="hover:text-text-primary transition-colors duration-150 ease-out"
         >
-          Privacy
+          개인정보처리방침
         </Link>
       </nav>
       <span className="text-xs text-text-secondary">

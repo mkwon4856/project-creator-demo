@@ -12,7 +12,7 @@ export interface DemoBannerProps {
   message?: string;
 }
 
-const DEFAULT_MESSAGE = '🎮 This is a demo with sample data. Not a live service.';
+const DEFAULT_MESSAGE = '🎮 샘플 데이터로 구성된 데모입니다. 실제 서비스가 아닙니다.';
 
 const HAS_SUPABASE_ENV =
   !!process.env.NEXT_PUBLIC_SUPABASE_URL &&
@@ -79,7 +79,7 @@ export function DemoBanner({ message = DEFAULT_MESSAGE }: DemoBannerProps) {
               className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded hover:bg-ube/20 transition-colors duration-150 ease-out cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ube/60 disabled:opacity-60 disabled:cursor-wait"
             >
               <Database size={14} aria-hidden />
-              <span className="font-medium">{seeding ? 'Seeding…' : 'Seed DB'}</span>
+              <span className="font-medium">{seeding ? '시드 중…' : 'DB 시드'}</span>
             </button>
           )}
           <button
@@ -89,7 +89,7 @@ export function DemoBanner({ message = DEFAULT_MESSAGE }: DemoBannerProps) {
             className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded hover:bg-ube/20 transition-colors duration-150 ease-out cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ube/60"
           >
             <RotateCcw size={14} aria-hidden />
-            <span className="font-medium">Reset demo</span>
+            <span className="font-medium">데모 초기화</span>
           </button>
         </div>
       </div>

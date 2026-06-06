@@ -47,14 +47,14 @@ export function TierDonut({ tierCounts }: TierDonutProps = {}) {
   });
 
   return (
-    <Panel title="Creators by tier" ctaHref="/admin/creators" cta="View all">
+    <Panel title="티어별 크리에이터" ctaHref="/admin/creators" cta="전체 보기">
       <div className="flex items-center gap-6">
         <svg
           viewBox="0 0 100 100"
           width={120}
           height={120}
           role="img"
-          aria-label="Creators by tier — donut chart"
+          aria-label="티어별 크리에이터 — 도넛 차트"
           className="shrink-0 -rotate-90"
         >
           <circle
@@ -88,7 +88,7 @@ export function TierDonut({ tierCounts }: TierDonutProps = {}) {
               fill="#A1A1AA"
               transform="rotate(90 50 50)"
             >
-              Total
+              합계
             </text>
             <text
               x={50}
@@ -113,7 +113,7 @@ export function TierDonut({ tierCounts }: TierDonutProps = {}) {
                 aria-hidden
               />
               <span className="text-text-secondary truncate">
-                {t.tier}-tier <span className="text-text-muted">({t.label})</span>
+                {t.tier}티어 <span className="text-text-muted">({t.label})</span>
               </span>
               <span className="ml-auto font-medium tabular-nums text-text-primary">
                 {t.count}

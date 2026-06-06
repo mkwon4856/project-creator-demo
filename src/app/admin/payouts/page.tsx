@@ -10,6 +10,7 @@ import { createClient as createBrowserSupabaseClient } from '@/lib/supabase/clie
 import { useCurrentProfile } from '@/lib/supabase/hooks';
 
 import { getAdminSidebar } from '../_config/sidebar';
+import { useAdminBadgeCounts } from '../_hooks/useAdminBadgeCounts';
 
 const HAS_SUPABASE_ENV =
   Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
@@ -21,9 +22,9 @@ const GRID =
 type StatusFilter = 'all' | PaymentStatus;
 
 const STATUS_FILTERS: { id: StatusFilter; label: string }[] = [
-  { id: 'all', label: 'All' },
-  { id: 'pending', label: 'Pending' },
-  { id: 'completed', label: 'Completed' },
+  { id: 'all', label: '전체' },
+  { id: 'pending', label: '대기' },
+  { id: 'completed', label: '완료' },
 ];
 
 interface PayoutRow {
@@ -41,7 +42,7 @@ interface PayoutRow {
 
 function formatDate(s: string | null): string {
   if (!s) return '—';
-  return new Date(s).toLocaleDateString('en-US', {
+  return new Date(s).toLocaleDateString('ko-KR', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
@@ -52,13 +53,13 @@ function StatusPill({ status }: { status: PaymentStatus }) {
   if (status === 'completed') {
     return (
       <Pill variant="status" status="paid" size="sm">
-        Completed
+        완료
       </Pill>
     );
   }
   return (
     <Pill variant="status" status="review" size="sm">
-      Pending
+      대기
     </Pill>
   );
 }
@@ -123,14 +124,14 @@ function HeaderRow() {
       role="row"
       className={`grid ${GRID} items-center gap-3 px-5 py-3 bg-bg-elevated text-[11px] uppercase tracking-wider text-text-secondary`}
     >
-      <span>Creator</span>
-      <span>Campaign</span>
-      <span className="text-right">Amount</span>
-      <span className="text-right">Fee</span>
-      <span className="text-right">Net</span>
-      <span>Status</span>
-      <span>Date</span>
-      <span className="text-right">Action</span>
+      <span>크리에이터</span>
+      <span>캠페인</span>
+      <span className="text-right">금액</span>
+      <span className="text-right">수수료</span>
+      <span className="text-right">실수령액</span>
+      <span>상태</span>
+      <span>날짜</span>
+      <span className="text-right">작업</span>
     </div>
   );
 }
@@ -194,7 +195,7 @@ function Row({
             disabled={busy}
             onClick={() => onMarkCompleted(item.id)}
           >
-            Mark completed
+            완료 처리
           </Button>
         ) : (
           <span className="text-[11px] text-text-muted">—</span>
@@ -206,6 +207,7 @@ function Row({
 
 export default function AdminPayoutsPage() {
   const { data: profile, loading: profileLoading } = useCurrentProfile();
+  const badgeCounts = useAdminBadgeCounts();
   const [payouts, setPayouts] = useState<PayoutRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -288,9 +290,9 @@ export default function AdminPayoutsPage() {
         reward:
           (submission as { reward?: number } | null)?.reward ??
           raw.amount + raw.platform_fee,
-        creatorName: creator?.display_name ?? 'Unknown',
+        creatorName: creator?.display_name ?? '알 수 없음',
         creatorGrade: grade,
-        campaignName: campaign?.name ?? 'Unknown campaign',
+        campaignName: campaign?.name ?? '알 수 없는 캠페인',
         developer: campaign?.developer ?? '',
       };
     });
@@ -354,7 +356,7 @@ export default function AdminPayoutsPage() {
   if (profileLoading || loading) {
     return (
       <div className="min-h-screen bg-bg-base flex items-center justify-center">
-        <span className="text-text-secondary text-sm">Loading…</span>
+        <span className="text-text-secondary text-sm">불러오는 중…</span>
       </div>
     );
   }
@@ -367,41 +369,44 @@ export default function AdminPayoutsPage() {
       persona="admin"
       userName={adminName}
       userAvatar={initials}
-      userBadge="Admin"
-      sidebarSections={getAdminSidebar('payouts')}
-      notificationCount={5}
+      userBadge="관리자"
+      sidebarSections={getAdminSidebar('payouts', {
+        review: badgeCounts.review,
+        payouts: badgeCounts.payouts,
+      })}
+      notificationCount={badgeCounts.notification}
     >
       <header className="mb-6">
         <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-ube-bright">
-          Admin · Payouts
+          관리자 · 정산 지급
         </span>
         <h1 className="text-[22px] font-medium text-text-primary leading-tight mt-1.5">
-          Payouts
+          정산 지급
         </h1>
-        <p className="text-sm text-text-secondary mt-1">Manage platform settlements</p>
+        <p className="text-sm text-text-secondary mt-1">플랫폼 정산 관리</p>
       </header>
 
       <section className="mb-9 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <SummaryCard
-          label="Total payouts"
+          label="총 지급액"
           value={formatCompactKRW(summary.totalPayouts)}
-          sub="Paid to creators"
+          sub="크리에이터 지급"
         />
         <SummaryCard
-          label="Platform revenue"
+          label="플랫폼 매출"
           value={formatCompactKRW(summary.platformRevenue)}
-          sub="15% commission"
+          sub="15% 수수료"
           highlight
         />
         <SummaryCard
-          label="Pending"
+          label="대기"
           value={summary.pending.toString()}
-          sub={summary.pending === 1 ? 'awaiting payout' : 'awaiting payouts'}
+          sub="지급 대기"
         />
         <SummaryCard
-          label="Completed"
+          label="완료"
           value={summary.completed.toString()}
-          sub="processed payments"
+          sub="처리된 결제"
         />
       </section>
 
@@ -431,13 +436,13 @@ export default function AdminPayoutsPage() {
           <div className="px-5 py-16 text-center">
             <p className="text-sm text-text-primary mb-1">
               {payouts.length === 0
-                ? 'No payouts yet.'
-                : 'No payouts match your filter.'}
+                ? '아직 정산 내역이 없습니다.'
+                : '필터에 맞는 정산 내역이 없습니다.'}
             </p>
             <p className="text-xs text-text-secondary">
               {payouts.length === 0
-                ? 'Payouts will appear once content is approved.'
-                : 'Try a different status filter.'}
+                ? '콘텐츠가 승인되면 정산 내역이 표시됩니다.'
+                : '다른 상태 필터를 시도해 보세요.'}
             </p>
           </div>
         ) : (

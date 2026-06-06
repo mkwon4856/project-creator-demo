@@ -28,19 +28,19 @@ export function getStudioSidebar(activeId: StudioRouteId): SidebarSection[] {
 
   return [
     {
-      label: 'Studio',
+      label: '게임사',
       items: [
         {
           id: 'my-campaigns',
           icon: <LayoutDashboard size={16} />,
-          label: 'My campaigns',
+          label: '내 캠페인',
           href: '/studio',
           active: isActive('my-campaigns'),
         },
         {
           id: 'applicants',
           icon: <Users size={16} />,
-          label: 'Applicants',
+          label: '지원자',
           href: '/studio/applicants',
           count: 3,
           active: isActive('applicants'),
@@ -48,7 +48,7 @@ export function getStudioSidebar(activeId: StudioRouteId): SidebarSection[] {
         {
           id: 'review',
           icon: <FileText size={16} />,
-          label: 'Content review',
+          label: '콘텐츠 검수',
           href: '/studio/review',
           count: 8,
           countVariant: 'urgent',
@@ -57,57 +57,57 @@ export function getStudioSidebar(activeId: StudioRouteId): SidebarSection[] {
       ],
     },
     {
-      label: 'Explore',
+      label: '탐색',
       items: [
         {
           id: 'explore',
           icon: <Compass size={16} />,
-          label: 'All campaigns',
+          label: '전체 캠페인',
           href: '/studio/explore',
           active: isActive('explore'),
         },
         {
           id: 'creators',
           icon: <UserSearch size={16} />,
-          label: 'Creator directory',
+          label: '크리에이터 목록',
           href: '/studio/creators',
           active: isActive('creators'),
         },
         {
           id: 'insights',
           icon: <TrendingUp size={16} />,
-          label: 'Market insights',
+          label: '마켓 인사이트',
           href: '/studio/insights',
           active: isActive('insights'),
         },
       ],
     },
     {
-      label: 'Finance',
+      label: '정산',
       items: [
         {
           id: 'payments',
           icon: <Wallet size={16} />,
-          label: 'Payments',
+          label: '결제·정산',
           href: '/studio/payments',
           active: isActive('payments'),
         },
         {
           id: 'analytics',
           icon: <BarChart3 size={16} />,
-          label: 'Analytics',
+          label: '분석',
           href: '/studio/analytics',
           active: isActive('analytics'),
         },
       ],
     },
     {
-      label: 'Account',
+      label: '계정',
       items: [
         {
           id: 'settings',
           icon: <Settings size={16} />,
-          label: 'Settings',
+          label: '설정',
           href: '/studio/settings',
           active: isActive('settings'),
         },

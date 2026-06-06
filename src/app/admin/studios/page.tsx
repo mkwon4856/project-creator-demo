@@ -11,6 +11,7 @@ import { createClient as createBrowserSupabaseClient } from '@/lib/supabase/clie
 import { useCurrentProfile } from '@/lib/supabase/hooks';
 
 import { getAdminSidebar } from '../_config/sidebar';
+import { useAdminBadgeCounts } from '../_hooks/useAdminBadgeCounts';
 
 type StudioRow = Database['public']['Tables']['studios']['Row'];
 
@@ -28,7 +29,7 @@ interface StudioWithCounts extends StudioRow {
 
 function formatJoinedDate(iso: string): string {
   const d = new Date(iso);
-  return d.toLocaleDateString('en-US', {
+  return d.toLocaleDateString('ko-KR', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
@@ -53,11 +54,11 @@ function HeaderRow() {
       role="row"
       className={`grid ${GRID} items-center gap-3 px-5 py-3 bg-bg-elevated text-[11px] uppercase tracking-wider text-text-secondary`}
     >
-      <span>Studio</span>
-      <span>Email</span>
-      <span className="text-right">Campaigns</span>
-      <span className="text-right">Total budget</span>
-      <span>Joined</span>
+      <span>게임사</span>
+      <span>이메일</span>
+      <span className="text-right">캠페인</span>
+      <span className="text-right">총 예산</span>
+      <span>가입일</span>
     </div>
   );
 }
@@ -104,6 +105,7 @@ function Row({ item, last }: { item: StudioWithCounts; last: boolean }) {
 
 export default function AdminStudiosPage() {
   const { data: profile, loading: profileLoading } = useCurrentProfile();
+  const badgeCounts = useAdminBadgeCounts();
   const [studios, setStudios] = useState<StudioWithCounts[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -172,7 +174,7 @@ export default function AdminStudiosPage() {
   if (profileLoading || loading) {
     return (
       <div className="min-h-screen bg-bg-base flex items-center justify-center">
-        <span className="text-text-secondary text-sm">Loading…</span>
+        <span className="text-text-secondary text-sm">불러오는 중…</span>
       </div>
     );
   }
@@ -185,30 +187,33 @@ export default function AdminStudiosPage() {
       persona="admin"
       userName={adminName}
       userAvatar={initials}
-      userBadge="Admin"
-      sidebarSections={getAdminSidebar('studios')}
-      notificationCount={5}
+      userBadge="관리자"
+      sidebarSections={getAdminSidebar('studios', {
+        review: badgeCounts.review,
+        payouts: badgeCounts.payouts,
+      })}
+      notificationCount={badgeCounts.notification}
     >
       <header className="mb-6">
         <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-ube-bright">
-          Admin · Directory
+          관리자 · 디렉터리
         </span>
         <h1 className="text-[22px] font-medium text-text-primary leading-tight mt-1.5">
-          Studios
+          게임사
         </h1>
-        <p className="text-sm text-text-secondary mt-1">Registered game studios</p>
+        <p className="text-sm text-text-secondary mt-1">등록된 게임사</p>
       </header>
 
       <div className="flex items-center gap-3 flex-wrap mb-4">
         <span className="text-[11px] text-text-secondary tabular-nums">
-          {studios.length} {studios.length === 1 ? 'studio' : 'studios'}
+          게임사 {studios.length}곳
         </span>
         <div className="ml-auto w-full max-w-xs">
           <Input
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search studios"
+            placeholder="게임사 검색"
             icon={<Search size={14} aria-hidden />}
           />
         </div>
@@ -220,13 +225,13 @@ export default function AdminStudiosPage() {
           <div className="px-5 py-16 text-center">
             <p className="text-sm text-text-primary mb-1">
               {studios.length === 0
-                ? 'No studios registered yet.'
-                : 'No studios match your search.'}
+                ? '아직 등록된 게임사가 없습니다.'
+                : '검색에 맞는 게임사가 없습니다.'}
             </p>
             <p className="text-xs text-text-secondary">
               {studios.length === 0
-                ? 'Studios will appear here once they sign up.'
-                : 'Try a different search query.'}
+                ? '게임사가 가입하면 여기에 표시됩니다.'
+                : '다른 검색어를 시도해 보세요.'}
             </p>
           </div>
         ) : (

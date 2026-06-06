@@ -119,7 +119,7 @@ function MissionGroup({
           </span>
           <span className="text-[11px] text-text-secondary">{meta.description}</span>
         </div>
-        <Toggle on={enabled} onChange={setEnabled} label={`${meta.label} enabled`} />
+        <Toggle on={enabled} onChange={setEnabled} label={`${meta.label} 사용`} />
       </div>
 
       <div
@@ -137,7 +137,7 @@ function MissionGroup({
             ].join(' ')}
           >
             <span className="text-[10px] font-semibold uppercase tracking-wider text-text-muted">
-              {tier}-tier <span className="text-text-muted">({TIER_DESCRIPTION[tier]})</span>
+              {tier}티어 <span className="text-text-muted">({TIER_DESCRIPTION[tier]})</span>
             </span>
             <label className="flex items-center gap-1 px-2 py-1.5 rounded-md bg-bg-card border border-white/10 focus-within:border-ube focus-within:shadow-[0_0_0_3px_var(--ube-tint)] transition-all duration-150 ease-out">
               <span className="text-xs text-text-muted">₩</span>
@@ -147,12 +147,12 @@ function MissionGroup({
                 value={config.rates[tier]}
                 onChange={(e: ChangeEvent<HTMLInputElement>) => setRate(tier, Number(e.target.value) || 0)}
                 className="flex-1 min-w-0 bg-transparent border-none outline-none text-sm font-medium text-text-primary tabular-nums"
-                aria-label={`${meta.label} rate for ${tier}-tier`}
+                aria-label={`${meta.label} ${tier}티어 단가`}
               />
               <span className="text-xs text-text-muted">만</span>
             </label>
             <span className="text-[10px] text-ube-bright tabular-nums">
-              Market avg ₩{MARKET_AVG[id][tier]}만
+              시장 평균 ₩{MARKET_AVG[id][tier]}만
             </span>
           </div>
         ))}
@@ -166,10 +166,10 @@ export function StepMissions({ data, onChange }: StepMissionsProps) {
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1.5">
         <h2 className="text-[22px] font-medium text-text-primary leading-tight">
-          Set missions and tier rates
+          미션 및 티어 단가 설정
         </h2>
         <p className="text-sm text-text-secondary">
-          Pick which content types you accept and set per-tier compensation. Toggle off any mission you don&apos;t need.
+          원하는 콘텐츠 유형을 선택하고 티어별 단가를 설정하세요. 필요 없는 미션은 끄면 됩니다.
         </p>
       </div>
 

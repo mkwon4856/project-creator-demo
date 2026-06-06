@@ -54,7 +54,7 @@ function ReviewSection({
           className="inline-flex items-center gap-1 text-xs text-ube-bright hover:text-white transition-colors duration-150 ease-out cursor-pointer"
         >
           <Edit3 size={12} aria-hidden />
-          Edit
+          수정
         </button>
       </header>
       <div className="px-5 py-4">{children}</div>
@@ -81,17 +81,17 @@ export function StepReview({ data, onJump, confirmed, onConfirm }: StepReviewPro
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1.5">
         <h2 className="text-[22px] font-medium text-text-primary leading-tight">
-          Review and launch
+          검토 후 시작
         </h2>
         <p className="text-sm text-text-secondary">
-          Check everything below. Once launched, you can pause but rates can&apos;t be reduced.
+          아래 내용을 모두 확인하세요. 시작 후에는 일시중지는 가능하지만 단가를 낮출 수 없습니다.
         </p>
       </div>
 
-      <ReviewSection title="Game" icon={Gamepad2} onEdit={() => onJump(1)}>
+      <ReviewSection title="게임" icon={Gamepad2} onEdit={() => onJump(1)}>
         {game ? (
           <Row
-            label="Selected"
+            label="선택됨"
             value={
               <span className="inline-flex items-center gap-2.5">
                 <span
@@ -111,21 +111,21 @@ export function StepReview({ data, onJump, confirmed, onConfirm }: StepReviewPro
             }
           />
         ) : (
-          <p className="text-sm text-text-secondary">No game selected.</p>
+          <p className="text-sm text-text-secondary">선택된 게임이 없습니다.</p>
         )}
       </ReviewSection>
 
-      <ReviewSection title="Budget & schedule" icon={Wallet} onEdit={() => onJump(2)}>
-        <Row label="Total budget" value={<span className="text-ube-bright">{formatBudget(data.totalBudget)}</span>} />
-        <Row label="Recruitment opens" value={data.recruitStart} />
-        <Row label="Recruitment closes" value={data.recruitEnd} />
-        <Row label="Submission deadline" value={data.submitDeadline} />
-        <Row label="Payment within" value={`${data.payoutDays} days after approval`} />
+      <ReviewSection title="예산 & 일정" icon={Wallet} onEdit={() => onJump(2)}>
+        <Row label="총 예산" value={<span className="text-ube-bright">{formatBudget(data.totalBudget)}</span>} />
+        <Row label="모집 시작" value={data.recruitStart} />
+        <Row label="모집 마감" value={data.recruitEnd} />
+        <Row label="제출 마감" value={data.submitDeadline} />
+        <Row label="정산 지급 기한" value={`승인 후 ${data.payoutDays}일 이내`} />
       </ReviewSection>
 
-      <ReviewSection title="Missions & rates" icon={ListChecks} onEdit={() => onJump(3)}>
+      <ReviewSection title="미션 & 단가" icon={ListChecks} onEdit={() => onJump(3)}>
         {enabledMissions.length === 0 ? (
-          <p className="text-sm text-text-secondary">No missions enabled.</p>
+          <p className="text-sm text-text-secondary">활성화된 미션이 없습니다.</p>
         ) : (
           enabledMissions.map((id) => {
             const m = data.missions[id];
@@ -158,19 +158,19 @@ export function StepReview({ data, onJump, confirmed, onConfirm }: StepReviewPro
         )}
       </ReviewSection>
 
-      <ReviewSection title="Brief" icon={FileText} onEdit={() => onJump(4)}>
+      <ReviewSection title="브리프" icon={FileText} onEdit={() => onJump(4)}>
         <Row
-          label="Message"
+          label="메시지"
           value={
             data.brief.trim() ? (
               <span className="block whitespace-pre-wrap text-text-primary">{data.brief}</span>
             ) : (
-              <span className="text-text-secondary">— not written yet</span>
+              <span className="text-text-secondary">— 아직 작성되지 않음</span>
             )
           }
         />
         <Row
-          label="Hashtags"
+          label="해시태그"
           value={
             data.hashtags.length > 0 ? (
               <span className="flex flex-wrap gap-1">
@@ -189,7 +189,7 @@ export function StepReview({ data, onJump, confirmed, onConfirm }: StepReviewPro
           }
         />
         <div className="grid grid-cols-[160px_1fr] items-start gap-3 py-1.5">
-          <span className="text-xs text-text-secondary">Guidelines</span>
+          <span className="text-xs text-text-secondary">가이드라인</span>
           <ul className="flex flex-col gap-1 text-sm">
             {GUIDELINES.map((g) => {
               const checked = data.guidelines[g.id];
@@ -254,10 +254,10 @@ function ConfirmBox({
       </span>
       <span className="flex flex-col gap-0.5 min-w-0 flex-1">
         <span className="text-sm font-medium text-ube-bright leading-tight">
-          I confirm that {formatBudget(amount)} will be held in escrow.
+          {formatBudget(amount)}을(를) 에스크로에 예치하는 데 동의합니다.
         </span>
         <span className="text-[11px] text-ube-bright/85">
-          Funds release to creators automatically {days} days after approval. Platform fee is 15%.
+          승인 {days}일 후 크리에이터에게 자동으로 지급됩니다. 플랫폼 수수료는 15%입니다.
         </span>
       </span>
     </button>

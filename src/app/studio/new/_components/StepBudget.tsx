@@ -50,15 +50,15 @@ export function StepBudget({ data, onChange }: StepBudgetProps) {
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1.5">
         <h2 className="text-[22px] font-medium text-text-primary leading-tight">
-          Set your campaign budget
+          캠페인 예산 설정
         </h2>
         <p className="text-sm text-text-secondary">
-          Funds are held in escrow and released to creators on approval. 15% platform fee applies.
+          예산은 에스크로에 예치되며 승인 시 크리에이터에게 지급됩니다. 플랫폼 수수료 15%가 적용됩니다.
         </p>
       </div>
 
       <div className="bg-bg-card border border-white/10 rounded-lg p-6 flex flex-col gap-4">
-        <span className="text-sm text-text-secondary">Total budget (KRW)</span>
+        <span className="text-sm text-text-secondary">총 예산 (원)</span>
         <div className="flex items-baseline gap-2">
           <span className="text-3xl font-medium text-ube-bright leading-none">₩</span>
           <input
@@ -67,7 +67,7 @@ export function StepBudget({ data, onChange }: StepBudgetProps) {
             value={data.totalBudget.toLocaleString()}
             onChange={handleBudget}
             className="flex-1 min-w-0 bg-transparent border-none outline-none text-3xl font-medium tracking-tight text-ube-bright tabular-nums leading-none placeholder:text-text-muted"
-            aria-label="Total budget"
+            aria-label="총 예산"
           />
         </div>
         <div className="flex items-center gap-1.5 flex-wrap pt-2 border-t border-white/[0.06]">
@@ -90,25 +90,25 @@ export function StepBudget({ data, onChange }: StepBudgetProps) {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <DateField
-          label="Recruitment opens"
-          helper="When creators can start applying"
+          label="모집 시작"
+          helper="크리에이터가 지원을 시작할 수 있는 날짜"
           value={data.recruitStart}
           onChange={(v) => onChange({ recruitStart: v })}
         />
         <DateField
-          label="Recruitment closes"
-          helper="After this, no new applications"
+          label="모집 마감"
+          helper="이후로는 새 지원을 받지 않습니다"
           value={data.recruitEnd}
           onChange={(v) => onChange({ recruitEnd: v })}
         />
         <DateField
-          label="Content submission deadline"
-          helper="Final date for creators to submit"
+          label="콘텐츠 제출 마감"
+          helper="크리에이터의 최종 제출 기한"
           value={data.submitDeadline}
           onChange={(v) => onChange({ submitDeadline: v })}
         />
         <div className="flex flex-col gap-1.5">
-          <span className="text-xs font-medium text-text-secondary">Payment within</span>
+          <span className="text-xs font-medium text-text-secondary">정산 지급 기한</span>
           <label className="flex items-center gap-2 px-3 py-2.5 rounded-md bg-bg-card border border-white/10 focus-within:border-ube focus-within:shadow-[0_0_0_3px_var(--ube-tint)] transition-all duration-150 ease-out">
             <input
               type="number"
@@ -117,12 +117,12 @@ export function StepBudget({ data, onChange }: StepBudgetProps) {
               value={data.payoutDays}
               onChange={(e) => onChange({ payoutDays: Number(e.target.value) || 0 })}
               className="w-16 bg-transparent border-none outline-none text-sm text-text-primary tabular-nums"
-              aria-label="Payment days"
+              aria-label="정산 지급 일수"
             />
-            <span className="text-sm text-text-secondary">days after approval</span>
+            <span className="text-sm text-text-secondary">일 이내 (승인 후)</span>
           </label>
           <span className="text-[11px] text-text-secondary">
-            Auto-settlement to creator. Default 7 days.
+            크리에이터에게 자동 정산됩니다. 기본 7일.
           </span>
         </div>
       </div>

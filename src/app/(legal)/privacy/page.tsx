@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import { Bullets, LegalIntro, LegalTitle, Section } from '../_components/Section';
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy · Project Creator',
+  title: '개인정보처리방침 · Project Creator',
   description: 'Project Creator 개인정보처리방침',
 };
 

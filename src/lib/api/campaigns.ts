@@ -68,6 +68,8 @@ function asThumbnail(value: unknown): Campaign['thumbnail'] {
     from: t.from ?? FALLBACK_THUMBNAIL.from,
     to: t.to ?? FALLBACK_THUMBNAIL.to,
     emoji: t.emoji ?? FALLBACK_THUMBNAIL.emoji,
+    imageUrl: t.imageUrl,
+    type: t.type,
   };
 }
 

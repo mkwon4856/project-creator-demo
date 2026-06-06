@@ -14,16 +14,16 @@ import { formatBudget } from '@/lib/mockCampaigns';
 import { useAppStore, type ActivityMission, type ActivityStatus } from '@/lib/store';
 
 const MISSION_LABELS: Record<ActivityMission, string> = {
-  shortform: 'Shortform',
-  longform: 'Longform',
-  live: 'Live',
+  shortform: '숏폼',
+  longform: '롱폼',
+  live: '라이브',
 };
 
 const STATUS_LABELS: Record<ActivityStatus, string> = {
-  making: 'Making',
-  review: 'In review',
-  paid: 'Paid',
-  rejected: 'Rejected',
+  making: '제작중',
+  review: '검토중',
+  paid: '지급완료',
+  rejected: '반려',
 };
 
 const GRID_COLS = 'grid-cols-[60px_1.5fr_1fr_1fr_1fr_120px_120px]';
@@ -35,12 +35,12 @@ function HeaderRow() {
       role="row"
     >
       <span aria-hidden />
-      <span>Campaign</span>
-      <span>Mission</span>
-      <span>Submitted</span>
-      <span>Status</span>
-      <span className="text-right">Reward</span>
-      <span className="text-right">Action</span>
+      <span>캠페인</span>
+      <span>미션</span>
+      <span>제출일</span>
+      <span>상태</span>
+      <span className="text-right">보상</span>
+      <span className="text-right">작업</span>
     </div>
   );
 }
@@ -117,7 +117,7 @@ function ActivityRow({
       <span className="flex justify-end">
         {activity.status === 'making' ? (
           <Button variant="primary" size="sm" onClick={() => onSubmit(activity)}>
-            Submit URL
+            URL 제출
           </Button>
         ) : activity.status === 'review' ? (
           <span className="text-[11px] text-amber-400">검수 중</span>
@@ -173,13 +173,13 @@ export function ActivityTable() {
           <div className="overflow-x-auto">
             <div
               role="table"
-              aria-label="My activity"
+              aria-label="내 활동"
               className="min-w-[760px]"
             >
               <HeaderRow />
               {loading ? (
                 <div className="px-5 py-12 text-center text-sm text-text-secondary">
-                  Loading…
+                  불러오는 중…
                 </div>
               ) : (
                 list.map((a) => (

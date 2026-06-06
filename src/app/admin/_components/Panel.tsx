@@ -14,7 +14,7 @@ interface PanelProps {
 
 export function Panel({
   title,
-  cta = 'Full report',
+  cta = '전체 보고서',
   ctaHref,
   rightSlot,
   children,

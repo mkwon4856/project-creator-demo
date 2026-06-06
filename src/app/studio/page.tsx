@@ -10,7 +10,6 @@ import {
   WELCOME_SEEN_KEY,
 } from '@/components/onboarding/WelcomeModal';
 import { Button, EmptyState } from '@/components/ui';
-import { fetchMyCampaigns, transformDbCampaign } from '@/lib/api/campaigns';
 import { CAMPAIGNS as MOCK_CAMPAIGNS, type Campaign } from '@/lib/mockCampaigns';
 import { useCurrentStudio } from '@/lib/supabase/hooks';
 
@@ -21,22 +20,12 @@ import { getStudioSidebar } from './_config/sidebar';
 export default function StudioMyCampaignsPage() {
   const router = useRouter();
   const { data: studio, loading } = useCurrentStudio();
-  const [campaigns, setCampaigns] = useState<Campaign[]>(MOCK_CAMPAIGNS);
+  // Demo: always render the local CAMPAIGNS mock. DB fetch is intentionally
+  // disabled so edits to mockCampaigns.ts show up without stale DB rows.
+  const [campaigns] = useState<Campaign[]>(MOCK_CAMPAIGNS);
   const [status, setStatus] = useState<StatusFilter>('all');
   const [search, setSearch] = useState('');
   const [showWelcome, setShowWelcome] = useState(false);
-
-  useEffect(() => {
-    if (loading || !studio) return;
-    let cancelled = false;
-    void fetchMyCampaigns(studio.id).then((rows) => {
-      if (cancelled) return;
-      if (rows.length > 0) setCampaigns(rows.map(transformDbCampaign));
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [loading, studio]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -68,7 +57,7 @@ export default function StudioMyCampaignsPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-bg-base flex items-center justify-center">
-        <span className="text-text-secondary text-sm">Loading…</span>
+        <span className="text-text-secondary text-sm">불러오는 중…</span>
       </div>
     );
   }
@@ -76,9 +65,9 @@ export default function StudioMyCampaignsPage() {
   return (
     <WorkspaceLayout
       persona="studio"
-      userName={studio?.name ?? 'Pulse Games'}
+      userName={studio?.name ?? '테스트 게임사 1'}
       userAvatar="🎮"
-      userBadge="Studio"
+      userBadge="게임사"
       sidebarSections={getStudioSidebar('my-campaigns')}
       notificationCount={3}
     >
@@ -86,13 +75,13 @@ export default function StudioMyCampaignsPage() {
         <header className="flex items-end justify-between gap-4 flex-wrap">
           <div className="flex flex-col gap-1.5">
             <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-ube-bright">
-              Studio · My campaigns
+              게임사 · 내 캠페인
             </span>
             <h1 className="text-[22px] font-medium leading-tight text-text-primary">
-              Your campaigns
+              내 캠페인
             </h1>
             <p className="text-sm text-text-secondary">
-              Manage your own campaigns and review applicants.
+              직접 만든 캠페인을 관리하고 지원자를 검토하세요.
             </p>
           </div>
           <Button
@@ -128,7 +117,7 @@ export default function StudioMyCampaignsPage() {
           />
         ) : filtered.length === 0 ? (
           <div className="rounded-lg border border-dashed border-white/10 px-6 py-16 text-center text-sm text-text-secondary">
-            No campaigns match your filters.
+            필터에 맞는 캠페인이 없습니다.
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">

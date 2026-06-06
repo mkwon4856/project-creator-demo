@@ -1,6 +1,6 @@
 'use client';
 
-import { formatBudget, formatRate } from '@/lib/mockCampaigns';
+import { formatBudget } from '@/lib/mockCampaigns';
 
 import {
   calcEstimatedCreators,
@@ -13,6 +13,10 @@ import {
 
 export interface SummaryProps {
   data: WizardData;
+}
+
+function formatWizardRate(manwon: number): string {
+  return `₩${manwon.toLocaleString()}만`;
 }
 
 function SummaryRow({ label, value }: { label: string; value: React.ReactNode }) {
@@ -35,11 +39,11 @@ export function Summary({ data }: SummaryProps) {
 
   return (
     <aside
-      aria-label="Campaign summary"
+      aria-label="캠페인 요약"
       className="border-l border-white/[0.06] bg-bg-elevated p-7 flex flex-col gap-5 overflow-y-auto"
     >
       <span className="text-[10px] font-semibold uppercase tracking-wider text-text-muted">
-        Campaign summary
+        캠페인 요약
       </span>
 
       {game ? (
@@ -60,17 +64,17 @@ export function Summary({ data }: SummaryProps) {
         </div>
       ) : (
         <div className="rounded-lg border border-dashed border-white/15 p-4 text-center text-xs text-text-secondary">
-          Select a game in step 1 to see a summary.
+          1단계에서 게임을 선택하면 요약이 표시됩니다.
         </div>
       )}
 
       <div className="flex flex-col">
         <SummaryRow
-          label="Total budget"
+          label="총 예산"
           value={<span className="text-ube-bright">{formatBudget(data.totalBudget)}</span>}
         />
         <SummaryRow
-          label="Active missions"
+          label="활성 미션"
           value={
             enabledMissions.length === 0
               ? '—'
@@ -78,15 +82,15 @@ export function Summary({ data }: SummaryProps) {
           }
         />
         <SummaryRow
-          label="Highest tier rate (A)"
-          value={highestA > 0 ? formatRate(highestA) : '—'}
+          label="최고 티어 단가 (A)"
+          value={highestA > 0 ? formatWizardRate(highestA) : '—'}
         />
         <SummaryRow
-          label="Lowest tier rate (E)"
-          value={lowestE > 0 ? formatRate(lowestE) : '—'}
+          label="최저 티어 단가 (E)"
+          value={lowestE > 0 ? formatWizardRate(lowestE) : '—'}
         />
         <SummaryRow
-          label="Estimated creators"
+          label="예상 크리에이터 수"
           value={estimatedCreators > 0 ? `~${estimatedCreators}` : '—'}
         />
       </div>
@@ -96,12 +100,12 @@ export function Summary({ data }: SummaryProps) {
         style={{ background: 'var(--ube-tint)' }}
       >
         <span className="text-[10px] font-semibold uppercase tracking-wider text-ube-bright">
-          Platform fee (15%)
+          플랫폼 수수료 (15%)
         </span>
         <span className="text-2xl text-ube-bright font-medium tabular-nums leading-tight">
           {formatBudget(platformFee)}
         </span>
-        <span className="text-[11px] text-ube-bright/85">Charged on successful payouts</span>
+        <span className="text-[11px] text-ube-bright/85">정산 지급 성공 시 부과됩니다</span>
       </div>
     </aside>
   );

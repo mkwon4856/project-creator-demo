@@ -35,19 +35,19 @@ type PlatformFilter = 'all' | PlatformKey;
 type SortKey = 'subscribers' | 'rating' | 'campaigns';
 
 const GRADE_FILTERS: { id: GradeFilter; label: string }[] = [
-  { id: 'all', label: 'All grades' },
-  { id: 'A', label: 'A-tier' },
-  { id: 'B', label: 'B-tier' },
-  { id: 'C', label: 'C-tier' },
-  { id: 'D', label: 'D-tier' },
-  { id: 'E', label: 'E-tier' },
+  { id: 'all', label: '전체 등급' },
+  { id: 'A', label: 'A티어' },
+  { id: 'B', label: 'B티어' },
+  { id: 'C', label: 'C티어' },
+  { id: 'D', label: 'D티어' },
+  { id: 'E', label: 'E티어' },
 ];
 
 const PLATFORM_FILTERS: { id: PlatformFilter; label: string }[] = [
-  { id: 'all', label: 'All platforms' },
+  { id: 'all', label: '전체 플랫폼' },
   { id: 'youtube', label: 'YouTube' },
   { id: 'soop', label: 'SOOP' },
-  { id: 'chzzk', label: 'Chzzk' },
+  { id: 'chzzk', label: '치지직' },
 ];
 
 const SORT_OPTIONS: { id: SortKey; label: string }[] = [
@@ -65,7 +65,7 @@ type PlatformKey = 'youtube' | 'soop' | 'chzzk';
 const PLATFORM_META: Record<PlatformKey, { label: string; Icon: LucideIcon }> = {
   youtube: { label: 'YouTube', Icon: PlaySquare },
   soop: { label: 'SOOP', Icon: Radio },
-  chzzk: { label: 'Chzzk', Icon: Tv },
+  chzzk: { label: '치지직', Icon: Tv },
 };
 
 /** Return the set of platform types that have a non-empty URL. */
@@ -169,7 +169,7 @@ function CreatorCard({ data }: { data: CreatorCardData }) {
               <BadgeCheck
                 size={13}
                 className="text-ube-bright shrink-0"
-                aria-label="Verified"
+                aria-label="인증"
               />
             )}
           </div>
@@ -205,7 +205,7 @@ function CreatorCard({ data }: { data: CreatorCardData }) {
 
         <div className="flex items-center gap-1.5 min-h-[18px]">
           {platforms.size === 0 ? (
-            <span className="text-[11px] text-text-muted">No platforms connected</span>
+            <span className="text-[11px] text-text-muted">연결된 플랫폼 없음</span>
           ) : (
             (Array.from(platforms) as PlatformKey[]).map((key) => {
               const { label, Icon } = PLATFORM_META[key];
@@ -225,7 +225,7 @@ function CreatorCard({ data }: { data: CreatorCardData }) {
 
         <div className="mt-auto pt-2">
           <Button variant="ghost" size="sm" full onClick={handleViewProfile}>
-            View profile
+            프로필 보기
           </Button>
         </div>
       </div>
@@ -313,7 +313,7 @@ export default function StudioCreatorDirectoryPage() {
   if (isInitialLoading) {
     return (
       <div className="min-h-screen bg-bg-base flex items-center justify-center">
-        <span className="text-text-secondary text-sm">Loading…</span>
+        <span className="text-text-secondary text-sm">불러오는 중…</span>
       </div>
     );
   }
@@ -321,21 +321,21 @@ export default function StudioCreatorDirectoryPage() {
   return (
     <WorkspaceLayout
       persona="studio"
-      userName={studio?.name ?? 'Pulse Games'}
+      userName={studio?.name ?? '테스트 게임사 1'}
       userAvatar="🎮"
-      userBadge="Studio"
+      userBadge="게임사"
       sidebarSections={getStudioSidebar('creators')}
       notificationCount={3}
     >
       <header className="mb-6">
         <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-ube-bright">
-          Studio · Discovery
+          게임사 · 탐색
         </span>
         <h1 className="text-[22px] font-medium text-text-primary leading-tight mt-1.5">
-          Creator directory
+          크리에이터 목록
         </h1>
         <p className="text-sm text-text-secondary mt-1">
-          Find the right creators for your campaigns
+          캠페인에 맞는 크리에이터를 찾아보세요
         </p>
       </header>
 
@@ -368,7 +368,7 @@ export default function StudioCreatorDirectoryPage() {
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-[11px] uppercase tracking-wider text-text-muted mr-1">
-                Sort
+                정렬
               </span>
               {SORT_OPTIONS.map((opt) => (
                 <FilterPill
@@ -412,8 +412,7 @@ export default function StudioCreatorDirectoryPage() {
       ) : (
         <>
           <div className="text-xs text-text-secondary mb-3 tabular-nums">
-            {filtered.length} of {totalCreators}{' '}
-            {totalCreators === 1 ? 'creator' : 'creators'}
+            전체 {totalCreators}명 중 {filtered.length}명
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filtered.map((c) => (

@@ -31,9 +31,19 @@ function GameThumb({ campaign, selected }: { campaign: Campaign; selected: boole
         background: `linear-gradient(135deg, ${campaign.thumbnail.from}, ${campaign.thumbnail.to})`,
       }}
     >
-      <span className="text-[44px] leading-none drop-shadow-[0_4px_14px_rgba(0,0,0,0.45)]">
-        {campaign.thumbnail.emoji}
-      </span>
+      {campaign.thumbnail.imageUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={campaign.thumbnail.imageUrl}
+          alt={campaign.name}
+          className="absolute inset-0 w-full h-full object-cover"
+          loading="lazy"
+        />
+      ) : (
+        <span className="text-[44px] leading-none drop-shadow-[0_4px_14px_rgba(0,0,0,0.45)]">
+          {campaign.thumbnail.emoji}
+        </span>
+      )}
       {selected && (
         <span className="absolute top-2 right-2 inline-flex w-6 h-6 rounded-full bg-ube items-center justify-center text-white">
           <Check size={14} aria-hidden />
@@ -58,9 +68,9 @@ export function StepGame({ selected, onSelect }: StepGameProps) {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1.5">
-        <h2 className="text-[22px] font-medium text-text-primary leading-tight">Choose a game</h2>
+        <h2 className="text-[22px] font-medium text-text-primary leading-tight">게임 선택</h2>
         <p className="text-sm text-text-secondary">
-          Select a game from your registered library or add a new one.
+          등록된 라이브러리에서 게임을 선택하거나 새 게임을 추가하세요.
         </p>
       </div>
 
@@ -70,13 +80,26 @@ export function StepGame({ selected, onSelect }: StepGameProps) {
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search games…"
+          placeholder="게임 검색…"
           className="flex-1 min-w-0 bg-transparent border-none outline-none text-sm text-text-primary placeholder:text-text-muted"
-          aria-label="Search games"
+          aria-label="게임 검색"
         />
       </label>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <button
+          type="button"
+          className="rounded-lg border border-dashed border-white/15 bg-transparent p-4 flex flex-col items-center justify-center gap-2 text-text-secondary hover:border-ube hover:text-ube-bright transition-colors duration-150 ease-out cursor-pointer min-h-[180px]"
+          onClick={() => {
+            if (typeof window !== 'undefined') window.alert('게임 등록 기능은 곧 추가됩니다.');
+          }}
+        >
+          <span className="inline-flex w-8 h-8 rounded-full bg-bg-hover items-center justify-center">
+            <Plus size={16} aria-hidden />
+          </span>
+          <span className="text-sm">새 게임 추가</span>
+        </button>
+
         {filtered.map((c) => {
           const isSelected = c.id === selectedKey;
           return (
@@ -102,19 +125,6 @@ export function StepGame({ selected, onSelect }: StepGameProps) {
             </button>
           );
         })}
-
-        <button
-          type="button"
-          className="rounded-lg border border-dashed border-white/15 bg-transparent p-4 flex flex-col items-center justify-center gap-2 text-text-secondary hover:border-ube hover:text-ube-bright transition-colors duration-150 ease-out cursor-pointer min-h-[180px]"
-          onClick={() => {
-            if (typeof window !== 'undefined') window.alert('Game registration is coming soon.');
-          }}
-        >
-          <span className="inline-flex w-8 h-8 rounded-full bg-bg-hover items-center justify-center">
-            <Plus size={16} aria-hidden />
-          </span>
-          <span className="text-sm">Add new game</span>
-        </button>
       </div>
     </div>
   );

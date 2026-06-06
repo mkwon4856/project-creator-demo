@@ -25,9 +25,9 @@ const GRID =
   'grid-cols-[1.3fr_1fr_0.7fr_0.9fr_0.9fr_0.9fr_0.7fr_0.8fr]';
 
 const MISSION_META: Record<MissionType, { label: string; icon: LucideIcon }> = {
-  shortform: { label: 'Shortform', icon: Film },
-  longform: { label: 'Longform', icon: Video },
-  live: { label: 'Live', icon: Radio },
+  shortform: { label: '숏폼', icon: Film },
+  longform: { label: '롱폼', icon: Video },
+  live: { label: '라이브', icon: Radio },
 };
 
 interface PaymentRow {
@@ -45,7 +45,7 @@ interface PaymentRow {
 
 function formatDate(s: string | null): string {
   if (!s) return '—';
-  return new Date(s).toLocaleDateString('en-US', {
+  return new Date(s).toLocaleDateString('ko-KR', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
@@ -56,13 +56,13 @@ function StatusPill({ status }: { status: PaymentStatus }) {
   if (status === 'completed') {
     return (
       <Pill variant="status" status="paid" size="sm">
-        Completed
+        완료
       </Pill>
     );
   }
   return (
     <Pill variant="status" status="review" size="sm">
-      Pending
+      대기
     </Pill>
   );
 }
@@ -73,14 +73,14 @@ function HeaderRow() {
       role="row"
       className={`grid ${GRID} items-center gap-3 px-5 py-3 bg-bg-elevated text-[11px] uppercase tracking-wider text-text-secondary`}
     >
-      <span>Campaign</span>
-      <span>Creator</span>
-      <span>Mission</span>
-      <span className="text-right">Amount</span>
-      <span className="text-right">Fee</span>
-      <span className="text-right">Net</span>
-      <span>Status</span>
-      <span>Date</span>
+      <span>캠페인</span>
+      <span>크리에이터</span>
+      <span>미션</span>
+      <span className="text-right">금액</span>
+      <span className="text-right">수수료</span>
+      <span className="text-right">실수령</span>
+      <span>상태</span>
+      <span>날짜</span>
     </div>
   );
 }
@@ -296,9 +296,9 @@ export default function StudioPaymentsPage() {
           (submission as { reward?: number } | null)?.reward ??
           raw.amount + raw.platform_fee,
         campaignName:
-          (campaign as { name?: string } | null)?.name ?? 'Unknown campaign',
+          (campaign as { name?: string } | null)?.name ?? '알 수 없는 캠페인',
         creatorName:
-          (creator as { display_name?: string } | null)?.display_name ?? 'Unknown',
+          (creator as { display_name?: string } | null)?.display_name ?? '알 수 없음',
         creatorGrade: grade,
         mission: missionType,
       };
@@ -336,7 +336,7 @@ export default function StudioPaymentsPage() {
   if (studioLoading || loading) {
     return (
       <div className="min-h-screen bg-bg-base flex items-center justify-center">
-        <span className="text-text-secondary text-sm">Loading…</span>
+        <span className="text-text-secondary text-sm">불러오는 중…</span>
       </div>
     );
   }
@@ -344,21 +344,21 @@ export default function StudioPaymentsPage() {
   return (
     <WorkspaceLayout
       persona="studio"
-      userName={studio?.name ?? 'Pulse Games'}
+      userName={studio?.name ?? '테스트 게임사 1'}
       userAvatar="🎮"
-      userBadge="Studio"
+      userBadge="게임사"
       sidebarSections={getStudioSidebar('payments')}
       notificationCount={3}
     >
       <header className="mb-6">
         <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-ube-bright">
-          Studio · Payments
+          게임사 · 결제·정산
         </span>
         <h1 className="text-[22px] font-medium text-text-primary leading-tight mt-1.5">
-          Payments
+          결제·정산
         </h1>
         <p className="text-sm text-text-secondary mt-1">
-          Track your campaign spending and creator payouts
+          캠페인 지출과 크리에이터 정산 지급을 추적하세요
         </p>
       </header>
 
@@ -371,35 +371,35 @@ export default function StudioPaymentsPage() {
 
       <section className="mb-9 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <SummaryCard
-          label="Total spent"
+          label="총 집행액"
           value={formatCompactKRW(summary.totalSpent)}
-          sub="From all campaigns"
+          sub="전체 캠페인 합계"
           highlight
         />
         <SummaryCard
-          label="Platform fees"
+          label="플랫폼 수수료"
           value={formatCompactKRW(summary.platformFees)}
-          sub="15% commission"
+          sub="15% 수수료"
         />
         <SummaryCard
-          label="Creators paid"
+          label="지급 완료 크리에이터"
           value={summary.creatorsPaid.toString()}
-          sub={summary.creatorsPaid === 1 ? 'submission' : 'submissions'}
+          sub="건"
         />
         <SummaryCard
-          label="Active campaigns"
+          label="진행중인 캠페인"
           value={summary.activeCampaigns.toString()}
-          sub="Currently live"
+          sub="현재 진행중"
         />
       </section>
 
       <section className="mb-12">
         <div className="flex items-end justify-between gap-3 mb-4">
           <h2 className="text-base font-medium text-text-primary leading-tight">
-            Payment history
+            결제·정산 내역
           </h2>
           <span className="text-[11px] text-text-secondary tabular-nums">
-            {payments.length} {payments.length === 1 ? 'record' : 'records'}
+            {payments.length}건
           </span>
         </div>
 
@@ -407,9 +407,9 @@ export default function StudioPaymentsPage() {
           <HeaderRow />
           {payments.length === 0 ? (
             <div className="px-5 py-16 text-center">
-              <p className="text-sm text-text-primary mb-1">No payments yet.</p>
+              <p className="text-sm text-text-primary mb-1">아직 결제 내역이 없습니다.</p>
               <p className="text-xs text-text-secondary">
-                Payments will appear here once creators submit approved content.
+                크리에이터의 콘텐츠가 승인되면 결제 내역이 여기에 표시됩니다.
               </p>
             </div>
           ) : (

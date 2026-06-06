@@ -38,10 +38,10 @@ export function AuthForm({ mode }: AuthFormProps) {
   const isSignup = mode === 'signup';
 
   const validate = (): string | null => {
-    if (!email) return 'Email is required.';
-    if (!password) return 'Password is required.';
-    if (password.length < 6) return 'Password must be at least 6 characters.';
-    if (isSignup && !name.trim()) return 'Name is required.';
+    if (!email) return '이메일을 입력해주세요.';
+    if (!password) return '비밀번호를 입력해주세요.';
+    if (password.length < 6) return '비밀번호는 6자 이상이어야 합니다.';
+    if (isSignup && !name.trim()) return '이름을 입력해주세요.';
     return null;
   };
 
@@ -64,7 +64,7 @@ export function AuthForm({ mode }: AuthFormProps) {
     }
     if (!data.session || !data.user) {
       setError(
-        'Email confirmation is required. Disable "Confirm email" in your Supabase dashboard, or check your inbox before signing in.',
+        '이메일 인증이 필요합니다. Supabase 대시보드에서 "Confirm email"을 끄거나, 메일함을 확인한 뒤 로그인해주세요.',
       );
       setLoading(false);
       return;
@@ -80,7 +80,7 @@ export function AuthForm({ mode }: AuthFormProps) {
         description: '',
       });
       if (studioErr) {
-        setError(`Could not create studio profile: ${studioErr.message}`);
+        setError(`게임사 프로필 생성에 실패했습니다: ${studioErr.message}`);
         setLoading(false);
         return;
       }
@@ -101,7 +101,7 @@ export function AuthForm({ mode }: AuthFormProps) {
         platforms: [],
       });
       if (creatorErr) {
-        setError(`Could not create creator profile: ${creatorErr.message}`);
+        setError(`크리에이터 프로필 생성에 실패했습니다: ${creatorErr.message}`);
         setLoading(false);
         return;
       }
@@ -121,7 +121,7 @@ export function AuthForm({ mode }: AuthFormProps) {
       return;
     }
     if (!data.user) {
-      setError('Login failed.');
+      setError('로그인에 실패했습니다.');
       setLoading(false);
       return;
     }
@@ -175,12 +175,12 @@ export function AuthForm({ mode }: AuthFormProps) {
       </div>
 
       <h1 className="text-xl font-medium text-text-primary text-center leading-tight">
-        {isSignup ? 'Create your account' : 'Welcome back'}
+        {isSignup ? '계정 만들기' : '다시 오신 걸 환영해요'}
       </h1>
       <p className="text-sm text-text-secondary text-center mt-1 mb-6">
         {isSignup
-          ? 'Start as a game studio or creator'
-          : 'Log in to your workspace'}
+          ? '게임사 또는 크리에이터로 시작하세요'
+          : '워크스페이스에 로그인하세요'}
       </p>
 
       {error && (
@@ -196,7 +196,7 @@ export function AuthForm({ mode }: AuthFormProps) {
         <>
           <div className="mb-4">
             <Input
-              label="Name"
+              label="이름"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="홍길동"
@@ -207,13 +207,13 @@ export function AuthForm({ mode }: AuthFormProps) {
 
           <fieldset className="mb-4">
             <legend className="text-xs font-medium text-text-secondary mb-1.5">
-              I am a…
+              저는…
             </legend>
             <div className="grid grid-cols-2 gap-3">
               <RoleCard
                 Icon={Gamepad2}
-                label="Game studio"
-                hint="Run campaigns"
+                label="게임사"
+                hint="캠페인 운영"
                 selected={role === 'studio'}
                 selectedClass="border-ube bg-ube/10"
                 iconColor={role === 'studio' ? 'text-ube-bright' : 'text-text-secondary'}
@@ -222,8 +222,8 @@ export function AuthForm({ mode }: AuthFormProps) {
               />
               <RoleCard
                 Icon={Video}
-                label="Creator"
-                hint="Apply to campaigns"
+                label="크리에이터"
+                hint="캠페인에 지원"
                 selected={role === 'creator'}
                 selectedClass="border-green-500 bg-green-500/10"
                 iconColor={role === 'creator' ? 'text-green-400' : 'text-text-secondary'}
@@ -237,7 +237,7 @@ export function AuthForm({ mode }: AuthFormProps) {
 
       <div className="mb-4">
         <Input
-          label="Email"
+          label="이메일"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -250,11 +250,11 @@ export function AuthForm({ mode }: AuthFormProps) {
 
       <div className="mb-4">
         <Input
-          label="Password"
+          label="비밀번호"
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder={isSignup ? 'At least 6 characters' : 'Enter your password'}
+          placeholder={isSignup ? '6자 이상' : '비밀번호를 입력하세요'}
           autoComplete={isSignup ? 'new-password' : 'current-password'}
           minLength={6}
           required
@@ -269,22 +269,22 @@ export function AuthForm({ mode }: AuthFormProps) {
         full
         loading={loading}
       >
-        {isSignup ? 'Create account' : 'Log in'}
+        {isSignup ? '계정 만들기' : '로그인'}
       </Button>
 
       <p className="text-center mt-6 text-sm text-text-secondary">
         {isSignup ? (
           <>
-            Already have an account?{' '}
+            이미 계정이 있으신가요?{' '}
             <Link href="/login" className="text-ube-bright hover:underline">
-              Log in
+              로그인
             </Link>
           </>
         ) : (
           <>
-            Don&apos;t have an account?{' '}
+            계정이 없으신가요?{' '}
             <Link href="/signup" className="text-ube-bright hover:underline">
-              Sign up
+              회원가입
             </Link>
           </>
         )}

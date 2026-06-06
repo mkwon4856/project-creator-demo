@@ -15,6 +15,7 @@ import { createClient as createBrowserSupabaseClient } from '@/lib/supabase/clie
 import { useCurrentProfile } from '@/lib/supabase/hooks';
 
 import { getAdminSidebar } from '../_config/sidebar';
+import { useAdminBadgeCounts } from '../_hooks/useAdminBadgeCounts';
 
 type CampaignRow = Database['public']['Tables']['campaigns']['Row'];
 
@@ -30,11 +31,11 @@ const DEFAULT_THUMBNAIL = { from: '#1a0a3e', to: '#4a1a6e', emoji: '🎮' };
 type StatusFilter = 'all' | CampaignStatus;
 
 const STATUS_FILTERS: { id: StatusFilter; label: string }[] = [
-  { id: 'all', label: 'All' },
-  { id: 'draft', label: 'Draft' },
-  { id: 'recruiting', label: 'Recruiting' },
-  { id: 'live', label: 'Live' },
-  { id: 'completed', label: 'Completed' },
+  { id: 'all', label: '전체' },
+  { id: 'draft', label: '초안' },
+  { id: 'recruiting', label: '모집중' },
+  { id: 'live', label: '진행중' },
+  { id: 'completed', label: '완료' },
 ];
 
 interface CampaignWithCounts extends CampaignRow {
@@ -46,7 +47,7 @@ interface CampaignWithCounts extends CampaignRow {
 
 function formatCreatedDate(iso: string): string {
   const d = new Date(iso);
-  return d.toLocaleDateString('en-US', {
+  return d.toLocaleDateString('ko-KR', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
@@ -69,27 +70,27 @@ function StatusPill({ status }: { status: CampaignStatus }) {
   if (status === 'draft') {
     return (
       <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium leading-none border bg-bg-hover text-text-secondary border-white/10 whitespace-nowrap">
-        Draft
+        초안
       </span>
     );
   }
   if (status === 'recruiting') {
     return (
       <Pill variant="status" status="recruiting" size="sm">
-        Recruiting
+        모집중
       </Pill>
     );
   }
   if (status === 'live') {
     return (
       <Pill variant="status" status="live" size="sm">
-        Live
+        진행중
       </Pill>
     );
   }
   return (
     <Pill variant="status" status="completed" size="sm">
-      Completed
+      완료
     </Pill>
   );
 }
@@ -126,15 +127,15 @@ function HeaderRow() {
       className={`grid ${GRID} items-center gap-3 px-5 py-3 bg-bg-elevated text-[11px] uppercase tracking-wider text-text-secondary`}
     >
       <span aria-hidden />
-      <span>Campaign</span>
-      <span>Studio</span>
-      <span>Genre</span>
-      <span>Status</span>
-      <span className="text-right">Budget</span>
-      <span>Spent</span>
-      <span className="text-right">Creators</span>
-      <span className="text-right">Submissions</span>
-      <span>Created</span>
+      <span>캠페인</span>
+      <span>게임사</span>
+      <span>장르</span>
+      <span>상태</span>
+      <span className="text-right">예산</span>
+      <span>집행액</span>
+      <span className="text-right">크리에이터</span>
+      <span className="text-right">제출</span>
+      <span>등록일</span>
     </div>
   );
 }
@@ -217,6 +218,7 @@ function Row({ item, last }: { item: CampaignWithCounts; last: boolean }) {
 
 export default function AdminCampaignsPage() {
   const { data: profile, loading: profileLoading } = useCurrentProfile();
+  const badgeCounts = useAdminBadgeCounts();
   const [campaigns, setCampaigns] = useState<CampaignWithCounts[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
@@ -302,7 +304,7 @@ export default function AdminCampaignsPage() {
   if (profileLoading || loading) {
     return (
       <div className="min-h-screen bg-bg-base flex items-center justify-center">
-        <span className="text-text-secondary text-sm">Loading…</span>
+        <span className="text-text-secondary text-sm">불러오는 중…</span>
       </div>
     );
   }
@@ -315,18 +317,21 @@ export default function AdminCampaignsPage() {
       persona="admin"
       userName={adminName}
       userAvatar={initials}
-      userBadge="Admin"
-      sidebarSections={getAdminSidebar('campaigns')}
-      notificationCount={5}
+      userBadge="관리자"
+      sidebarSections={getAdminSidebar('campaigns', {
+        review: badgeCounts.review,
+        payouts: badgeCounts.payouts,
+      })}
+      notificationCount={badgeCounts.notification}
     >
       <header className="mb-6">
         <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-ube-bright">
-          Admin · Directory
+          관리자 · 디렉터리
         </span>
         <h1 className="text-[22px] font-medium text-text-primary leading-tight mt-1.5">
-          Campaigns
+          캠페인
         </h1>
-        <p className="text-sm text-text-secondary mt-1">All campaigns on the platform</p>
+        <p className="text-sm text-text-secondary mt-1">플랫폼의 모든 캠페인</p>
       </header>
 
       <div className="flex items-center gap-3 flex-wrap mb-4">
@@ -354,7 +359,7 @@ export default function AdminCampaignsPage() {
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search campaigns"
+            placeholder="캠페인 검색"
             icon={<Search size={14} aria-hidden />}
           />
         </div>
@@ -366,13 +371,13 @@ export default function AdminCampaignsPage() {
           <div className="px-5 py-16 text-center">
             <p className="text-sm text-text-primary mb-1">
               {campaigns.length === 0
-                ? 'No campaigns found.'
-                : 'No campaigns match your filter.'}
+                ? '캠페인이 없습니다.'
+                : '필터에 맞는 캠페인이 없습니다.'}
             </p>
             <p className="text-xs text-text-secondary">
               {campaigns.length === 0
-                ? 'Campaigns will appear here once studios create them.'
-                : 'Try a different status or search query.'}
+                ? '게임사가 캠페인을 생성하면 여기에 표시됩니다.'
+                : '다른 상태나 검색어를 시도해 보세요.'}
             </p>
           </div>
         ) : (

@@ -18,9 +18,9 @@ const HAS_SUPABASE_ENV =
 const GRID = 'grid-cols-[1.4fr_1.2fr_1fr_0.8fr_0.6fr_0.9fr_180px]';
 
 const MISSION_META: Record<MissionType, { label: string; icon: LucideIcon }> = {
-  shortform: { label: 'Shortform', icon: Film },
-  longform: { label: 'Longform', icon: Video },
-  live: { label: 'Live', icon: Radio },
+  shortform: { label: '숏폼', icon: Film },
+  longform: { label: '롱폼', icon: Video },
+  live: { label: '라이브', icon: Radio },
 };
 
 interface Applicant {
@@ -44,13 +44,13 @@ interface Applicant {
 function getTimeAgo(dateStr: string | null): string {
   if (!dateStr) return '—';
   const diff = Date.now() - new Date(dateStr).getTime();
-  if (diff < 60_000) return 'Just now';
+  if (diff < 60_000) return '방금 전';
   const mins = Math.floor(diff / 60_000);
-  if (mins < 60) return `${mins}m ago`;
+  if (mins < 60) return `${mins}분 전`;
   const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return `${hours}시간 전`;
   const days = Math.floor(hours / 24);
-  if (days < 30) return `${days}d ago`;
+  if (days < 30) return `${days}일 전`;
   return new Date(dateStr).toLocaleDateString();
 }
 
@@ -92,13 +92,13 @@ function HeaderRow() {
       role="row"
       className={`grid ${GRID} items-center gap-3 px-5 py-3 bg-bg-elevated text-[11px] uppercase tracking-wider text-text-secondary`}
     >
-      <span>Creator</span>
-      <span>Campaign</span>
-      <span>Mission</span>
-      <span>Applied</span>
-      <span>Grade</span>
-      <span>Status</span>
-      <span className="text-right">Action</span>
+      <span>크리에이터</span>
+      <span>캠페인</span>
+      <span>미션</span>
+      <span>지원일</span>
+      <span>등급</span>
+      <span>상태</span>
+      <span className="text-right">작업</span>
     </div>
   );
 }
@@ -134,7 +134,7 @@ function Row({
             {item.creator.displayName}
           </span>
           <span className="text-[11px] text-text-secondary truncate">
-            {item.creator.handle} · {formatSubscribers(item.creator.subscribers)} subs
+            {item.creator.handle} · 구독자 {formatSubscribers(item.creator.subscribers)}
           </span>
         </div>
       </div>
@@ -161,10 +161,10 @@ function Row({
         {item.status === 'applied' ? (
           <>
             <Button variant="ghost" size="sm" disabled={busy} onClick={() => onReject(item.id)}>
-              Reject
+              거절
             </Button>
             <Button variant="primary" size="sm" disabled={busy} onClick={() => onAccept(item.id)}>
-              Accept
+              수락
             </Button>
           </>
         ) : (
@@ -289,12 +289,12 @@ export default function StudioApplicantsPage() {
         appliedAt: raw.applied_at,
         campaign: {
           id: campaign?.id ?? '',
-          name: campaign?.name ?? 'Unknown campaign',
+          name: campaign?.name ?? '알 수 없는 캠페인',
           developer: campaign?.developer ?? '',
         },
         mission: missionType,
         creator: {
-          displayName: creator?.display_name ?? 'Unknown',
+          displayName: creator?.display_name ?? '알 수 없음',
           handle: creator?.handle ?? '',
           grade,
           subscribers: Number(creator?.subscribers ?? 0),
@@ -370,7 +370,7 @@ export default function StudioApplicantsPage() {
   if (studioLoading || loading) {
     return (
       <div className="min-h-screen bg-bg-base flex items-center justify-center">
-        <span className="text-text-secondary text-sm">Loading…</span>
+        <span className="text-text-secondary text-sm">불러오는 중…</span>
       </div>
     );
   }
@@ -380,21 +380,21 @@ export default function StudioApplicantsPage() {
   return (
     <WorkspaceLayout
       persona="studio"
-      userName={studio?.name ?? 'Pulse Games'}
+      userName={studio?.name ?? '테스트 게임사 1'}
       userAvatar="🎮"
-      userBadge="Studio"
+      userBadge="게임사"
       sidebarSections={getStudioSidebar('applicants')}
       notificationCount={3}
     >
       <header className="mb-6">
         <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-ube-bright">
-          Studio · Applicants
+          게임사 · 지원자
         </span>
         <h1 className="text-[22px] font-medium text-text-primary leading-tight mt-1.5">
-          Applicants
+          지원자
         </h1>
         <p className="text-sm text-text-secondary mt-1">
-          Review and manage creator applications for your campaigns
+          캠페인에 지원한 크리에이터를 검토하고 관리하세요
         </p>
       </header>
 
@@ -411,7 +411,7 @@ export default function StudioApplicantsPage() {
             active={campaignFilter === 'all'}
             onClick={() => setCampaignFilter('all')}
           >
-            All campaigns
+            전체 캠페인
             <span className="ml-1.5 text-text-muted tabular-nums">{applicants.length}</span>
           </FilterPill>
           {campaignOptions.map(({ id, name }) => {
@@ -435,7 +435,7 @@ export default function StudioApplicantsPage() {
             );
           })}
           <span className="ml-auto text-[11px] font-medium text-amber-400 tabular-nums">
-            {pendingCount} pending
+            대기 {pendingCount}건
           </span>
         </div>
       )}
@@ -454,9 +454,9 @@ export default function StudioApplicantsPage() {
           <HeaderRow />
           {filtered.length === 0 ? (
             <div className="px-5 py-16 text-center">
-              <p className="text-sm text-text-primary mb-1">No applicants match your filters.</p>
+              <p className="text-sm text-text-primary mb-1">필터에 맞는 지원자가 없습니다.</p>
               <p className="text-xs text-text-secondary">
-                Try changing the campaign filter above.
+                위의 캠페인 필터를 변경해보세요.
               </p>
             </div>
           ) : (

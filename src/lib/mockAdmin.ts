@@ -27,12 +27,12 @@ export interface GmvHistoryPoint {
 }
 
 export const GMV_HISTORY: GmvHistoryPoint[] = [
-  { month: 'Dec', gmv: 12_000_000, fee: 1_800_000 },
-  { month: 'Jan', gmv: 14_500_000, fee: 2_175_000 },
-  { month: 'Feb', gmv: 18_000_000, fee: 2_700_000 },
-  { month: 'Mar', gmv: 22_500_000, fee: 3_375_000 },
-  { month: 'Apr', gmv: 28_500_000, fee: 4_275_000 },
-  { month: 'May', gmv: 33_500_000, fee: 5_025_000 },
+  { month: '12월', gmv: 12_000_000, fee: 1_800_000 },
+  { month: '1월', gmv: 14_500_000, fee: 2_175_000 },
+  { month: '2월', gmv: 18_000_000, fee: 2_700_000 },
+  { month: '3월', gmv: 22_500_000, fee: 3_375_000 },
+  { month: '4월', gmv: 28_500_000, fee: 4_275_000 },
+  { month: '5월', gmv: 33_500_000, fee: 5_025_000 },
 ];
 
 export type CreatorTierKey = 'A' | 'B' | 'C' | 'D' | 'E';

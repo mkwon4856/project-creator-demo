@@ -7,7 +7,7 @@ import type { ReactNode } from 'react';
 
 import { createClient as createBrowserSupabaseClient } from '@/lib/supabase/client';
 
-import { LanguageToggle, type Locale } from './LanguageToggle';
+import { type Locale } from './LanguageToggle';
 import { SizeToggle, type TextSize } from './SizeToggle';
 
 export type Persona = 'studio' | 'creator' | 'admin';
@@ -65,7 +65,7 @@ export interface TopbarProps {
 
 function DemoBadge({ persona, label }: { persona: Persona; label?: string }) {
   const isAdmin = persona === 'admin';
-  const text = label ?? (isAdmin ? 'ADMIN' : 'DEMO');
+  const text = label ?? (isAdmin ? '관리자' : 'DEMO');
   return (
     <span
       className={[
@@ -117,8 +117,8 @@ function LogoutButton() {
     <button
       type="button"
       onClick={handleLogout}
-      title="Log out"
-      aria-label="Log out"
+      title="로그아웃"
+      aria-label="로그아웃"
       className="inline-flex w-9 h-9 items-center justify-center rounded-lg bg-bg-card border border-white/10 text-text-secondary hover:text-red-400 hover:border-white/20 transition-colors duration-150 ease-out cursor-pointer"
     >
       <LogOut size={16} aria-hidden />
@@ -160,8 +160,6 @@ export function Topbar({
   userBadge,
   textSize,
   onTextSizeChange,
-  locale,
-  onLocaleChange,
   notificationCount,
   onNotificationClick,
   badgeLabel,
@@ -192,7 +190,6 @@ export function Topbar({
       <div className="flex items-center gap-2 md:gap-3">
         <div className="hidden md:flex items-center gap-3">
           <SizeToggle value={textSize} onChange={onTextSizeChange} />
-          <LanguageToggle value={locale} onChange={onLocaleChange} />
         </div>
         <NotificationBell count={notificationCount} onClick={onNotificationClick} />
         <div className="flex items-center gap-2 pl-1 md:pl-2">

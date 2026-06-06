@@ -21,7 +21,7 @@ function MetaItem({ icon, value, label }: { icon: string; value: string; label: 
 export function CreatorProfileBar({ creator }: CreatorProfileBarProps) {
   return (
     <section
-      aria-label="Creator profile"
+      aria-label="크리에이터 프로필"
       className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 sm:p-5 rounded-lg bg-bg-card border border-white/[0.06] mb-6"
     >
       <div className="flex items-center gap-3 sm:gap-4">
@@ -36,7 +36,7 @@ export function CreatorProfileBar({ creator }: CreatorProfileBarProps) {
           <div className="flex items-center gap-2">
             <h2 className="text-base font-medium text-text-primary truncate">{creator.name}</h2>
             <span className="bg-bg-hover text-text-secondary px-1.5 py-0.5 text-[10px] rounded font-medium leading-none">
-              {creator.grade}-tier
+              {creator.grade}티어
             </span>
             {creator.isVerified && (
               <BadgeCheck
@@ -54,7 +54,7 @@ export function CreatorProfileBar({ creator }: CreatorProfileBarProps) {
         <div className="flex items-center gap-2">
           <h2 className="text-base font-medium text-text-primary truncate">{creator.name}</h2>
           <span className="bg-bg-hover text-text-secondary px-1.5 py-0.5 text-[10px] rounded font-medium leading-none">
-            {creator.grade}-tier
+            {creator.grade}티어
           </span>
           {creator.isVerified && (
             <BadgeCheck
@@ -66,25 +66,25 @@ export function CreatorProfileBar({ creator }: CreatorProfileBarProps) {
         </div>
         <span className="text-xs text-text-secondary mb-2">{creator.handle}</span>
         <div className="flex items-center gap-3.5 text-xs flex-wrap">
-          <MetaItem icon="📺" value={formatSubscribers(creator.subscribers)} label="subs" />
-          <MetaItem icon="👁" value={formatSubscribers(creator.avgViews)} label="avg views" />
-          <MetaItem icon="⭐" value={creator.rating.toFixed(1)} label="rating" />
+          <MetaItem icon="📺" value={formatSubscribers(creator.subscribers)} label="구독자" />
+          <MetaItem icon="👁" value={formatSubscribers(creator.avgViews)} label="평균 조회수" />
+          <MetaItem icon="⭐" value={creator.rating.toFixed(1)} label="평점" />
           <MetaItem
             icon="🏆"
             value={creator.completedCampaigns.toString()}
-            label="campaigns done"
+            label="완료 캠페인"
           />
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs sm:hidden">
-        <MetaItem icon="📺" value={formatSubscribers(creator.subscribers)} label="subs" />
-        <MetaItem icon="👁" value={formatSubscribers(creator.avgViews)} label="avg views" />
-        <MetaItem icon="⭐" value={creator.rating.toFixed(1)} label="rating" />
+        <MetaItem icon="📺" value={formatSubscribers(creator.subscribers)} label="구독자" />
+        <MetaItem icon="👁" value={formatSubscribers(creator.avgViews)} label="평균 조회수" />
+        <MetaItem icon="⭐" value={creator.rating.toFixed(1)} label="평점" />
         <MetaItem
           icon="🏆"
           value={creator.completedCampaigns.toString()}
-          label="campaigns"
+          label="완료 캠페인"
         />
       </div>
     </section>

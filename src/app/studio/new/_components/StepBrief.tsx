@@ -50,20 +50,20 @@ export function StepBrief({ data, onChange }: StepBriefProps) {
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1.5">
         <h2 className="text-[22px] font-medium text-text-primary leading-tight">
-          Write a brief for creators
+          크리에이터를 위한 브리프 작성
         </h2>
         <p className="text-sm text-text-secondary">
-          Communicate the angle, the must-haves, and the tone. Creators will see this on the campaign page.
+          콘셉트, 필수 요소, 톤을 전달하세요. 크리에이터는 이 내용을 캠페인 페이지에서 보게 됩니다.
         </p>
       </div>
 
       <section
-        aria-label="Quick start templates"
+        aria-label="빠른 시작 템플릿"
         className="rounded-lg p-3.5 border border-ube/30"
         style={{ background: 'var(--ube-tint)' }}
       >
         <span className="block text-[10px] font-semibold uppercase tracking-wider text-ube-bright mb-2">
-          Quick start — tap to insert
+          빠른 시작 — 탭하여 삽입
         </span>
         <div className="flex flex-wrap gap-1.5">
           {BRIEF_TEMPLATES.map((t) => (
@@ -81,7 +81,7 @@ export function StepBrief({ data, onChange }: StepBriefProps) {
 
       <section className="flex flex-col gap-1.5">
         <label htmlFor="brief-textarea" className="text-xs font-medium text-text-secondary">
-          Brief message (shown to all applicants)
+          브리프 메시지 (모든 지원자에게 표시)
         </label>
         <textarea
           id="brief-textarea"
@@ -94,7 +94,7 @@ export function StepBrief({ data, onChange }: StepBriefProps) {
           className="min-h-[140px] resize-y bg-bg-card border border-white/10 rounded-md p-3.5 text-sm text-text-primary placeholder:text-text-muted outline-none focus:border-ube focus:shadow-[0_0_0_3px_var(--ube-tint)] transition-all duration-150 ease-out"
         />
         <div className="flex items-center justify-between text-[11px] text-text-secondary">
-          <span>Markdown supported.</span>
+          <span>마크다운을 지원합니다.</span>
           <span className="tabular-nums">
             {data.brief.length} / {MAX_BRIEF}
           </span>
@@ -102,7 +102,7 @@ export function StepBrief({ data, onChange }: StepBriefProps) {
       </section>
 
       <section className="flex flex-col gap-1.5">
-        <span className="text-xs font-medium text-text-secondary">Required hashtags</span>
+        <span className="text-xs font-medium text-text-secondary">필수 해시태그</span>
         <div className="flex flex-wrap gap-1.5 min-h-[50px] p-2 rounded-md bg-bg-card border border-white/10 focus-within:border-ube focus-within:shadow-[0_0_0_3px_var(--ube-tint)] transition-all duration-150 ease-out">
           {data.hashtags.map((tag) => (
             <span
@@ -114,7 +114,7 @@ export function StepBrief({ data, onChange }: StepBriefProps) {
                 type="button"
                 onClick={() => removeHashtag(tag)}
                 className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full hover:bg-white/20 transition-colors duration-150 ease-out cursor-pointer"
-                aria-label={`Remove ${tag}`}
+                aria-label={`${tag} 삭제`}
               >
                 <X size={10} aria-hidden />
               </button>
@@ -131,16 +131,16 @@ export function StepBrief({ data, onChange }: StepBriefProps) {
                 setDraft('');
               }
             }}
-            placeholder="+ Add hashtag"
+            placeholder="+ 해시태그 추가"
             className="flex-1 min-w-[120px] bg-transparent border-none outline-none text-sm text-text-primary placeholder:text-text-muted px-1.5 py-1"
-            aria-label="Add hashtag"
+            aria-label="해시태그 추가"
           />
         </div>
-        <span className="text-[11px] text-text-secondary">Press space or enter to add. # is optional.</span>
+        <span className="text-[11px] text-text-secondary">스페이스 또는 엔터로 추가하세요. #은 선택사항입니다.</span>
       </section>
 
       <section className="flex flex-col gap-2 pt-4 border-t border-white/[0.06]">
-        <span className="text-xs font-medium text-text-secondary">Content guidelines</span>
+        <span className="text-xs font-medium text-text-secondary">콘텐츠 가이드라인</span>
         <ul className="flex flex-col gap-2">
           {GUIDELINES.map((g) => {
             const checked = data.guidelines[g.id];

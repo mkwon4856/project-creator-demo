@@ -90,7 +90,7 @@ export function GmvChart({ monthlyData }: GmvChartProps = {}) {
   const gridLines = buildGridLines(yMax);
 
   return (
-    <Panel title="GMV growth — last 6 months" ctaHref="/admin/revenue" cta="Full report">
+    <Panel title="GMV 추이 — 최근 6개월" ctaHref="/admin/revenue" cta="전체 보고서">
       <div className="flex items-center gap-4 text-[11px] text-text-secondary mb-4">
         <span className="inline-flex items-center gap-1.5">
           <span className="inline-block w-2 h-2 rounded-full bg-ube" aria-hidden />
@@ -106,7 +106,7 @@ export function GmvChart({ monthlyData }: GmvChartProps = {}) {
               backgroundSize: '4px 1px',
             }}
           />
-          Platform fee
+          플랫폼 수수료
         </span>
       </div>
 
@@ -115,7 +115,7 @@ export function GmvChart({ monthlyData }: GmvChartProps = {}) {
         width="100%"
         height={VIEW_H}
         role="img"
-        aria-label="GMV growth chart over the last 6 months"
+        aria-label="최근 6개월 GMV 추이 차트"
         className="block"
       >
         <defs>

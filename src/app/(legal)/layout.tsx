@@ -33,18 +33,18 @@ function LegalFooter() {
   return (
     <footer className="py-6 mt-8 border-t border-white/[0.06] flex flex-wrap justify-between items-center gap-3">
       <Logo size="sm" />
-      <nav aria-label="Legal" className="flex items-center gap-4 text-xs text-text-secondary">
+      <nav aria-label="법적 고지" className="flex items-center gap-4 text-xs text-text-secondary">
         <Link
           href="/terms"
           className="hover:text-text-primary transition-colors duration-150 ease-out"
         >
-          Terms
+          이용약관
         </Link>
         <Link
           href="/privacy"
           className="hover:text-text-primary transition-colors duration-150 ease-out"
         >
-          Privacy
+          개인정보처리방침
         </Link>
       </nav>
       <span className="text-xs text-text-secondary">

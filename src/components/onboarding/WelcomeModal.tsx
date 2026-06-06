@@ -91,7 +91,7 @@ interface RoleCopy {
 function getRoleCopy(role: WelcomeRole, userName: string): RoleCopy {
   if (role === 'studio') {
     return {
-      title: 'Welcome to Project Creator! 🎮',
+      title: 'Project Creator에 오신 걸 환영해요! 🎮',
       subtitle: '크리에이터와 함께 캠페인을 시작해보세요.',
       steps: STUDIO_STEPS,
       primaryCta: { label: '첫 캠페인 만들기', href: '/studio/new' },
@@ -123,7 +123,7 @@ export function WelcomeModal({ open, role, userName, onClose }: WelcomeModalProp
       <Modal.Hero>
         <div className="flex flex-col gap-1.5">
           <span className="text-[10px] font-semibold uppercase tracking-wider text-text-secondary">
-            Get started
+            시작하기
           </span>
           <h2 className="text-xl font-medium text-text-primary leading-tight">
             {copy.title}

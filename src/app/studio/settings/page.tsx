@@ -54,7 +54,7 @@ export default function StudioSettingsPage() {
       return;
     }
     if (!name.trim()) {
-      toast.error('Studio name을 입력해주세요');
+      toast.error('게임사 이름을 입력해주세요');
       return;
     }
     setSaving(true);
@@ -72,7 +72,7 @@ export default function StudioSettingsPage() {
         toast.error(`저장 실패: ${error.message}`);
         return;
       }
-      toast.success('Studio 프로필이 저장되었습니다');
+      toast.success('게임사 프로필이 저장되었습니다');
     } finally {
       setSaving(false);
     }
@@ -123,7 +123,7 @@ export default function StudioSettingsPage() {
   if (studioLoading || profileLoading) {
     return (
       <div className="min-h-screen bg-bg-base flex items-center justify-center">
-        <span className="text-text-secondary text-sm">Loading…</span>
+        <span className="text-text-secondary text-sm">불러오는 중…</span>
       </div>
     );
   }
@@ -131,19 +131,19 @@ export default function StudioSettingsPage() {
   return (
     <WorkspaceLayout
       persona="studio"
-      userName={studio?.name ?? 'Pulse Games'}
+      userName={studio?.name ?? '테스트 게임사 1'}
       userAvatar="🎮"
-      userBadge="Studio"
+      userBadge="게임사"
       sidebarSections={getStudioSidebar('settings')}
     >
       <header className="mb-6">
         <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-ube-bright">
-          Studio · Settings
+          게임사 · 설정
         </span>
         <h1 className="text-[22px] font-medium text-text-primary leading-tight mt-1.5">
-          Settings
+          설정
         </h1>
-        <p className="text-sm text-text-secondary mt-1">Manage your studio profile</p>
+        <p className="text-sm text-text-secondary mt-1">게임사 프로필을 관리하세요</p>
       </header>
 
       {!studio && (
@@ -154,18 +154,18 @@ export default function StudioSettingsPage() {
       )}
 
       <Card variant="default" padding="lg" className="mb-6">
-        <SectionLabel>Studio Profile</SectionLabel>
+        <SectionLabel>게임사 프로필</SectionLabel>
 
         <div className="grid grid-cols-2 gap-4 mb-4">
           <Input
-            label="Studio name"
+            label="게임사 이름"
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Your studio name"
+            placeholder="게임사 이름"
           />
           <Input
-            label="Logo URL"
+            label="로고 URL"
             type="url"
             value={logoUrl}
             onChange={(e) => setLogoUrl(e.target.value)}
@@ -175,14 +175,14 @@ export default function StudioSettingsPage() {
 
         <div className="mb-4 flex flex-col gap-1.5">
           <label htmlFor={descId} className="text-xs font-medium text-text-secondary">
-            Description
+            소개
           </label>
           <textarea
             id={descId}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={3}
-            placeholder="What your studio is about"
+            placeholder="게임사 소개"
             className="min-h-[100px] bg-bg-card border border-white/10 rounded-md p-3.5 text-sm text-text-primary placeholder:text-text-muted outline-none focus:border-ube focus:shadow-[0_0_0_3px_var(--ube-tint)] resize-vertical transition-all duration-150 ease-out"
           />
         </div>
@@ -195,16 +195,16 @@ export default function StudioSettingsPage() {
             disabled={!studio || saving}
             loading={saving}
           >
-            {saving ? 'Saving…' : 'Save changes'}
+            {saving ? '저장 중…' : '변경사항 저장'}
           </Button>
         </div>
       </Card>
 
       <Card variant="default" padding="lg" className="mb-6">
-        <SectionLabel>Account</SectionLabel>
+        <SectionLabel>계정</SectionLabel>
 
         <div className="mb-5 pb-5 border-b border-white/[0.06]">
-          <div className="text-xs font-medium text-text-secondary mb-1.5">Email</div>
+          <div className="text-xs font-medium text-text-secondary mb-1.5">이메일</div>
           <div className="text-sm text-text-primary tabular-nums">
             {profile?.email ?? '—'}
           </div>
@@ -215,19 +215,19 @@ export default function StudioSettingsPage() {
 
         <div className="grid grid-cols-2 gap-4 mb-4">
           <Input
-            label="New password"
+            label="새 비밀번호"
             type="password"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
-            placeholder="At least 6 characters"
+            placeholder="6자 이상"
             helper="6자 이상 입력"
           />
           <Input
-            label="Confirm password"
+            label="비밀번호 확인"
             type="password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            placeholder="Re-enter password"
+            placeholder="비밀번호 재입력"
           />
         </div>
 
@@ -239,7 +239,7 @@ export default function StudioSettingsPage() {
             disabled={changingPassword || !newPassword || !confirmPassword}
             loading={changingPassword}
           >
-            {changingPassword ? 'Updating…' : 'Save password'}
+            {changingPassword ? '변경 중…' : '비밀번호 저장'}
           </Button>
         </div>
       </Card>
@@ -249,11 +249,11 @@ export default function StudioSettingsPage() {
         padding="lg"
         className="mb-12 border-red-500/30"
       >
-        <SectionLabel>Danger Zone</SectionLabel>
+        <SectionLabel>위험 구역</SectionLabel>
 
         <div className="flex items-center justify-between gap-4 py-3 border-b border-white/[0.06]">
           <div>
-            <div className="text-sm font-medium text-text-primary">Log out</div>
+            <div className="text-sm font-medium text-text-primary">로그아웃</div>
             <div className="text-[11px] text-text-secondary mt-0.5">
               로그아웃하고 로그인 페이지로 돌아갑니다
             </div>
@@ -265,19 +265,19 @@ export default function StudioSettingsPage() {
             onClick={handleLogout}
             disabled={loggingOut}
           >
-            {loggingOut ? 'Logging out…' : 'Log out'}
+            {loggingOut ? '로그아웃 중…' : '로그아웃'}
           </Button>
         </div>
 
         <div className="flex items-center justify-between gap-4 pt-3">
           <div>
-            <div className="text-sm font-medium text-red-400">Delete account</div>
+            <div className="text-sm font-medium text-red-400">계정 삭제</div>
             <div className="text-[11px] text-text-secondary mt-0.5">
               계정과 모든 데이터를 영구 삭제합니다 (복구 불가)
             </div>
           </div>
           <Button variant="ghost" size="sm" disabled>
-            Coming soon
+            준비 중
           </Button>
         </div>
       </Card>

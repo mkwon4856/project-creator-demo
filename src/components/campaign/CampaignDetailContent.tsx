@@ -21,10 +21,12 @@ import {
   CAMPAIGNS,
   formatBudget,
   formatRate,
+  getMissionRate,
   getSpentPercent,
   type Campaign,
   type CampaignMissions,
   type CampaignRates,
+  type MissionKind,
 } from '@/lib/mockCampaigns';
 import { CURRENT_CREATOR, type CreatorGrade } from '@/lib/mockCreators';
 import { createClient as createBrowserSupabaseClient } from '@/lib/supabase/client';
@@ -36,9 +38,9 @@ const STATUS_TO_PILL = {
 } as const;
 
 const STATUS_LABEL = {
-  live: 'Live',
-  recruiting: 'Recruiting',
-  completed: 'Completed',
+  live: '진행중',
+  recruiting: '모집중',
+  completed: '완료',
 } as const;
 
 const TIERS: CreatorGrade[] = ['A', 'B', 'C', 'D', 'E'];
@@ -48,9 +50,9 @@ const MISSIONS: ReadonlyArray<{
   label: string;
   icon: LucideIcon;
 }> = [
-  { id: 'shortform', label: 'Shortform', icon: Film },
-  { id: 'longform', label: 'Longform', icon: Video },
-  { id: 'live', label: 'Live', icon: Radio },
+  { id: 'shortform', label: '숏폼', icon: Film },
+  { id: 'longform', label: '롱폼', icon: Video },
+  { id: 'live', label: '라이브', icon: Radio },
 ];
 
 interface CampaignCopy {
@@ -119,7 +121,7 @@ function RateMatrix({
     <div className="border border-white/10 rounded-lg overflow-hidden">
       <div className="grid grid-cols-[140px_repeat(5,1fr)] bg-bg-elevated">
         <div className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-text-secondary">
-          Mission
+          미션
         </div>
         {TIERS.map((tier) => (
           <div
@@ -129,7 +131,7 @@ function RateMatrix({
               tier === highlightTier ? 'text-ube-bright bg-ube/10' : 'text-text-secondary',
             ].join(' ')}
           >
-            {tier}-tier
+            {tier}티어
           </div>
         ))}
       </div>
@@ -146,7 +148,7 @@ function RateMatrix({
               <span>{m.label}</span>
             </div>
             {TIERS.map((tier) => {
-              const value = enabled ? rates[tier] : 0;
+              const value = enabled ? getMissionRate(rates[tier], m.id as MissionKind) : 0;
               const isHighlight = tier === highlightTier;
               return (
                 <div
@@ -236,16 +238,16 @@ export function CampaignDetailContent({
 
   if (state.kind === 'loading') {
     return (
-      <div className="p-10 text-center text-sm text-text-secondary">Loading…</div>
+      <div className="p-10 text-center text-sm text-text-secondary">불러오는 중…</div>
     );
   }
 
   if (state.kind === 'not-found') {
     return (
       <div className="p-10 text-center">
-        <p className="text-base text-text-primary mb-2">Campaign not found</p>
+        <p className="text-base text-text-primary mb-2">캠페인을 찾을 수 없습니다</p>
         <p className="text-sm text-text-secondary">
-          The campaign id <code className="text-ube-bright">{campaignId}</code> doesn&apos;t exist.
+          캠페인 ID <code className="text-ube-bright">{campaignId}</code>가 존재하지 않습니다.
         </p>
       </div>
     );
@@ -268,16 +270,26 @@ export function CampaignDetailContent({
           background: `linear-gradient(135deg, ${campaign.thumbnail.from}, ${campaign.thumbnail.to})`,
         }}
       >
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-[64px] leading-none drop-shadow-[0_8px_24px_rgba(0,0,0,0.5)]">
-            {campaign.thumbnail.emoji}
-          </span>
-        </div>
+        {campaign.thumbnail.imageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={campaign.thumbnail.imageUrl}
+            alt={campaign.name}
+            className="absolute inset-0 w-full h-full object-cover"
+            loading="lazy"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-[64px] leading-none drop-shadow-[0_8px_24px_rgba(0,0,0,0.5)]">
+              {campaign.thumbnail.emoji}
+            </span>
+          </div>
+        )}
         <div
           className="absolute inset-0"
           style={{
             background:
-              'linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 40%, rgba(0,0,0,0) 70%)',
+              'linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.45) 45%, rgba(0,0,0,0.25) 100%)',
           }}
           aria-hidden
         />
@@ -286,7 +298,7 @@ export function CampaignDetailContent({
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close"
+            aria-label="닫기"
             className="absolute top-3 right-3 inline-flex w-8 h-8 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm text-white hover:bg-black/60 transition-colors duration-150 ease-out"
           >
             <X size={16} aria-hidden />
@@ -299,7 +311,7 @@ export function CampaignDetailContent({
               {STATUS_LABEL[campaign.status]}
             </Pill>
             <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium text-white bg-white/20 backdrop-blur-sm">
-              {percent}% budget used
+              예산 {percent}% 사용
             </span>
             {copy.tags.map((t) => (
               <span
@@ -326,10 +338,10 @@ export function CampaignDetailContent({
           .join(' ')}
       >
         <nav
-          aria-label="Campaign sections"
+          aria-label="캠페인 섹션"
           className="flex items-center gap-1 border-b border-white/[0.06] -mx-6 px-6"
         >
-          {(['Overview', 'Missions & rates', 'Participants', 'Submitted content'] as const).map(
+          {(['개요', '미션 & 단가', '참여자', '제출 콘텐츠'] as const).map(
             (label, i) => {
               const active = i === 0;
               const isModalDisabled = variant === 'modal' && !active;
@@ -355,36 +367,36 @@ export function CampaignDetailContent({
         </nav>
 
         <section
-          aria-label="Key metrics"
+          aria-label="주요 지표"
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3"
         >
           <MetricCard
-            label="Total budget"
+            label="총 예산"
             value={formatBudget(campaign.totalBudget)}
-            sub="Reserved"
+            sub="예약됨"
           />
           <MetricCard
-            label="Spent"
+            label="집행액"
             value={formatBudget(campaign.spentBudget)}
-            sub={`${percent}% used`}
+            sub={`${percent}% 사용`}
             valueClass="text-ube-bright"
           />
           <MetricCard
-            label="Creators joined"
+            label="참여 크리에이터"
             value={`${campaign.joined} / ${campaign.target}`}
-            sub={`${fillRatio}% filled`}
+            sub={`${fillRatio}% 충원`}
           />
           <MetricCard
-            label="Content submitted"
+            label="제출 콘텐츠"
             value="12"
-            sub="2 pending review"
+            sub="2건 검수 대기"
             valueClass="text-green-400"
           />
         </section>
 
         <section className="flex flex-col gap-2">
           <span className="text-[10px] font-semibold uppercase tracking-wider text-text-secondary">
-            About the game
+            게임 소개
           </span>
           <p className="text-sm leading-relaxed text-text-primary">{copy.about}</p>
         </section>
@@ -392,10 +404,10 @@ export function CampaignDetailContent({
         <section className="flex flex-col gap-2">
           <div className="flex items-baseline justify-between">
             <span className="text-[10px] font-semibold uppercase tracking-wider text-text-secondary">
-              Mission rates by tier
+              티어별 미션 단가
             </span>
             <span className="text-[11px] text-ube-bright">
-              You&apos;re {myTier}-tier · highlighted column
+              내 티어 {myTier} · 강조 표시됨
             </span>
           </div>
           <RateMatrix
@@ -407,19 +419,19 @@ export function CampaignDetailContent({
 
         <section className="flex flex-col gap-2">
           <span className="text-[10px] font-semibold uppercase tracking-wider text-text-secondary">
-            Brief for creators
+            크리에이터 가이드
           </span>
           <p className="text-sm leading-relaxed text-text-primary">{copy.brief}</p>
         </section>
 
         <section className="flex flex-col gap-2">
           <span className="text-[10px] font-semibold uppercase tracking-wider text-text-secondary">
-            Schedule
+            일정
           </span>
           <div className="rounded-lg border border-white/[0.06] bg-bg-elevated overflow-hidden">
-            <ScheduleRow label="Recruitment period" value={copy.schedule.recruitment} />
-            <ScheduleRow label="Content submission deadline" value={copy.schedule.submission} />
-            <ScheduleRow label="Settlement" value={copy.schedule.settlement} />
+            <ScheduleRow label="모집 기간" value={copy.schedule.recruitment} />
+            <ScheduleRow label="콘텐츠 제출 마감" value={copy.schedule.submission} />
+            <ScheduleRow label="정산일" value={copy.schedule.settlement} />
           </div>
         </section>
       </div>
@@ -435,11 +447,11 @@ export function CampaignDetailContent({
         <span className="inline-flex items-center gap-1.5 text-xs text-ube-bright">
           <Sparkles size={13} aria-hidden />
           <span className="tabular-nums">{matchScore}%</span>
-          <span className="text-text-secondary">match with your channel</span>
+          <span className="text-text-secondary">내 채널과 매칭</span>
         </span>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="md" icon={<Calendar size={14} />}>
-            Save for later
+            나중에 보기
           </Button>
           <ApplyButton
             campaignId={campaign.id}
