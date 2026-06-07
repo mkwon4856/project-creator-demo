@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
 
 import { Bullets, LegalIntro, LegalTitle, Section } from '../_components/Section';
+import { SITE_NAME } from '@/lib/siteConfig';
 
 export const metadata: Metadata = {
-  title: '개인정보처리방침 · Project Creator',
-  description: 'Project Creator 개인정보처리방침',
+  title: '개인정보처리방침',
+  description: `${SITE_NAME} 개인정보처리방침`,
 };
 
 export default function PrivacyPage() {
@@ -16,7 +17,7 @@ export default function PrivacyPage() {
       />
 
       <LegalIntro>
-        Project Creator(이하 “회사”)는 정보주체의 자유와 권리를 보호하기 위해
+        {SITE_NAME}(이하 “회사”)는 정보주체의 자유와 권리를 보호하기 위해
         「개인정보 보호법」을 비롯한 관련 법령을 준수하며, 다음과 같이 개인정보를
         처리하고 있습니다.
       </LegalIntro>

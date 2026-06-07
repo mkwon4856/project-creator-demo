@@ -1,11 +1,7 @@
 import { formatCompactKRW } from '@/lib/formatCurrency';
+import { getSiteUrl, SITE_NAME } from '@/lib/siteConfig';
 
-const DEFAULT_SITE_URL = 'https://project-creator-demo.vercel.app';
-
-export function getSiteUrl(): string {
-  const raw = process.env.NEXT_PUBLIC_SITE_URL?.trim();
-  return raw && raw.length > 0 ? raw.replace(/\/$/, '') : DEFAULT_SITE_URL;
-}
+export { getSiteUrl };
 
 function emailLayout(title: string, body: string, buttonLabel: string, buttonHref: string): string {
   return `<!DOCTYPE html>
@@ -22,7 +18,7 @@ function emailLayout(title: string, body: string, buttonLabel: string, buttonHre
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:12px;border:1px solid #e4e4e7;overflow:hidden;">
           <tr>
             <td style="padding:32px 28px 24px;">
-              <p style="margin:0 0 8px;font-size:12px;font-weight:600;color:#7c3aed;letter-spacing:0.04em;">Project Creator</p>
+              <p style="margin:0 0 8px;font-size:12px;font-weight:600;color:#7c3aed;letter-spacing:0.04em;">${SITE_NAME}</p>
               <h1 style="margin:0 0 16px;font-size:20px;font-weight:600;color:#18181b;line-height:1.4;">${title}</h1>
               <div style="font-size:15px;color:#3f3f46;line-height:1.6;">${body}</div>
             </td>
@@ -33,7 +29,7 @@ function emailLayout(title: string, body: string, buttonLabel: string, buttonHre
             </td>
           </tr>
         </table>
-        <p style="margin:16px 0 0;font-size:12px;color:#a1a1aa;">이 메일은 Project Creator 알림입니다.</p>
+        <p style="margin:16px 0 0;font-size:12px;color:#a1a1aa;">이 메일은 ${SITE_NAME} 알림입니다.</p>
       </td>
     </tr>
   </table>
@@ -44,7 +40,7 @@ function emailLayout(title: string, body: string, buttonLabel: string, buttonHre
 export function applicationReceivedEmail(campaignName: string): { subject: string; html: string } {
   const href = `${getSiteUrl()}/studio/applicants`;
   return {
-    subject: `[Project Creator] 새 캠페인 지원 — ${campaignName}`,
+    subject: `[${SITE_NAME}] 새 캠페인 지원 — ${campaignName}`,
     html: emailLayout(
       '새로운 크리에이터가 캠페인에 지원했습니다',
       `<p style="margin:0 0 12px;"><strong>${campaignName}</strong> 캠페인에 새 지원이 접수되었습니다.</p>
@@ -68,7 +64,7 @@ export function applicationResultEmail(
        <p style="margin:0;">다른 캠페인에 지원해 보실 수 있습니다.</p>`;
 
   return {
-    subject: `[Project Creator] ${approved ? '지원 승인' : '지원 거절'} — ${campaignName}`,
+    subject: `[${SITE_NAME}] ${approved ? '지원 승인' : '지원 거절'} — ${campaignName}`,
     html: emailLayout(title, body, '내 활동 보기', href),
   };
 }
@@ -76,7 +72,7 @@ export function applicationResultEmail(
 export function submissionReceivedEmail(campaignName: string): { subject: string; html: string } {
   const href = `${getSiteUrl()}/studio/review`;
   return {
-    subject: `[Project Creator] 새 콘텐츠 제출 — ${campaignName}`,
+    subject: `[${SITE_NAME}] 새 콘텐츠 제출 — ${campaignName}`,
     html: emailLayout(
       '새 콘텐츠가 제출되었습니다',
       `<p style="margin:0 0 12px;"><strong>${campaignName}</strong> 캠페인에 크리에이터가 콘텐츠를 제출했습니다.</p>
@@ -100,7 +96,7 @@ export function submissionResultEmail(
        <p style="margin:0;">가이드라인을 확인한 뒤 수정·재제출해주세요.</p>`;
 
   return {
-    subject: `[Project Creator] ${approved ? '콘텐츠 승인' : '콘텐츠 반려'} — ${campaignName}`,
+    subject: `[${SITE_NAME}] ${approved ? '콘텐츠 승인' : '콘텐츠 반려'} — ${campaignName}`,
     html: emailLayout(title, body, '내 활동 보기', href),
   };
 }
@@ -112,7 +108,7 @@ export function paymentCompletedEmail(
   const href = `${getSiteUrl()}/creator/earnings`;
   const formatted = formatCompactKRW(amount);
   return {
-    subject: `[Project Creator] 정산 완료 — ${campaignName}`,
+    subject: `[${SITE_NAME}] 정산 완료 — ${campaignName}`,
     html: emailLayout(
       '정산이 완료되었습니다',
       `<p style="margin:0 0 12px;"><strong>${campaignName}</strong> 캠페인 정산이 완료되었습니다.</p>

@@ -5,51 +5,14 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { CampaignCard } from '@/app/studio/_components/CampaignCard';
+import { FooterBar, NavBar } from '@/app/_components/landing/PublicChrome';
 import { DemoBanner } from '@/components/layout';
 import { Badge, Button, Card } from '@/components/ui';
+
 import type { Campaign } from '@/lib/campaigns/types';
 
 interface LandingPageProps {
   liveCampaigns: Campaign[];
-}
-
-function Logo({ size = 'md' }: { size?: 'sm' | 'md' }) {
-  const cls =
-    size === 'sm'
-      ? 'text-sm font-semibold tracking-tight'
-      : 'text-base font-semibold tracking-tight';
-  return (
-    <Link href="/" className={`${cls} text-text-primary`}>
-      Project <span className="text-primary">Creator</span>
-    </Link>
-  );
-}
-
-function NavBar() {
-  const router = useRouter();
-  return (
-    <nav className="flex items-center justify-between gap-3 py-5">
-      <Logo />
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0">
-        <Button
-          variant="ghost"
-          size="md"
-          className="w-full sm:w-auto"
-          onClick={() => router.push('/login')}
-        >
-          로그인
-        </Button>
-        <Button
-          variant="primary"
-          size="md"
-          className="w-full sm:w-auto"
-          onClick={() => router.push('/signup')}
-        >
-          시작하기
-        </Button>
-      </div>
-    </nav>
-  );
 }
 
 function HeroSection() {
@@ -218,31 +181,6 @@ function FinalCtaSection() {
         </Button>
       </div>
     </section>
-  );
-}
-
-function FooterBar() {
-  return (
-    <footer className="py-6 border-t border-border flex flex-wrap justify-between items-center gap-3">
-      <Logo size="sm" />
-      <nav aria-label="법적 고지" className="flex items-center gap-4 text-xs text-text-secondary">
-        <Link
-          href="/terms"
-          className="hover:text-text-primary transition-colors duration-150 ease-out"
-        >
-          이용약관
-        </Link>
-        <Link
-          href="/privacy"
-          className="hover:text-text-primary transition-colors duration-150 ease-out"
-        >
-          개인정보처리방침
-        </Link>
-      </nav>
-      <span className="text-xs text-text-secondary">
-        © 2026 Project Creator. All rights reserved.
-      </span>
-    </footer>
   );
 }
 

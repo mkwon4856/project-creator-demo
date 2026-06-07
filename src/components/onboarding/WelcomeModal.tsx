@@ -12,6 +12,7 @@ import {
 import { useRouter } from 'next/navigation';
 
 import { Button, Modal } from '@/components/ui';
+import { SITE_NAME } from '@/lib/siteConfig';
 
 export const WELCOME_SEEN_KEY = 'pc-welcome-seen';
 
@@ -91,7 +92,7 @@ interface RoleCopy {
 function getRoleCopy(role: WelcomeRole, userName: string): RoleCopy {
   if (role === 'studio') {
     return {
-      title: 'Project Creator에 오신 걸 환영해요! 🎮',
+      title: `${SITE_NAME}에 오신 걸 환영해요! 🎮`,
       subtitle: '크리에이터와 함께 캠페인을 시작해보세요.',
       steps: STUDIO_STEPS,
       primaryCta: { label: '첫 캠페인 만들기', href: '/studio/new' },

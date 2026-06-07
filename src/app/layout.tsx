@@ -1,10 +1,32 @@
-import type { Metadata } from "next";
-import "./globals.css";
-import { ToastContainer } from "@/components/ui";
+import type { Metadata } from 'next';
+
+import { ToastContainer } from '@/components/ui';
+import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '@/lib/siteConfig';
+
+import './globals.css';
 
 export const metadata: Metadata = {
-  title: "Project Creator",
-  description: "크리에이터 마케팅 데모",
+  title: {
+    default: SITE_NAME,
+    template: `%s | ${SITE_NAME}`,
+  },
+  description: SITE_DESCRIPTION,
+  metadataBase: new URL(SITE_URL),
+  openGraph: {
+    type: 'website',
+    locale: 'ko_KR',
+    siteName: SITE_NAME,
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
+    images: [
+      {
+        url: '/opengraph-image',
+        width: 1200,
+        height: 630,
+        alt: SITE_NAME,
+      },
+    ],
+  },
 };
 
 export default function RootLayout({

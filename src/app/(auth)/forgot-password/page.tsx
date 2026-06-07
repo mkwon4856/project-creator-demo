@@ -1,7 +1,7 @@
 import { ForgotPasswordForm } from '../_components/ForgotPasswordForm';
 
 export const metadata = {
-  title: '비밀번호 재설정 · Project Creator',
+  title: '비밀번호 재설정',
 };
 
 export default function ForgotPasswordPage() {

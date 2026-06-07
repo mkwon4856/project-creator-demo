@@ -1,7 +1,7 @@
 import { ResetPasswordForm } from '../_components/ResetPasswordForm';
 
 export const metadata = {
-  title: '새 비밀번호 설정 · Project Creator',
+  title: '새 비밀번호 설정',
 };
 
 export default function ResetPasswordPage() {

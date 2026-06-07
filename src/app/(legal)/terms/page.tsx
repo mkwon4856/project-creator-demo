@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
 
 import { Bullets, LegalIntro, LegalTitle, Section } from '../_components/Section';
+import { SITE_NAME } from '@/lib/siteConfig';
 
 export const metadata: Metadata = {
-  title: '이용약관 · Project Creator',
-  description: 'Project Creator 서비스 이용약관',
+  title: '이용약관',
+  description: `${SITE_NAME} 서비스 이용약관`,
 };
 
 export default function TermsPage() {
@@ -16,14 +17,14 @@ export default function TermsPage() {
       />
 
       <LegalIntro>
-        본 약관은 Project Creator(이하 “서비스”)를 이용하는 모든 회원과 회사 사이의
+        본 약관은 {SITE_NAME}(이하 “서비스”)를 이용하는 모든 회원과 회사 사이의
         권리·의무 및 책임 사항을 규정합니다. 회원가입을 진행하는 시점에 본 약관에
         동의한 것으로 간주합니다.
       </LegalIntro>
 
       <Section number={1} title="서비스 개요">
         <p>
-          Project Creator는 게임사(이하 “게임사”)와 크리에이터(이하 “크리에이터”)를
+          {SITE_NAME}는 게임사(이하 “게임사”)와 크리에이터(이하 “크리에이터”)를
           연결하여 게임 마케팅 콘텐츠 제작·정산을 중개하는 온라인 플랫폼입니다. 회사는
           양 당사자가 효율적으로 협업할 수 있도록 캠페인 생성, 지원, 검수, 정산 등의
           기능을 제공합니다.

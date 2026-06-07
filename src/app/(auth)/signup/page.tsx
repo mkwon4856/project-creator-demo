@@ -3,7 +3,7 @@ import { Suspense } from 'react';
 import { AuthForm } from '../_components/AuthForm';
 
 export const metadata = {
-  title: '회원가입 · Project Creator',
+  title: '회원가입',
 };
 
 export default function SignupPage() {

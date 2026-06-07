@@ -1,10 +1,12 @@
-import Link from 'next/link';
-import type { ReactNode } from 'react';
+'use client';
 
-import { DemoBanner } from '@/components/layout';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+
+import { Button } from '@/components/ui';
 import { SITE_NAME, splitSiteName } from '@/lib/siteConfig';
 
-function Logo({ size = 'md' }: { size?: 'sm' | 'md' }) {
+export function Logo({ size = 'md' }: { size?: 'sm' | 'md' }) {
   const cls =
     size === 'sm'
       ? 'text-sm font-semibold tracking-tight'
@@ -23,25 +25,44 @@ function Logo({ size = 'md' }: { size?: 'sm' | 'md' }) {
   );
 }
 
-function LegalHeader() {
+export function NavBar() {
+  const router = useRouter();
   return (
-    <header className="flex items-center justify-between py-5 border-b border-border">
+    <nav className="flex items-center justify-between gap-3 py-5">
       <Logo />
-      <Link
-        href="/"
-        className="text-xs text-text-secondary hover:text-text-primary transition-colors duration-150 ease-out"
-      >
-        ← 홈으로
-      </Link>
-    </header>
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0">
+        <Button
+          variant="ghost"
+          size="md"
+          className="w-full sm:w-auto"
+          onClick={() => router.push('/login')}
+        >
+          로그인
+        </Button>
+        <Button
+          variant="primary"
+          size="md"
+          className="w-full sm:w-auto"
+          onClick={() => router.push('/signup')}
+        >
+          시작하기
+        </Button>
+      </div>
+    </nav>
   );
 }
 
-function LegalFooter() {
+export function FooterBar() {
   return (
-    <footer className="py-6 mt-8 border-t border-border flex flex-wrap justify-between items-center gap-3">
+    <footer className="py-6 border-t border-border flex flex-wrap justify-between items-center gap-3">
       <Logo size="sm" />
       <nav aria-label="법적 고지" className="flex items-center gap-4 text-xs text-text-secondary">
+        <Link
+          href="/pricing"
+          className="hover:text-text-primary transition-colors duration-150 ease-out"
+        >
+          가격 정책
+        </Link>
         <Link
           href="/terms"
           className="hover:text-text-primary transition-colors duration-150 ease-out"
@@ -59,20 +80,5 @@ function LegalFooter() {
         © 2026 {SITE_NAME}. All rights reserved.
       </span>
     </footer>
-  );
-}
-
-export default function LegalLayout({ children }: { children: ReactNode }) {
-  return (
-    <main className="min-h-screen bg-bg-base text-text-primary">
-      <div className="sticky top-0 z-40">
-        <DemoBanner />
-      </div>
-      <div className="w-full max-w-[800px] mx-auto px-6 py-12">
-        <LegalHeader />
-        <article className="pt-4 pb-2">{children}</article>
-        <LegalFooter />
-      </div>
-    </main>
   );
 }
