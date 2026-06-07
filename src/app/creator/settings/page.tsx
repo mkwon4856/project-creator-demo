@@ -97,7 +97,7 @@ export default function CreatorSettingsPage() {
       sidebarSections={getCreatorSidebar('settings')}
     >
       <header className="mb-6">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-ube-bright">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-primary">
           크리에이터 · 설정
         </span>
         <h1 className="text-[22px] font-medium text-text-primary leading-tight mt-1.5">

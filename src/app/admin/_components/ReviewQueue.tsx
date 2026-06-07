@@ -3,9 +3,9 @@
 import { Film, Radio, Video } from 'lucide-react';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 
-import { Button, Pill, toast } from '@/components/ui';
+import { Badge, Button, statusToBadgeVariant, toast } from '@/components/ui';
 import type { CampaignThumbnailJson, CreatorGrade } from '@/lib/db.types';
-import { formatCompactKRW, MISSION_LABELS } from '@/lib/mockAdmin';
+import { formatCompactKRW } from '@/lib/formatCurrency';
 import {
   useAppStore,
   type ActivityMission,
@@ -20,6 +20,13 @@ const HAS_SUPABASE_ENV =
   Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
 const GRID = 'grid-cols-[40px_1.4fr_1fr_1fr_0.8fr_0.9fr_180px]';
+
+const MISSION_LABELS: Record<ActivityMission, string> = {
+  shortform: 'Shortform',
+  longform: 'Longform',
+  live: 'Live',
+};
+
 
 type QueueStatus = 'review' | 'approved';
 
@@ -50,18 +57,21 @@ interface QueueRow {
   reward: number;
 }
 
-function StatusPill({ status }: { status: QueueStatus }) {
-  if (status === 'approved') {
-    return (
-      <Pill variant="status" status="live" size="sm">
-        승인됨 · 정산 대기
-      </Pill>
-    );
-  }
+const QUEUE_STATUS_LABELS: Record<QueueStatus, string> = {
+  review: '검수 중',
+  approved: '승인됨 · 정산 대기',
+};
+
+const QUEUE_BADGE_STATUS: Record<QueueStatus, string> = {
+  review: 'review',
+  approved: 'approved',
+};
+
+function StatusBadge({ status }: { status: QueueStatus }) {
   return (
-    <Pill variant="status" status="review" size="sm">
-      검수 중
-    </Pill>
+    <Badge variant={statusToBadgeVariant(QUEUE_BADGE_STATUS[status])} size="sm">
+      {QUEUE_STATUS_LABELS[status]}
+    </Badge>
   );
 }
 
@@ -111,7 +121,7 @@ function HeaderRow() {
   return (
     <div
       role="row"
-      className={`grid ${GRID} items-center gap-3 px-5 py-3 bg-bg-elevated text-[11px] uppercase tracking-wider text-text-secondary`}
+      className={`grid ${GRID} items-center gap-3 px-5 py-3 bg-bg-elevated text-xs font-medium text-text-secondary uppercase`}
     >
       <span aria-hidden />
       <span>캠페인</span>
@@ -142,7 +152,7 @@ function Row({
       role="row"
       className={[
         `grid ${GRID} items-center gap-3 px-5 py-3 transition-colors duration-150 ease-out hover:bg-bg-hover`,
-        last ? '' : 'border-b border-white/[0.06]',
+        last ? '' : 'border-b border-border',
       ].join(' ')}
     >
       <span
@@ -180,7 +190,7 @@ function Row({
 
       <span className="text-xs text-text-secondary">{item.submittedAgo}</span>
 
-      <StatusPill status={item.status} />
+      <StatusBadge status={item.status} />
 
       <div className="flex items-center justify-end gap-2">
         <span className="text-sm font-medium tabular-nums text-text-primary">

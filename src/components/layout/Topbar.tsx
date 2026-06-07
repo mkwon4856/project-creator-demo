@@ -1,10 +1,11 @@
 'use client';
 
-import { Bell, LogOut, Menu } from 'lucide-react';
+import { Bell, LogOut, Menu, X } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import type { ReactNode } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { useEffect, useState, type ReactNode } from 'react';
 
+import { Badge, IconButton } from '@/components/ui';
 import { createClient as createBrowserSupabaseClient } from '@/lib/supabase/client';
 
 import { type Locale } from './LanguageToggle';
@@ -18,27 +19,111 @@ const PERSONA_LINKS: ReadonlyArray<{ key: Persona; label: string; href: string }
   { key: 'admin', label: '관리자', href: '/admin' },
 ];
 
-function PersonaSwitcher({ persona }: { persona: Persona }) {
+function isPersonaActive(pathname: string, key: Persona): boolean {
+  const prefix =
+    key === 'studio' ? '/studio' : key === 'creator' ? '/creator' : '/admin';
+  return pathname === prefix || pathname.startsWith(`${prefix}/`);
+}
+
+function PersonaNavLink({
+  href,
+  label,
+  active,
+  variant,
+  onNavigate,
+}: {
+  href: string;
+  label: string;
+  active: boolean;
+  variant: 'desktop' | 'mobile';
+  onNavigate?: () => void;
+}) {
+  if (variant === 'desktop') {
+    return (
+      <Link
+        href={href}
+        onClick={onNavigate}
+        className={[
+          'relative inline-flex items-center px-3 h-14 text-sm transition-colors duration-150 ease-out',
+          active
+            ? 'text-text-primary font-medium'
+            : 'text-text-secondary hover:text-text-primary',
+        ].join(' ')}
+        aria-current={active ? 'page' : undefined}
+      >
+        {label}
+        {active && (
+          <span
+            aria-hidden
+            className="absolute bottom-0 left-3 right-3 h-0.5 rounded-full bg-primary"
+          />
+        )}
+      </Link>
+    );
+  }
+
+  return (
+    <Link
+      href={href}
+      onClick={onNavigate}
+      className={[
+        'block py-3 px-4 text-sm transition-colors duration-150 ease-out',
+        active
+          ? 'text-primary bg-primary-dim font-medium'
+          : 'text-text-secondary hover:text-text-primary hover:bg-surface-hover',
+      ].join(' ')}
+      aria-current={active ? 'page' : undefined}
+    >
+      {label}
+    </Link>
+  );
+}
+
+function DesktopPersonaNav() {
+  const pathname = usePathname();
+
   return (
     <nav
-      aria-label="페르소나 전환 (데모용)"
-      className="hidden md:flex items-center gap-1 ml-4 text-xs"
+      aria-label="역할 메뉴"
+      className="hidden md:flex items-center gap-0.5 ml-2"
     >
-      {PERSONA_LINKS.map((p, i) => (
-        <span key={p.key} className="inline-flex items-center gap-1">
-          {i > 0 && <span className="text-text-muted">·</span>}
-          <Link
-            href={p.href}
-            className={
-              p.key === persona
-                ? 'text-ube-bright font-medium px-1.5 py-0.5 rounded'
-                : 'text-text-muted hover:text-text-secondary px-1.5 py-0.5 rounded transition-colors duration-150 ease-out'
-            }
-            aria-current={p.key === persona ? 'page' : undefined}
-          >
-            {p.label}
-          </Link>
-        </span>
+      {PERSONA_LINKS.map((p) => (
+        <PersonaNavLink
+          key={p.key}
+          href={p.href}
+          label={p.label}
+          active={isPersonaActive(pathname, p.key)}
+          variant="desktop"
+        />
+      ))}
+    </nav>
+  );
+}
+
+function MobilePersonaNavPanel({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) {
+  const pathname = usePathname();
+  if (!open) return null;
+
+  return (
+    <nav
+      aria-label="역할 메뉴"
+      className="md:hidden border-b border-border bg-surface"
+    >
+      {PERSONA_LINKS.map((p) => (
+        <PersonaNavLink
+          key={p.key}
+          href={p.href}
+          label={p.label}
+          active={isPersonaActive(pathname, p.key)}
+          variant="mobile"
+          onNavigate={onClose}
+        />
       ))}
     </nav>
   );
@@ -66,22 +151,19 @@ export interface TopbarProps {
 function DemoBadge({ persona, label }: { persona: Persona; label?: string }) {
   const isAdmin = persona === 'admin';
   const text = label ?? (isAdmin ? '관리자' : 'DEMO');
+
+  if (isAdmin) {
+    return (
+      <Badge variant="primary" size="xs" className="uppercase tracking-wider">
+        {text}
+      </Badge>
+    );
+  }
+
   return (
-    <span
-      className={[
-        'inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold tracking-wider uppercase leading-none',
-        isAdmin
-          ? 'text-white border border-ube-dark'
-          : 'bg-ube-tint text-ube-bright border border-ube/30',
-      ].join(' ')}
-      style={
-        isAdmin
-          ? { background: 'linear-gradient(135deg, var(--ube-dark), #3F2D5A)' }
-          : undefined
-      }
-    >
+    <Badge variant="neutral" size="xs" className="uppercase tracking-wider">
       {text}
-    </span>
+    </Badge>
   );
 }
 
@@ -89,7 +171,7 @@ function Avatar({ avatar, name }: { avatar?: string; name: string }) {
   const isUrl = avatar && /^(https?:|\/)/i.test(avatar);
   return (
     <span
-      className="inline-flex w-8 h-8 rounded-full bg-bg-card border border-white/10 items-center justify-center overflow-hidden text-base shrink-0"
+      className="inline-flex w-8 h-8 rounded-full bg-bg-card border border-border items-center justify-center overflow-hidden text-base shrink-0"
       aria-hidden
     >
       {avatar && isUrl ? (
@@ -114,15 +196,9 @@ function LogoutButton() {
     router.push('/login');
   };
   return (
-    <button
-      type="button"
-      onClick={handleLogout}
-      title="로그아웃"
-      aria-label="로그아웃"
-      className="inline-flex w-9 h-9 items-center justify-center rounded-lg bg-bg-card border border-white/10 text-text-secondary hover:text-red-400 hover:border-white/20 transition-colors duration-150 ease-out cursor-pointer"
-    >
+    <IconButton aria-label="로그아웃" title="로그아웃" size="md" onClick={handleLogout}>
       <LogOut size={16} aria-hidden />
-    </button>
+    </IconButton>
   );
 }
 
@@ -135,21 +211,20 @@ function NotificationBell({
 }) {
   const hasCount = typeof count === 'number' && count > 0;
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={hasCount ? `알림 ${count}개` : '알림'}
-      className="relative inline-flex w-9 h-9 items-center justify-center rounded-lg bg-bg-card border border-white/10 text-text-secondary hover:text-text-primary hover:border-white/20 transition-colors duration-150 ease-out cursor-pointer"
-    >
-      <Bell size={16} aria-hidden />
+    <span className="relative inline-flex">
+      <IconButton
+        aria-label={hasCount ? `알림 ${count}개` : '알림'}
+        size="md"
+        onClick={onClick}
+      >
+        <Bell size={16} aria-hidden />
+      </IconButton>
       {hasCount && (
-        <span
-          className="absolute top-1.5 right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-ube-bright text-[10px] text-white font-semibold flex items-center justify-center leading-none ring-1 ring-bg-base"
-        >
+        <span className="pointer-events-none absolute top-1 right-1 min-w-[16px] h-4 px-1 rounded-full bg-primary text-[10px] text-bg font-semibold flex items-center justify-center leading-none ring-1 ring-bg">
           {count! > 99 ? '99+' : count}
         </span>
       )}
-    </button>
+    </span>
   );
 }
 
@@ -166,43 +241,74 @@ export function Topbar({
   leftSlot,
   onMenuToggle,
 }: TopbarProps) {
-  return (
-    <header className="flex items-center justify-between px-4 md:px-8 py-3 md:py-4 border-b border-white/[0.06] bg-bg-base gap-2">
-      <div className="flex items-center gap-2 md:gap-3 min-w-0">
-        {onMenuToggle && (
-          <button
-            type="button"
-            onClick={onMenuToggle}
-            aria-label="메뉴 열기"
-            className="md:hidden inline-flex w-9 h-9 items-center justify-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-bg-hover transition-colors duration-150 ease-out cursor-pointer"
-          >
-            <Menu size={20} aria-hidden />
-          </button>
-        )}
-        <span className="text-base font-semibold tracking-tight whitespace-nowrap">
-          Project <span className="text-ube-bright">Creator</span>
-        </span>
-        <DemoBadge persona={persona} label={badgeLabel} />
-        <PersonaSwitcher persona={persona} />
-        {leftSlot && <div className="ml-3 min-w-0 hidden md:block">{leftSlot}</div>}
-      </div>
+  const pathname = usePathname();
+  const [navOpen, setNavOpen] = useState(false);
 
-      <div className="flex items-center gap-2 md:gap-3">
-        <div className="hidden md:flex items-center gap-3">
-          <SizeToggle value={textSize} onChange={onTextSizeChange} />
+  useEffect(() => {
+    setNavOpen(false);
+  }, [pathname]);
+
+  const closeNav = () => setNavOpen(false);
+
+  return (
+    <div className="sticky top-0 z-50">
+      <header className="flex items-center justify-between h-14 px-4 md:px-6 border-b border-border bg-bg/95 backdrop-blur-md gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          {onMenuToggle && (
+            <IconButton
+              aria-label="사이드바 메뉴"
+              size="md"
+              className="md:hidden shrink-0"
+              onClick={onMenuToggle}
+            >
+              <Menu size={20} aria-hidden />
+            </IconButton>
+          )}
+          <Link
+            href={
+              persona === 'studio'
+                ? '/studio'
+                : persona === 'creator'
+                  ? '/creator'
+                  : '/admin'
+            }
+            className="text-sm font-bold tracking-tight text-text-primary whitespace-nowrap shrink-0"
+          >
+            Project <span className="text-primary">Creator</span>
+          </Link>
+          <DemoBadge persona={persona} label={badgeLabel} />
+          <DesktopPersonaNav />
+          {leftSlot && <div className="ml-2 min-w-0 hidden md:block">{leftSlot}</div>}
         </div>
-        <NotificationBell count={notificationCount} onClick={onNotificationClick} />
-        <div className="flex items-center gap-2 pl-1 md:pl-2">
-          <Avatar avatar={userAvatar} name={userName} />
-          <div className="hidden sm:flex flex-col leading-tight">
-            <span className="text-sm font-medium text-text-primary">{userName}</span>
-            {userBadge && (
-              <span className="text-[11px] text-text-muted">{userBadge}</span>
-            )}
+
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+          <IconButton
+            aria-label={navOpen ? '역할 메뉴 닫기' : '역할 메뉴 열기'}
+            size="md"
+            className="md:hidden"
+            onClick={() => setNavOpen((v) => !v)}
+          >
+            {navOpen ? <X size={20} aria-hidden /> : <Menu size={20} aria-hidden />}
+          </IconButton>
+
+          <div className="hidden md:flex items-center">
+            <SizeToggle value={textSize} onChange={onTextSizeChange} />
           </div>
+          <NotificationBell count={notificationCount} onClick={onNotificationClick} />
+          <div className="flex items-center gap-2 pl-0.5 sm:pl-1">
+            <Avatar avatar={userAvatar} name={userName} />
+            <div className="hidden sm:flex flex-col leading-tight">
+              <span className="text-sm font-medium text-text-primary">{userName}</span>
+              {userBadge && (
+                <span className="text-[11px] text-text-muted">{userBadge}</span>
+              )}
+            </div>
+          </div>
+          <LogoutButton />
         </div>
-        <LogoutButton />
-      </div>
-    </header>
+      </header>
+
+      <MobilePersonaNavPanel open={navOpen} onClose={closeNav} />
+    </div>
   );
 }

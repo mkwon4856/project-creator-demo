@@ -4,7 +4,7 @@ import { Check, Search, Star, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { WorkspaceLayout } from '@/components/layout';
-import { Badge, Input, toast } from '@/components/ui';
+import { Badge, Card, Input, Pill, toast } from '@/components/ui';
 import type { CreatorGrade, Database } from '@/lib/db.types';
 import { formatSubscribers } from '@/lib/mockCreators';
 import { createClient as createBrowserSupabaseClient } from '@/lib/supabase/client';
@@ -54,36 +54,11 @@ function CreatorAvatar({ name }: { name: string }) {
   );
 }
 
-function FilterPill({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={[
-        'inline-flex items-center rounded-full px-3 py-1 text-xs font-medium transition-colors duration-150 ease-out border whitespace-nowrap',
-        active
-          ? 'bg-ube text-white border-ube'
-          : 'bg-transparent border-white/10 text-text-secondary hover:border-white/20 hover:text-text-primary',
-      ].join(' ')}
-    >
-      {children}
-    </button>
-  );
-}
-
 function HeaderRow() {
   return (
     <div
       role="row"
-      className={`grid ${GRID} items-center gap-3 px-5 py-3 bg-bg-elevated text-[11px] uppercase tracking-wider text-text-secondary`}
+      className={`grid ${GRID} items-center gap-3 px-5 py-3 bg-bg-elevated text-xs font-medium text-text-secondary uppercase`}
     >
       <span>크리에이터</span>
       <span>핸들</span>
@@ -104,7 +79,7 @@ function Row({ item, last }: { item: CreatorRow; last: boolean }) {
       role="row"
       className={[
         `grid ${GRID} items-center gap-3 px-5 py-3 transition-colors duration-150 ease-out hover:bg-bg-hover`,
-        last ? '' : 'border-b border-white/[0.06]',
+        last ? '' : 'border-b border-border',
       ].join(' ')}
     >
       <div className="flex items-center gap-2 min-w-0">
@@ -116,7 +91,7 @@ function Row({ item, last }: { item: CreatorRow; last: boolean }) {
 
       <span className="text-xs text-text-secondary truncate">{item.handle}</span>
 
-      <Badge variant="ube" size="sm">
+      <Badge variant="primary" size="sm">
         {item.grade}
       </Badge>
 
@@ -129,7 +104,7 @@ function Row({ item, last }: { item: CreatorRow; last: boolean }) {
       </span>
 
       <span className="inline-flex items-center justify-end gap-1 text-sm tabular-nums text-text-primary">
-        <Star size={12} className="text-amber-400 fill-amber-400" aria-hidden />
+        <Star size={12} className="text-warning fill-warning" aria-hidden />
         {Number(item.rating).toFixed(1)}
       </span>
 
@@ -139,7 +114,7 @@ function Row({ item, last }: { item: CreatorRow; last: boolean }) {
 
       <span className="flex items-center justify-center">
         {item.is_verified ? (
-          <Check size={14} className="text-green-400" aria-hidden />
+          <Check size={14} className="text-success" aria-hidden />
         ) : (
           <X size={14} className="text-text-muted" aria-hidden />
         )}
@@ -239,7 +214,7 @@ export default function AdminCreatorsPage() {
       notificationCount={badgeCounts.notification}
     >
       <header className="mb-6">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-ube-bright">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-primary">
           관리자 · 디렉터리
         </span>
         <h1 className="text-[22px] font-medium text-text-primary leading-tight mt-1.5">
@@ -251,9 +226,9 @@ export default function AdminCreatorsPage() {
       <div className="flex items-center gap-3 flex-wrap mb-4">
         <div className="flex items-center gap-2 flex-wrap">
           {GRADE_FILTERS.map((f) => (
-            <FilterPill
+            <Pill
               key={f.id}
-              active={gradeFilter === f.id}
+              variant={gradeFilter === f.id ? 'active' : 'default'}
               onClick={() => setGradeFilter(f.id)}
             >
               {f.label}
@@ -265,7 +240,7 @@ export default function AdminCreatorsPage() {
               >
                 {counts[f.id]}
               </span>
-            </FilterPill>
+            </Pill>
           ))}
         </div>
         <div className="ml-auto w-full max-w-xs">
@@ -279,7 +254,7 @@ export default function AdminCreatorsPage() {
         </div>
       </div>
 
-      <div className="border border-white/[0.06] rounded-lg overflow-hidden bg-bg-card">
+      <Card padding="none" className="overflow-hidden">
         <HeaderRow />
         {filtered.length === 0 ? (
           <div className="px-5 py-16 text-center">
@@ -299,7 +274,7 @@ export default function AdminCreatorsPage() {
             <Row key={item.id} item={item} last={i === filtered.length - 1} />
           ))
         )}
-      </div>
+      </Card>
     </WorkspaceLayout>
   );
 }

@@ -82,9 +82,10 @@ export function WorkspaceLayout({
 
   return (
     <div className="min-h-screen flex flex-col bg-bg-base text-text-primary">
-      <div className="sticky top-0 z-40">
+      <div className="sticky top-0 z-40 bg-bg-base">
         <DemoBanner />
         <Topbar
+
           persona={persona}
           userName={userName}
           userAvatar={userAvatar}

@@ -3,7 +3,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-import { type Campaign } from '@/lib/mockCampaigns';
+import { type Campaign } from '@/lib/campaigns/types';
 import { CURRENT_CREATOR } from '@/lib/mockCreators';
 
 export type ActivityStatus = 'making' | 'review' | 'paid' | 'rejected';

@@ -5,7 +5,7 @@ import { useEffect, useId, useState } from 'react';
 
 import { WorkspaceLayout } from '@/components/layout';
 import { ProfileCompletion } from '@/components/creator/ProfileCompletion';
-import { Badge, Button, Card, Input, toast } from '@/components/ui';
+import { Alert, Badge, Button, Card, Input, Textarea, toast } from '@/components/ui';
 import type { CreatorGrade, Database, Json } from '@/lib/db.types';
 import { CURRENT_CREATOR, formatSubscribers } from '@/lib/mockCreators';
 import { createClient as createBrowserSupabaseClient } from '@/lib/supabase/client';
@@ -354,11 +354,9 @@ export default function CreatorProfilePage() {
       )}
 
       {!creator && (
-        <Card variant="default" padding="md" className="mb-6 border-amber-500/40">
-          <p className="text-xs text-amber-300">
-            크리에이터 프로필이 없습니다. 회원가입 시 role을 <code>creator</code>로 선택해야 이 페이지에서 수정할 수 있습니다.
-          </p>
-        </Card>
+        <Alert variant="warning" className="mb-6">
+          크리에이터 프로필이 없습니다. 회원가입 시 role을 <code>creator</code>로 선택해야 이 페이지에서 수정할 수 있습니다.
+        </Alert>
       )}
 
       <Card variant="default" padding="lg" className="mb-6">
@@ -382,27 +380,24 @@ export default function CreatorProfilePage() {
           />
         </div>
 
-        <div className="mb-4 flex flex-col gap-1.5">
-          <label htmlFor={bioId} className="text-xs font-medium text-text-secondary">
-            소개
-          </label>
-          <textarea
-            id={bioId}
-            value={bio}
-            onChange={(e) => setBio(e.target.value)}
-            rows={3}
-            placeholder="자기소개 (어떤 게임을 주로 다루는지, 채널 컨셉 등)"
-            className="min-h-[100px] bg-bg-card border border-white/10 rounded-md p-3.5 text-sm text-text-primary placeholder:text-text-muted outline-none focus:border-ube focus:shadow-[0_0_0_3px_var(--ube-tint)] resize-vertical transition-all duration-150 ease-out"
-          />
-        </div>
+        <Textarea
+          id={bioId}
+          label="소개"
+          value={bio}
+          onChange={(e) => setBio(e.target.value)}
+          rows={3}
+          placeholder="자기소개 (어떤 게임을 주로 다루는지, 채널 컨셉 등)"
+          className="min-h-[100px] resize-vertical"
+          containerClassName="mb-4"
+        />
 
         <div className="flex items-center gap-3 pt-2 border-t border-white/[0.06] mt-2">
           <span className="text-xs font-medium text-text-secondary">등급</span>
-          <Badge variant="ube" size="sm">
+          <Badge variant="primary" size="sm">
             {currentGrade}티어
           </Badge>
           {computedGrade !== currentGrade && (
-            <span className="text-[11px] text-amber-300">
+            <span className="text-[11px] text-warning">
               저장 시 {currentGrade} → {computedGrade}로 자동 변경
             </span>
           )}

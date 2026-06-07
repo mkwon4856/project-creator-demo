@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 
-import { Button, Input } from '@/components/ui';
+import { Alert, Button, Card, Input } from '@/components/ui';
 import { createClient as createBrowserSupabaseClient } from '@/lib/supabase/client';
 
 type AuthRole = 'studio' | 'creator';
@@ -161,16 +161,14 @@ export function AuthForm({ mode }: AuthFormProps) {
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="max-w-[420px] w-full bg-bg-card border border-white/[0.06] rounded-xl p-8"
-    >
+    <form onSubmit={handleSubmit} className="max-w-[420px] w-full">
+      <Card padding="lg">
       <div className="flex justify-center mb-7">
         <Link
           href="/"
           className="text-base font-semibold tracking-tight text-text-primary"
         >
-          Project <span className="text-ube-bright">Creator</span>
+          Project <span className="text-primary">Creator</span>
         </Link>
       </div>
 
@@ -184,12 +182,9 @@ export function AuthForm({ mode }: AuthFormProps) {
       </p>
 
       {error && (
-        <div
-          role="alert"
-          className="mb-4 px-3 py-2.5 rounded-md bg-red-500/15 text-red-400 border border-red-500/30 text-xs leading-relaxed"
-        >
+        <Alert variant="danger" className="mb-4">
           {error}
-        </div>
+        </Alert>
       )}
 
       {isSignup && (
@@ -215,8 +210,8 @@ export function AuthForm({ mode }: AuthFormProps) {
                 label="게임사"
                 hint="캠페인 운영"
                 selected={role === 'studio'}
-                selectedClass="border-ube bg-ube/10"
-                iconColor={role === 'studio' ? 'text-ube-bright' : 'text-text-secondary'}
+                selectedClass="border-primary bg-primary-dim"
+                iconColor={role === 'studio' ? 'text-primary' : 'text-text-secondary'}
                 onClick={() => setRole('studio')}
                 disabled={loading}
               />
@@ -225,8 +220,8 @@ export function AuthForm({ mode }: AuthFormProps) {
                 label="크리에이터"
                 hint="캠페인에 지원"
                 selected={role === 'creator'}
-                selectedClass="border-green-500 bg-green-500/10"
-                iconColor={role === 'creator' ? 'text-green-400' : 'text-text-secondary'}
+                selectedClass="border-success bg-success/10"
+                iconColor={role === 'creator' ? 'text-success' : 'text-text-secondary'}
                 onClick={() => setRole('creator')}
                 disabled={loading}
               />
@@ -260,6 +255,16 @@ export function AuthForm({ mode }: AuthFormProps) {
           required
           disabled={loading}
         />
+        {!isSignup && (
+          <p className="mt-1.5 text-right">
+            <Link
+              href="/forgot-password"
+              className="text-sm text-text-secondary hover:text-primary transition-colors duration-150 ease-out"
+            >
+              비밀번호를 잊으셨나요?
+            </Link>
+          </p>
+        )}
       </div>
 
       <Button
@@ -276,19 +281,20 @@ export function AuthForm({ mode }: AuthFormProps) {
         {isSignup ? (
           <>
             이미 계정이 있으신가요?{' '}
-            <Link href="/login" className="text-ube-bright hover:underline">
+            <Link href="/login" className="text-primary hover:underline">
               로그인
             </Link>
           </>
         ) : (
           <>
             계정이 없으신가요?{' '}
-            <Link href="/signup" className="text-ube-bright hover:underline">
+            <Link href="/signup" className="text-primary hover:underline">
               회원가입
             </Link>
           </>
         )}
       </p>
+      </Card>
     </form>
   );
 }
@@ -314,25 +320,23 @@ function RoleCard({
   disabled?: boolean;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
+    <Card
+      padding="md"
+      hover
+      onClick={disabled ? undefined : onClick}
+      role="button"
       aria-pressed={selected}
       className={[
-        'flex flex-col items-center justify-center gap-1.5 px-3 py-4 rounded-lg border transition-colors duration-150 ease-out cursor-pointer',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ube/60',
-        'disabled:opacity-50 disabled:cursor-not-allowed',
-        selected
-          ? selectedClass
-          : 'bg-bg-elevated border-white/10 hover:border-white/20',
+        'flex flex-col items-center justify-center gap-1.5 text-center',
+        selected ? 'border-primary bg-primary-dim' : '',
+        disabled ? 'opacity-50 cursor-not-allowed' : '',
       ].join(' ')}
     >
-      <Icon size={20} className={iconColor} aria-hidden />
+      <Icon size={20} className={selected ? 'text-primary' : 'text-text-secondary'} aria-hidden />
       <span className="text-sm font-medium text-text-primary leading-none">
         {label}
       </span>
       <span className="text-[11px] text-text-secondary leading-none">{hint}</span>
-    </button>
+    </Card>
   );
 }

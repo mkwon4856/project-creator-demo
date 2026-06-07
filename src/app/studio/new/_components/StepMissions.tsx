@@ -3,6 +3,8 @@
 import { Film, Radio, Video, type LucideIcon } from 'lucide-react';
 import type { ChangeEvent } from 'react';
 
+import { Input, Switch } from '@/components/ui';
+
 import {
   MARKET_AVG,
   MISSIONS_META,
@@ -22,38 +24,6 @@ const ICON_MAP: Record<'film' | 'video' | 'radio', LucideIcon> = {
 interface StepMissionsProps {
   data: WizardData;
   onChange: (patch: Partial<WizardData>) => void;
-}
-
-function Toggle({
-  on,
-  onChange,
-  label,
-}: {
-  on: boolean;
-  onChange: (next: boolean) => void;
-  label: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={() => onChange(!on)}
-      role="switch"
-      aria-checked={on}
-      aria-label={label}
-      className={[
-        'relative inline-flex w-10 h-5 rounded-full transition-colors duration-150 ease-out cursor-pointer',
-        on ? 'bg-ube' : 'bg-bg-hover border border-white/10',
-      ].join(' ')}
-    >
-      <span
-        aria-hidden
-        className={[
-          'absolute top-0.5 inline-block w-4 h-4 rounded-full bg-white shadow-sm transition-all duration-150 ease-out',
-          on ? 'left-[20px]' : 'left-0.5',
-        ].join(' ')}
-      />
-    </button>
-  );
 }
 
 function MissionGroup({
@@ -96,13 +66,13 @@ function MissionGroup({
       <div
         className={[
           'flex items-center gap-3 px-4 py-3.5 rounded-t-lg border',
-          enabled ? 'bg-ube/10 border-ube/30' : 'bg-bg-elevated border-white/10',
+          enabled ? 'bg-primary-dim border-primary/30' : 'bg-bg-elevated border-border',
         ].join(' ')}
       >
         <span
           className={[
             'inline-flex w-8 h-8 rounded-md items-center justify-center shrink-0',
-            enabled ? 'bg-ube text-white' : 'bg-bg-hover text-text-secondary',
+            enabled ? 'bg-primary text-bg' : 'bg-surface-hover text-text-secondary',
           ].join(' ')}
           aria-hidden
         >
@@ -119,7 +89,11 @@ function MissionGroup({
           </span>
           <span className="text-[11px] text-text-secondary">{meta.description}</span>
         </div>
-        <Toggle on={enabled} onChange={setEnabled} label={`${meta.label} 사용`} />
+        <Switch
+          checked={enabled}
+          onCheckedChange={setEnabled}
+          aria-label={`${meta.label} 사용`}
+        />
       </div>
 
       <div
@@ -139,19 +113,19 @@ function MissionGroup({
             <span className="text-[10px] font-semibold uppercase tracking-wider text-text-muted">
               {tier}티어 <span className="text-text-muted">({TIER_DESCRIPTION[tier]})</span>
             </span>
-            <label className="flex items-center gap-1 px-2 py-1.5 rounded-md bg-bg-card border border-white/10 focus-within:border-ube focus-within:shadow-[0_0_0_3px_var(--ube-tint)] transition-all duration-150 ease-out">
-              <span className="text-xs text-text-muted">₩</span>
-              <input
-                type="number"
-                min={0}
-                value={config.rates[tier]}
-                onChange={(e: ChangeEvent<HTMLInputElement>) => setRate(tier, Number(e.target.value) || 0)}
-                className="flex-1 min-w-0 bg-transparent border-none outline-none text-sm font-medium text-text-primary tabular-nums"
-                aria-label={`${meta.label} ${tier}티어 단가`}
-              />
-              <span className="text-xs text-text-muted">만</span>
-            </label>
-            <span className="text-[10px] text-ube-bright tabular-nums">
+            <Input
+              type="number"
+              min={0}
+              value={config.rates[tier]}
+              onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                setRate(tier, Number(e.target.value) || 0)
+              }
+              icon={<span className="text-xs">₩</span>}
+              suffix="만"
+              aria-label={`${meta.label} ${tier}티어 단가`}
+              containerClassName="[&_input]:text-sm [&_input]:font-medium [&_input]:tabular-nums"
+            />
+            <span className="text-[10px] text-primary tabular-nums">
               시장 평균 ₩{MARKET_AVG[id][tier]}만
             </span>
           </div>

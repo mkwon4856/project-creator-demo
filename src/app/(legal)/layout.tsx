@@ -10,14 +10,14 @@ function Logo({ size = 'md' }: { size?: 'sm' | 'md' }) {
       : 'text-base font-semibold tracking-tight';
   return (
     <Link href="/" className={`${cls} text-text-primary`}>
-      Project <span className="text-ube-bright">Creator</span>
+      Project <span className="text-primary">Creator</span>
     </Link>
   );
 }
 
 function LegalHeader() {
   return (
-    <header className="flex items-center justify-between py-5 border-b border-white/[0.06]">
+    <header className="flex items-center justify-between py-5 border-b border-border">
       <Logo />
       <Link
         href="/"
@@ -31,7 +31,7 @@ function LegalHeader() {
 
 function LegalFooter() {
   return (
-    <footer className="py-6 mt-8 border-t border-white/[0.06] flex flex-wrap justify-between items-center gap-3">
+    <footer className="py-6 mt-8 border-t border-border flex flex-wrap justify-between items-center gap-3">
       <Logo size="sm" />
       <nav aria-label="법적 고지" className="flex items-center gap-4 text-xs text-text-secondary">
         <Link

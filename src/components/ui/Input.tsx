@@ -2,6 +2,12 @@
 
 import { forwardRef, useId, type InputHTMLAttributes, type ReactNode } from 'react';
 
+const FIELD_SHELL = [
+  'flex items-center gap-2 px-3.5 py-2.5 rounded-lg',
+  'bg-bg border border-border transition-all duration-150 ease-out',
+  'focus-within:border-primary focus-within:ring-2 focus-within:ring-[rgba(167,139,250,0.25)]',
+].join(' ');
+
 export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size'> {
   label?: string;
   helper?: string;
@@ -10,6 +16,7 @@ export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 
   iconPosition?: 'left' | 'right';
   /** 단위 (₩, 만, % 등) — 입력 우측 표시 */
   suffix?: string;
+  containerClassName?: string;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
@@ -21,6 +28,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
     icon,
     iconPosition = 'left',
     suffix,
+    containerClassName = '',
     className = '',
     disabled,
     'aria-describedby': ariaDescribedBy,
@@ -35,7 +43,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
   const describedBy = [ariaDescribedBy, helperId, errorId].filter(Boolean).join(' ') || undefined;
 
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className={['flex flex-col gap-1.5', containerClassName].filter(Boolean).join(' ')}>
       {label && (
         <label htmlFor={inputId} className="text-xs font-medium text-text-secondary">
           {label}
@@ -43,11 +51,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
       )}
       <div
         className={[
-          'flex items-center gap-2 px-3.5 py-2.5 rounded-md',
-          'bg-bg-card border transition-all duration-150 ease-out',
-          error
-            ? 'border-red-500/60 focus-within:border-red-500'
-            : 'border-white/10 focus-within:border-ube focus-within:shadow-[0_0_0_3px_var(--ube-tint)]',
+          FIELD_SHELL,
+          error ? 'border-danger focus-within:border-danger focus-within:ring-danger/25' : '',
           disabled ? 'opacity-50 cursor-not-allowed' : '',
         ]
           .filter(Boolean)
@@ -78,7 +83,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
         )}
       </div>
       {error ? (
-        <p id={errorId} className="text-[11px] text-red-400">
+        <p id={errorId} className="text-[11px] text-danger">
           {error}
         </p>
       ) : (

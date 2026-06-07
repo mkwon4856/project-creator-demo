@@ -1,10 +1,9 @@
 'use client';
 
 import { Search } from 'lucide-react';
-import type { ChangeEvent } from 'react';
 
-import { Pill } from '@/components/ui';
-import type { CampaignStatus } from '@/lib/mockCampaigns';
+import { Input, Pill } from '@/components/ui';
+import type { CampaignStatus } from '@/lib/campaigns/types';
 
 export type StatusFilter = 'all' | CampaignStatus;
 
@@ -45,23 +44,15 @@ export function CampaignToolbar({
         ))}
       </div>
 
-      <label
-        className={[
-          'flex items-center gap-2 px-3 py-2 rounded-md w-72 max-w-full',
-          'bg-bg-card border border-white/10 transition-all duration-150 ease-out',
-          'focus-within:border-ube focus-within:shadow-[0_0_0_3px_var(--ube-tint)]',
-        ].join(' ')}
-      >
-        <Search size={14} className="text-text-muted shrink-0" aria-hidden />
-        <input
-          type="search"
-          value={search}
-          onChange={(e: ChangeEvent<HTMLInputElement>) => onSearchChange(e.target.value)}
-          placeholder={searchPlaceholder}
-          className="flex-1 min-w-0 bg-transparent border-none outline-none text-sm text-text-primary placeholder:text-text-muted"
-          aria-label="캠페인 검색"
-        />
-      </label>
+      <Input
+        type="search"
+        value={search}
+        onChange={(e) => onSearchChange(e.target.value)}
+        placeholder={searchPlaceholder}
+        aria-label="캠페인 검색"
+        icon={<Search size={14} />}
+        containerClassName="w-72 max-w-full"
+      />
     </div>
   );
 }

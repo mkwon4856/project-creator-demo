@@ -4,8 +4,8 @@ import { Film, Radio, Video, type LucideIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState, type ReactNode } from 'react';
 
-import { Badge, Button, Modal, toast } from '@/components/ui';
-import { CAMPAIGNS, formatRate, type Campaign } from '@/lib/mockCampaigns';
+import { Badge, Button, Modal, SelectableCard, toast } from '@/components/ui';
+import { formatRate, type Campaign } from '@/lib/campaigns/types';
 import { CURRENT_CREATOR } from '@/lib/mockCreators';
 import { useAppStore, type ActivityMission } from '@/lib/store';
 import { createClient as createBrowserSupabaseClient } from '@/lib/supabase/client';
@@ -31,11 +31,9 @@ const MISSION_META: Record<ActivityMission, { label: string; icon: LucideIcon; d
 export interface ApplyButtonProps {
   campaignId: string;
   /**
-   * The campaign object. Pass it directly when the data source isn't the mock
-   * (e.g. DB-backed campaigns with UUIDs). Falls back to looking up `campaignId`
-   * in the mock CAMPAIGNS array when omitted.
+   * The campaign object from DB. Required for apply flow.
    */
-  campaign?: Campaign;
+  campaign: Campaign;
   /** Modal close handler — when ApplyButton lives inside an existing modal. */
   onAppliedClose?: () => void;
   /** Override label */
@@ -45,7 +43,7 @@ export interface ApplyButtonProps {
 
 export function ApplyButton({
   campaignId,
-  campaign: providedCampaign,
+  campaign,
   onAppliedClose,
   children,
   size = 'md',
@@ -54,13 +52,7 @@ export function ApplyButton({
   const applyToCampaign = useAppStore((s) => s.applyToCampaign);
   const activities = useAppStore((s) => s.activities);
 
-  const campaign = useMemo(
-    () => providedCampaign ?? CAMPAIGNS.find((c) => c.id === campaignId),
-    [providedCampaign, campaignId],
-  );
-
   const availableMissions = useMemo<ActivityMission[]>(() => {
-    if (!campaign) return [];
     return (Object.entries(campaign.missions) as [ActivityMission, boolean][])
       .filter(([, enabled]) => enabled)
       .map(([m]) => m);
@@ -75,8 +67,6 @@ export function ApplyButton({
   const [selected, setSelected] = useState<ActivityMission | null>(
     availableMissions[0] ?? null,
   );
-
-  if (!campaign) return null;
 
   const grade = CURRENT_CREATOR.grade;
   const rate = campaign.rates[grade];
@@ -133,7 +123,7 @@ export function ApplyButton({
         .eq('enabled', true)
         .maybeSingle();
       if (!mission) {
-        toast.error('미션을 찾을 수 없습니다 (이 캠페인은 DB에 없는 mock 캠페인일 수 있습니다)');
+        toast.error('이 캠페인에는 현재 지원 가능한 미션이 없습니다');
         return;
       }
 
@@ -237,7 +227,7 @@ export function ApplyButton({
               {campaign.name}
             </h2>
             <p className="text-[12px] text-text-secondary">
-              {campaign.developer} · 내 등급 <span className="text-ube-bright">{grade}티어</span>
+              {campaign.developer} · 내 등급 <span className="text-primary">{grade}티어</span>
             </p>
           </div>
         </Modal.Hero>
@@ -252,14 +242,14 @@ export function ApplyButton({
               const Icon = meta.icon;
               const checked = selected === m;
               return (
-                <label
+                <SelectableCard
                   key={m}
-                  className={[
-                    'flex items-start gap-3 rounded-[var(--radius-md)] border p-3 cursor-pointer transition-colors',
-                    checked
-                      ? 'border-ube/60 bg-ube/[0.08]'
-                      : 'border-white/10 bg-bg-elevated hover:border-white/20',
-                  ].join(' ')}
+                  selected={checked}
+                  onClick={() => setSelected(m)}
+                  padding="md"
+                  className="flex items-start gap-3"
+                  role="radio"
+                  aria-checked={checked}
                 >
                   <input
                     type="radio"
@@ -267,15 +257,16 @@ export function ApplyButton({
                     checked={checked}
                     onChange={() => setSelected(m)}
                     className="sr-only"
+                    tabIndex={-1}
                   />
                   <span
                     aria-hidden
                     className={[
                       'mt-0.5 inline-flex w-4 h-4 rounded-full border items-center justify-center flex-shrink-0',
-                      checked ? 'border-ube' : 'border-white/30',
+                      checked ? 'border-primary' : 'border-border',
                     ].join(' ')}
                   >
-                    {checked && <span className="w-2 h-2 rounded-full bg-ube" />}
+                    {checked && <span className="w-2 h-2 rounded-full bg-primary" />}
                   </span>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
@@ -290,17 +281,17 @@ export function ApplyButton({
                     <span className="text-[10px] uppercase tracking-wider text-text-secondary">
                       내 단가
                     </span>
-                    <span className="text-sm font-medium text-ube-bright tabular-nums">
+                    <span className="text-sm font-medium text-primary tabular-nums">
                       {formatRate(rate)}
                     </span>
                   </div>
-                </label>
+                </SelectableCard>
               );
             })}
           </fieldset>
 
           <div className="mt-4 rounded-[var(--radius-md)] bg-bg-elevated border border-white/[0.06] p-3 flex items-start gap-2">
-            <Badge variant="ube" size="sm">
+            <Badge variant="primary" size="sm">
               안내
             </Badge>
             <p className="text-[11px] leading-relaxed text-text-secondary">

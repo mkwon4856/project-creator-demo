@@ -13,12 +13,9 @@ export interface CardProps extends Omit<HTMLAttributes<HTMLDivElement>, 'childre
 }
 
 const VARIANT_CLASSES: Record<CardVariant, string> = {
-  default:
-    'bg-bg-card border border-white/[0.06] rounded-lg',
-  elevated:
-    'bg-bg-elevated border border-white/10 rounded-lg shadow-[0_8px_24px_rgba(0,0,0,0.4)]',
-  featured:
-    'border border-ube/40 rounded-lg',
+  default: 'bg-surface border border-border rounded-xl',
+  elevated: 'bg-surface border border-border rounded-xl',
+  featured: 'bg-primary-dim border border-primary/30 rounded-xl',
 };
 
 const PADDING_CLASSES: Record<CardPadding, string> = {
@@ -36,21 +33,12 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(function Card(
     onClick,
     children,
     className = '',
-    style,
     role,
     tabIndex,
     ...rest
   },
   ref,
 ) {
-  const featuredStyle =
-    variant === 'featured'
-      ? {
-          background:
-            'linear-gradient(135deg, var(--ube-tint), var(--ube-tint-strong))',
-        }
-      : undefined;
-
   const isInteractive = Boolean(onClick) || hover;
 
   return (
@@ -70,13 +58,12 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(function Card(
         VARIANT_CLASSES[variant],
         PADDING_CLASSES[padding],
         isInteractive
-          ? 'transition-colors duration-150 ease-out cursor-pointer hover:border-ube/60'
+          ? 'transition-colors duration-150 ease-out cursor-pointer hover:bg-surface-hover hover:border-text-muted'
           : '',
         className,
       ]
         .filter(Boolean)
         .join(' ')}
-      style={{ ...featuredStyle, ...style }}
       {...rest}
     >
       {children}

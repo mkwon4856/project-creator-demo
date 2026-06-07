@@ -1,3 +1,6 @@
+export { PageHeader } from './PageHeader';
+export type { PageHeaderProps } from './PageHeader';
+
 export { WorkspaceLayout } from './WorkspaceLayout';
 export type { WorkspaceLayoutProps } from './WorkspaceLayout';
 

@@ -11,7 +11,8 @@ import {
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 
-import { formatBudget, formatRate } from '@/lib/mockCampaigns';
+import { Badge, Button, Card } from '@/components/ui';
+import { formatBudget, formatRate } from '@/lib/campaigns/types';
 
 import {
   GUIDELINES,
@@ -40,25 +41,20 @@ function ReviewSection({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-lg border border-white/[0.06] bg-bg-card overflow-hidden">
-      <header className="flex items-center justify-between gap-3 px-5 py-3.5 border-b border-white/[0.06]">
+    <Card padding="none" className="overflow-hidden">
+      <header className="flex items-center justify-between gap-3 px-5 py-3.5 border-b border-border">
         <div className="inline-flex items-center gap-2">
-          <span className="inline-flex w-6 h-6 rounded-md bg-bg-hover items-center justify-center text-text-secondary">
+          <span className="inline-flex w-6 h-6 rounded-md bg-surface-hover items-center justify-center text-text-secondary">
             <Icon size={13} aria-hidden />
           </span>
           <h3 className="text-sm font-medium text-text-primary leading-tight">{title}</h3>
         </div>
-        <button
-          type="button"
-          onClick={onEdit}
-          className="inline-flex items-center gap-1 text-xs text-ube-bright hover:text-white transition-colors duration-150 ease-out cursor-pointer"
-        >
-          <Edit3 size={12} aria-hidden />
+        <Button type="button" variant="ghost" size="sm" icon={<Edit3 size={12} />} onClick={onEdit}>
           수정
-        </button>
+        </Button>
       </header>
       <div className="px-5 py-4">{children}</div>
-    </section>
+    </Card>
   );
 }
 
@@ -116,7 +112,7 @@ export function StepReview({ data, onJump, confirmed, onConfirm }: StepReviewPro
       </ReviewSection>
 
       <ReviewSection title="예산 & 일정" icon={Wallet} onEdit={() => onJump(2)}>
-        <Row label="총 예산" value={<span className="text-ube-bright">{formatBudget(data.totalBudget)}</span>} />
+        <Row label="총 예산" value={<span className="text-primary">{formatBudget(data.totalBudget)}</span>} />
         <Row label="모집 시작" value={data.recruitStart} />
         <Row label="모집 마감" value={data.recruitEnd} />
         <Row label="제출 마감" value={data.submitDeadline} />
@@ -175,12 +171,9 @@ export function StepReview({ data, onJump, confirmed, onConfirm }: StepReviewPro
             data.hashtags.length > 0 ? (
               <span className="flex flex-wrap gap-1">
                 {data.hashtags.map((t) => (
-                  <span
-                    key={t}
-                    className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] text-ube-bright bg-ube/15 border border-ube/30"
-                  >
+                  <Badge key={t} variant="primary" size="xs">
                     {t}
-                  </span>
+                  </Badge>
                 ))}
               </span>
             ) : (
@@ -198,7 +191,7 @@ export function StepReview({ data, onJump, confirmed, onConfirm }: StepReviewPro
                   <span
                     className={[
                       'mt-0.5 inline-flex w-3.5 h-3.5 rounded items-center justify-center shrink-0',
-                      checked ? 'bg-ube text-white' : 'border border-white/30 text-transparent',
+                      checked ? 'bg-primary text-bg' : 'border border-border text-transparent',
                     ].join(' ')}
                     aria-hidden
                   >
@@ -236,30 +229,32 @@ function ConfirmBox({
   onConfirm: (next: boolean) => void;
 }) {
   return (
-    <button
-      type="button"
+    <Card
+      variant="featured"
+      padding="md"
+      hover
       onClick={() => onConfirm(!confirmed)}
+      role="button"
       aria-pressed={confirmed}
-      className="text-left rounded-lg p-4 border border-ube/30 flex items-start gap-3 hover:border-ube transition-colors duration-150 ease-out cursor-pointer"
-      style={{ background: 'var(--ube-tint)' }}
+      className="text-left flex items-start gap-3"
     >
       <span
         aria-hidden
         className={[
           'mt-0.5 inline-flex w-[18px] h-[18px] rounded items-center justify-center shrink-0 transition-colors duration-150 ease-out',
-          confirmed ? 'bg-ube text-white' : 'border border-white/30',
+          confirmed ? 'bg-primary text-bg' : 'border border-border',
         ].join(' ')}
       >
         {confirmed && <Check size={11} aria-hidden />}
       </span>
       <span className="flex flex-col gap-0.5 min-w-0 flex-1">
-        <span className="text-sm font-medium text-ube-bright leading-tight">
+        <span className="text-sm font-medium text-primary leading-tight">
           {formatBudget(amount)}을(를) 에스크로에 예치하는 데 동의합니다.
         </span>
-        <span className="text-[11px] text-ube-bright/85">
+        <span className="text-[11px] text-text-secondary">
           승인 {days}일 후 크리에이터에게 자동으로 지급됩니다. 플랫폼 수수료는 15%입니다.
         </span>
       </span>
-    </button>
+    </Card>
   );
 }

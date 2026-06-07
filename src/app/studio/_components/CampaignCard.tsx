@@ -11,7 +11,7 @@ import {
   PLATFORM_ICONS,
   STATUS_LABELS,
   type Campaign,
-} from '@/lib/mockCampaigns';
+} from '@/lib/campaigns/types';
 
 const PROGRESS_BAR_COLOR: Record<'ube' | 'amber' | 'red', string> = {
   ube: 'bg-ube',
@@ -89,7 +89,7 @@ export function CampaignCard({ campaign, footer = 'joined', onClick }: CampaignC
             {STATUS_LABELS[campaign.status]}
           </Pill>
           {campaign.isNew && (
-            <Badge variant="ube-glow" size="xs">
+            <Badge variant="primary" size="xs">
               신규
             </Badge>
           )}
@@ -113,7 +113,7 @@ export function CampaignCard({ campaign, footer = 'joined', onClick }: CampaignC
 
         <div className="flex items-center gap-1 flex-wrap">
           {visibleRates.map(([grade, rate]) => (
-            <Badge key={grade} variant="ube" size="xs">
+            <Badge key={grade} variant="primary" size="xs">
               {grade} {formatRate(rate)}
             </Badge>
           ))}

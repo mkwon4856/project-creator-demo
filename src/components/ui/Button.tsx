@@ -2,7 +2,7 @@
 
 import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react';
 
-export type ButtonVariant = 'primary' | 'ghost' | 'danger' | 'launch';
+export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'launch';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
 export interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> {
@@ -16,20 +16,22 @@ export interface ButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement
 }
 
 const SIZE_CLASSES: Record<ButtonSize, string> = {
-  sm: 'px-3 py-1.5 text-xs gap-1.5',
-  md: 'px-4 py-2 text-sm gap-2',
-  lg: 'px-5 py-2.5 text-base gap-2',
+  sm: 'h-8 px-3 text-sm gap-1.5',
+  md: 'h-10 px-4 text-sm gap-2',
+  lg: 'h-12 px-6 text-base gap-2',
 };
 
 const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   primary:
-    'bg-ube text-white hover:bg-ube-dark shadow-sm shadow-black/30',
+    'bg-primary text-bg font-bold hover:bg-primary-hover',
+  secondary:
+    'bg-surface border border-border text-text-primary hover:bg-surface-hover',
   ghost:
-    'bg-transparent border border-white/10 text-text-primary hover:bg-bg-hover hover:border-white/20',
+    'bg-transparent text-text-secondary hover:text-text-primary',
   danger:
-    'bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20',
+    'bg-danger/12 text-danger border border-danger/30 hover:bg-danger/20',
   launch:
-    'text-white border border-ube/40',
+    'bg-primary text-bg font-bold hover:bg-primary-hover',
 };
 
 function Spinner({ size }: { size: ButtonSize }) {
@@ -37,7 +39,7 @@ function Spinner({ size }: { size: ButtonSize }) {
   return (
     <span
       aria-hidden
-      className="inline-block rounded-full border-2 border-white/30 border-t-white"
+      className="inline-block rounded-full border-2 border-bg/30 border-t-bg"
       style={{
         width: dim,
         height: dim,
@@ -59,20 +61,11 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
     children,
     className = '',
     type = 'button',
-    style,
     ...rest
   },
   ref,
 ) {
   const isDisabled = disabled || loading;
-  const launchStyle =
-    variant === 'launch'
-      ? {
-          background:
-            'linear-gradient(135deg, var(--ube-bright), var(--ube))',
-          boxShadow: '0 4px 16px rgba(155,126,200,0.45)',
-        }
-      : undefined;
 
   return (
     <button
@@ -81,10 +74,10 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       disabled={isDisabled}
       aria-busy={loading || undefined}
       className={[
-        'inline-flex items-center justify-center rounded-md font-medium leading-tight',
+        'inline-flex items-center justify-center rounded-lg leading-tight',
         'transition-all duration-150 ease-out cursor-pointer select-none',
         'disabled:opacity-40 disabled:cursor-not-allowed',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ube/60 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25',
         SIZE_CLASSES[size],
         VARIANT_CLASSES[variant],
         full ? 'w-full' : '',
@@ -92,7 +85,6 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       ]
         .filter(Boolean)
         .join(' ')}
-      style={{ ...launchStyle, ...style }}
       {...rest}
     >
       {loading ? (

@@ -4,7 +4,7 @@ import { Film, Radio, Users, Video, type LucideIcon } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { WorkspaceLayout } from '@/components/layout';
-import { Badge, Button, EmptyState, Pill, toast } from '@/components/ui';
+import { Alert, Badge, Button, Card, EmptyState, Pill, statusToBadgeVariant, toast } from '@/components/ui';
 import type { ApplicationStatus, CreatorGrade, MissionType } from '@/lib/db.types';
 import { createClient as createBrowserSupabaseClient } from '@/lib/supabase/client';
 import { useCurrentStudio } from '@/lib/supabase/hooks';
@@ -60,17 +60,23 @@ function formatSubscribers(n: number): string {
   return n.toString();
 }
 
-function StatusPill({ status }: { status: ApplicationStatus }) {
-  if (status === 'applied') {
-    return <Pill variant="status" status="review" size="sm">대기 중</Pill>;
-  }
-  if (status === 'accepted') {
-    return <Pill variant="status" status="live" size="sm">수락됨</Pill>;
-  }
+const APPLICATION_STATUS_LABELS: Record<ApplicationStatus, string> = {
+  applied: '대기 중',
+  accepted: '수락됨',
+  rejected: '거절됨',
+};
+
+const APPLICATION_BADGE_STATUS: Record<ApplicationStatus, string> = {
+  applied: 'pending',
+  accepted: 'approved',
+  rejected: 'rejected',
+};
+
+function StatusBadge({ status }: { status: ApplicationStatus }) {
   return (
-    <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium leading-none border bg-red-500/15 text-red-400 border-red-500/30 whitespace-nowrap">
-      거절됨
-    </span>
+    <Badge variant={statusToBadgeVariant(APPLICATION_BADGE_STATUS[status])} size="sm">
+      {APPLICATION_STATUS_LABELS[status]}
+    </Badge>
   );
 }
 
@@ -90,7 +96,7 @@ function HeaderRow() {
   return (
     <div
       role="row"
-      className={`grid ${GRID} items-center gap-3 px-5 py-3 bg-bg-elevated text-[11px] uppercase tracking-wider text-text-secondary`}
+      className={`grid ${GRID} items-center gap-3 px-5 py-3 bg-bg-elevated text-xs font-medium text-text-secondary uppercase`}
     >
       <span>크리에이터</span>
       <span>캠페인</span>
@@ -124,7 +130,7 @@ function Row({
       role="row"
       className={[
         `grid ${GRID} items-center gap-3 px-5 py-3 transition-colors duration-150 ease-out hover:bg-bg-hover`,
-        last ? '' : 'border-b border-white/[0.06]',
+        last ? '' : 'border-b border-border',
       ].join(' ')}
     >
       <div className="flex items-center gap-2 min-w-0">
@@ -153,9 +159,9 @@ function Row({
 
       <span className="text-xs text-text-secondary">{getTimeAgo(item.appliedAt)}</span>
 
-      <Badge variant="ube" size="sm">{item.creator.grade}</Badge>
+      <Badge variant="primary" size="sm">{item.creator.grade}</Badge>
 
-      <StatusPill status={item.status} />
+      <StatusBadge status={item.status} />
 
       <div className="flex items-center justify-end gap-2">
         {item.status === 'applied' ? (
@@ -172,29 +178,6 @@ function Row({
         )}
       </div>
     </div>
-  );
-}
-
-interface FilterPillProps {
-  active: boolean;
-  onClick: () => void;
-  children: ReactNode;
-}
-
-function FilterPill({ active, onClick, children }: FilterPillProps) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={[
-        'inline-flex items-center rounded-full px-3 py-1 text-xs font-medium transition-colors duration-150 ease-out border whitespace-nowrap',
-        active
-          ? 'bg-ube text-white border-ube'
-          : 'bg-transparent border-white/10 text-text-secondary hover:border-white/20 hover:text-text-primary',
-      ].join(' ')}
-    >
-      {children}
-    </button>
   );
 }
 
@@ -387,7 +370,7 @@ export default function StudioApplicantsPage() {
       notificationCount={3}
     >
       <header className="mb-6">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-ube-bright">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-primary">
           게임사 · 지원자
         </span>
         <h1 className="text-[22px] font-medium text-text-primary leading-tight mt-1.5">
@@ -399,27 +382,27 @@ export default function StudioApplicantsPage() {
       </header>
 
       {!studio && (
-        <div className="rounded-lg border border-amber-500/40 bg-amber-500/5 px-4 py-3 text-xs text-amber-300 mb-6">
+        <Alert variant="warning" className="mb-6">
           스튜디오 프로필이 없습니다. 회원가입 시 role을 <code>studio</code>로 선택해야
           이 페이지가 작동합니다.
-        </div>
+        </Alert>
       )}
 
       {applicants.length > 0 && (
         <div className="flex items-center gap-2 mb-4 flex-wrap">
-          <FilterPill
-            active={campaignFilter === 'all'}
+          <Pill
+            variant={campaignFilter === 'all' ? 'active' : 'default'}
             onClick={() => setCampaignFilter('all')}
           >
             전체 캠페인
             <span className="ml-1.5 text-text-muted tabular-nums">{applicants.length}</span>
-          </FilterPill>
+          </Pill>
           {campaignOptions.map(({ id, name }) => {
             const count = applicants.filter((a) => a.campaign.id === id).length;
             return (
-              <FilterPill
+              <Pill
                 key={id}
-                active={campaignFilter === id}
+                variant={campaignFilter === id ? 'active' : 'default'}
                 onClick={() => setCampaignFilter(id)}
               >
                 {name}
@@ -431,26 +414,26 @@ export default function StudioApplicantsPage() {
                 >
                   {count}
                 </span>
-              </FilterPill>
+              </Pill>
             );
           })}
-          <span className="ml-auto text-[11px] font-medium text-amber-400 tabular-nums">
+          <span className="ml-auto text-[11px] font-medium text-warning tabular-nums">
             대기 {pendingCount}건
           </span>
         </div>
       )}
 
       {applicants.length === 0 ? (
-        <div className="border border-white/[0.06] rounded-lg bg-bg-card">
+        <Card padding="none">
           <EmptyState
             icon={<Users size={24} aria-hidden />}
             title="아직 지원자가 없습니다"
             description="캠페인을 만들면 크리에이터들이 지원합니다."
             primaryAction={{ label: '캠페인 만들기', href: '/studio/new' }}
           />
-        </div>
+        </Card>
       ) : (
-        <div className="border border-white/[0.06] rounded-lg overflow-hidden bg-bg-card">
+        <Card padding="none" className="overflow-hidden">
           <HeaderRow />
           {filtered.length === 0 ? (
             <div className="px-5 py-16 text-center">
@@ -471,7 +454,7 @@ export default function StudioApplicantsPage() {
               />
             ))
           )}
-        </div>
+        </Card>
       )}
     </WorkspaceLayout>
   );

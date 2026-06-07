@@ -4,8 +4,9 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 
 import { WorkspaceLayout } from '@/components/layout';
+import { Card } from '@/components/ui';
 import { fetchCampaigns, transformDbCampaign } from '@/lib/api/campaigns';
-import { CAMPAIGNS as MOCK_CAMPAIGNS, type Campaign } from '@/lib/mockCampaigns';
+import type { Campaign } from '@/lib/campaigns/types';
 
 import { CampaignCard } from '../_components/CampaignCard';
 import { CampaignToolbar, type StatusFilter } from '../_components/CampaignToolbar';
@@ -13,7 +14,8 @@ import { getStudioSidebar } from '../_config/sidebar';
 
 export default function StudioExplorePage() {
   const router = useRouter();
-  const [campaigns, setCampaigns] = useState<Campaign[]>(MOCK_CAMPAIGNS);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState<StatusFilter>('all');
   const [search, setSearch] = useState('');
 
@@ -21,7 +23,8 @@ export default function StudioExplorePage() {
     let cancelled = false;
     void fetchCampaigns().then((rows) => {
       if (cancelled) return;
-      if (rows.length > 0) setCampaigns(rows.map(transformDbCampaign));
+      setCampaigns(rows.map(transformDbCampaign));
+      setLoading(false);
     });
     return () => {
       cancelled = true;
@@ -73,9 +76,15 @@ export default function StudioExplorePage() {
           searchPlaceholder="게임사, 장르 검색…"
         />
 
-        {filtered.length === 0 ? (
+        {loading ? (
+          <Card padding="lg" className="text-center text-sm text-text-secondary">
+            불러오는 중…
+          </Card>
+        ) : filtered.length === 0 ? (
           <div className="rounded-lg border border-dashed border-white/10 px-6 py-16 text-center text-sm text-text-secondary">
-            필터에 맞는 캠페인이 없습니다.
+            {campaigns.length === 0
+              ? '등록된 캠페인이 없습니다.'
+              : '필터에 맞는 캠페인이 없습니다.'}
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">

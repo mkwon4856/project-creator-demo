@@ -2,6 +2,8 @@
 
 import { forwardRef, type HTMLAttributes, type ReactNode } from 'react';
 
+import { statusToBadgeVariant } from './Badge';
+
 export type PillVariant = 'default' | 'active' | 'status';
 export type PillStatus = 'live' | 'recruiting' | 'completed' | 'review' | 'paid';
 export type PillSize = 'sm' | 'md';
@@ -15,27 +17,32 @@ export interface PillProps extends Omit<HTMLAttributes<HTMLSpanElement>, 'childr
 }
 
 const SIZE_CLASSES: Record<PillSize, string> = {
-  sm: 'px-2 py-0.5 text-[10px]',
+  sm: 'px-2.5 py-0.5 text-[10px]',
   md: 'px-3 py-1 text-xs',
 };
 
+const STATUS_VARIANT_CLASS: Record<
+  ReturnType<typeof statusToBadgeVariant>,
+  string
+> = {
+  success: 'bg-success/12 text-success',
+  warning: 'bg-warning/12 text-warning',
+  danger: 'bg-danger/12 text-danger',
+  neutral: 'bg-surface-hover text-text-secondary',
+};
+
 const STATUS_CLASSES: Record<PillStatus, string> = {
-  live:
-    'bg-green-500/15 text-green-400 border border-green-500/30',
-  recruiting:
-    'bg-ube/20 text-ube-bright border border-ube/40',
-  completed:
-    'bg-bg-hover text-text-secondary border border-white/10',
-  review:
-    'bg-amber-500/15 text-amber-400 border border-amber-500/30',
-  paid:
-    'bg-green-500/15 text-green-400 border border-green-500/30',
+  live: STATUS_VARIANT_CLASS[statusToBadgeVariant('live')],
+  recruiting: STATUS_VARIANT_CLASS[statusToBadgeVariant('recruiting')],
+  completed: STATUS_VARIANT_CLASS[statusToBadgeVariant('completed')],
+  review: STATUS_VARIANT_CLASS[statusToBadgeVariant('review')],
+  paid: STATUS_VARIANT_CLASS[statusToBadgeVariant('paid')],
 };
 
 const VARIANT_DEFAULT =
-  'bg-transparent border border-white/10 text-text-secondary hover:border-white/20 hover:text-text-primary';
+  'bg-transparent border border-border text-text-secondary hover:bg-surface-hover hover:text-text-primary';
 const VARIANT_ACTIVE =
-  'bg-ube text-white border border-ube';
+  'bg-primary text-bg font-bold border border-primary hover:bg-primary-hover';
 
 export const Pill = forwardRef<HTMLSpanElement, PillProps>(function Pill(
   {
@@ -76,7 +83,7 @@ export const Pill = forwardRef<HTMLSpanElement, PillProps>(function Pill(
       }}
       className={[
         'inline-flex items-center gap-1 rounded-full font-medium leading-none whitespace-nowrap',
-        'transition-colors duration-150 ease-out',
+        'transition-all duration-150 ease-out',
         interactive ? 'cursor-pointer' : '',
         SIZE_CLASSES[size],
         variantClass,

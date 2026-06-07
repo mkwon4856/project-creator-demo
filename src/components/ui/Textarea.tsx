@@ -1,0 +1,85 @@
+'use client';
+
+import { forwardRef, useId, type ReactNode, type TextareaHTMLAttributes } from 'react';
+
+const FIELD_SHELL = [
+  'rounded-lg bg-bg border border-border transition-all duration-150 ease-out',
+  'focus-within:border-primary focus-within:ring-2 focus-within:ring-[rgba(167,139,250,0.25)]',
+].join(' ');
+
+export interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
+  label?: string;
+  helper?: string;
+  error?: string;
+  containerClassName?: string;
+}
+
+export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function Textarea(
+  {
+    id,
+    label,
+    helper,
+    error,
+    containerClassName = '',
+    className = '',
+    disabled,
+    'aria-describedby': ariaDescribedBy,
+    ...rest
+  },
+  ref,
+) {
+  const generatedId = useId();
+  const textareaId = id ?? `ui-textarea-${generatedId}`;
+  const helperId = helper ? `${textareaId}-helper` : undefined;
+  const errorId = error ? `${textareaId}-error` : undefined;
+  const describedBy = [ariaDescribedBy, helperId, errorId].filter(Boolean).join(' ') || undefined;
+
+  return (
+    <div className={['flex flex-col gap-1.5', containerClassName].filter(Boolean).join(' ')}>
+      {label && (
+        <label htmlFor={textareaId} className="text-xs font-medium text-text-secondary">
+          {label}
+        </label>
+      )}
+      <div
+        className={[
+          FIELD_SHELL,
+          error ? 'border-danger focus-within:border-danger focus-within:ring-danger/25' : '',
+          disabled ? 'opacity-50 cursor-not-allowed' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+      >
+        <textarea
+          ref={ref}
+          id={textareaId}
+          disabled={disabled}
+          aria-invalid={Boolean(error) || undefined}
+          aria-describedby={describedBy}
+          className={[
+            'w-full min-w-0 bg-transparent border-none outline-none resize-y',
+            'px-3.5 py-2.5 text-sm text-text-primary placeholder:text-text-muted',
+            'disabled:cursor-not-allowed',
+            className,
+          ]
+            .filter(Boolean)
+            .join(' ')}
+          {...rest}
+        />
+      </div>
+      {error ? (
+        <p id={errorId} className="text-[11px] text-danger">
+          {error}
+        </p>
+      ) : (
+        helper && (
+          <p id={helperId} className="text-[11px] text-text-secondary">
+            {helper}
+          </p>
+        )
+      )}
+    </div>
+  );
+});
+
+Textarea.displayName = 'Textarea';

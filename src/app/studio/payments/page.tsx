@@ -4,14 +4,14 @@ import { Film, Radio, Video, type LucideIcon } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { WorkspaceLayout } from '@/components/layout';
-import { Badge, Card, Pill, toast } from '@/components/ui';
+import { Alert, Badge, Card, statusToBadgeVariant, toast } from '@/components/ui';
 import type {
   CampaignStatus,
   CreatorGrade,
   MissionType,
   PaymentStatus,
 } from '@/lib/db.types';
-import { formatCompactKRW } from '@/lib/mockAdmin';
+import { formatCompactKRW } from '@/lib/formatCurrency';
 import { createClient as createBrowserSupabaseClient } from '@/lib/supabase/client';
 import { useCurrentStudio } from '@/lib/supabase/hooks';
 
@@ -52,18 +52,16 @@ function formatDate(s: string | null): string {
   });
 }
 
-function StatusPill({ status }: { status: PaymentStatus }) {
-  if (status === 'completed') {
-    return (
-      <Pill variant="status" status="paid" size="sm">
-        완료
-      </Pill>
-    );
-  }
+const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
+  pending: '대기',
+  completed: '완료',
+};
+
+function StatusBadge({ status }: { status: PaymentStatus }) {
   return (
-    <Pill variant="status" status="review" size="sm">
-      대기
-    </Pill>
+    <Badge variant={statusToBadgeVariant(status)} size="sm">
+      {PAYMENT_STATUS_LABELS[status]}
+    </Badge>
   );
 }
 
@@ -71,7 +69,7 @@ function HeaderRow() {
   return (
     <div
       role="row"
-      className={`grid ${GRID} items-center gap-3 px-5 py-3 bg-bg-elevated text-[11px] uppercase tracking-wider text-text-secondary`}
+      className={`grid ${GRID} items-center gap-3 px-5 py-3 bg-bg-elevated text-xs font-medium text-text-secondary uppercase`}
     >
       <span>캠페인</span>
       <span>크리에이터</span>
@@ -94,7 +92,7 @@ function Row({ item, last }: { item: PaymentRow; last: boolean }) {
       role="row"
       className={[
         `grid ${GRID} items-center gap-3 px-5 py-3 transition-colors duration-150 ease-out hover:bg-bg-hover`,
-        last ? '' : 'border-b border-white/[0.06]',
+        last ? '' : 'border-b border-border',
       ].join(' ')}
     >
       <span className="text-sm font-medium text-text-primary truncate">
@@ -103,7 +101,7 @@ function Row({ item, last }: { item: PaymentRow; last: boolean }) {
 
       <div className="flex items-center gap-2 min-w-0">
         <span className="text-sm text-text-primary truncate">{item.creatorName}</span>
-        <Badge variant="ube" size="sm">
+        <Badge variant="primary" size="sm">
           {item.creatorGrade}
         </Badge>
       </div>
@@ -121,11 +119,11 @@ function Row({ item, last }: { item: PaymentRow; last: boolean }) {
         −{formatCompactKRW(item.platformFee)}
       </span>
 
-      <span className="text-sm font-medium tabular-nums text-green-400 text-right">
+      <span className="text-sm font-medium tabular-nums text-success text-right">
         {formatCompactKRW(item.amount)}
       </span>
 
-      <StatusPill status={item.status} />
+      <StatusBadge status={item.status} />
 
       <span className="text-xs text-text-secondary tabular-nums">
         {formatDate(item.paidAt)}
@@ -152,7 +150,7 @@ function SummaryCard({
         <span
           className={[
             'text-2xl font-medium tracking-tight tabular-nums leading-tight',
-            highlight ? 'text-ube-bright' : 'text-text-primary',
+            highlight ? 'text-primary' : 'text-text-primary',
           ].join(' ')}
         >
           {value}
@@ -351,7 +349,7 @@ export default function StudioPaymentsPage() {
       notificationCount={3}
     >
       <header className="mb-6">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-ube-bright">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-primary">
           게임사 · 결제·정산
         </span>
         <h1 className="text-[22px] font-medium text-text-primary leading-tight mt-1.5">
@@ -363,10 +361,10 @@ export default function StudioPaymentsPage() {
       </header>
 
       {!studio && (
-        <div className="rounded-lg border border-amber-500/40 bg-amber-500/5 px-4 py-3 text-xs text-amber-300 mb-6">
+        <Alert variant="warning" className="mb-6">
           스튜디오 프로필이 없습니다. 회원가입 시 role을 <code>studio</code>로 선택해야
           이 페이지가 작동합니다.
-        </div>
+        </Alert>
       )}
 
       <section className="mb-9 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -403,7 +401,7 @@ export default function StudioPaymentsPage() {
           </span>
         </div>
 
-        <div className="border border-white/[0.06] rounded-lg overflow-hidden bg-bg-card">
+        <Card padding="none" className="overflow-hidden">
           <HeaderRow />
           {payments.length === 0 ? (
             <div className="px-5 py-16 text-center">
@@ -417,7 +415,7 @@ export default function StudioPaymentsPage() {
               <Row key={item.id} item={item} last={i === payments.length - 1} />
             ))
           )}
-        </div>
+        </Card>
       </section>
     </WorkspaceLayout>
   );

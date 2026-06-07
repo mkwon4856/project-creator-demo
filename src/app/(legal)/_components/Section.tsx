@@ -37,7 +37,7 @@ export function Section({
   children: ReactNode;
 }) {
   return (
-    <section className="border-b border-white/[0.06] py-6 last:border-b-0">
+    <section className="border-b border-border py-6 last:border-b-0">
       <h2 className="text-lg font-medium text-text-primary mb-3">
         <span className="text-text-muted tabular-nums mr-2">
           {number.toString().padStart(2, '0')}.

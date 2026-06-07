@@ -4,9 +4,9 @@ import { Search } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { WorkspaceLayout } from '@/components/layout';
-import { Input, toast } from '@/components/ui';
+import { Card, Input, toast } from '@/components/ui';
 import type { Database } from '@/lib/db.types';
-import { formatCompactKRW } from '@/lib/mockAdmin';
+import { formatCompactKRW } from '@/lib/formatCurrency';
 import { createClient as createBrowserSupabaseClient } from '@/lib/supabase/client';
 import { useCurrentProfile } from '@/lib/supabase/hooks';
 
@@ -52,7 +52,7 @@ function HeaderRow() {
   return (
     <div
       role="row"
-      className={`grid ${GRID} items-center gap-3 px-5 py-3 bg-bg-elevated text-[11px] uppercase tracking-wider text-text-secondary`}
+      className={`grid ${GRID} items-center gap-3 px-5 py-3 bg-bg-elevated text-xs font-medium text-text-secondary uppercase`}
     >
       <span>게임사</span>
       <span>이메일</span>
@@ -69,7 +69,7 @@ function Row({ item, last }: { item: StudioWithCounts; last: boolean }) {
       role="row"
       className={[
         `grid ${GRID} items-center gap-3 px-5 py-3 transition-colors duration-150 ease-out hover:bg-bg-hover`,
-        last ? '' : 'border-b border-white/[0.06]',
+        last ? '' : 'border-b border-border',
       ].join(' ')}
     >
       <div className="flex items-center gap-2 min-w-0">
@@ -195,7 +195,7 @@ export default function AdminStudiosPage() {
       notificationCount={badgeCounts.notification}
     >
       <header className="mb-6">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-ube-bright">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-primary">
           관리자 · 디렉터리
         </span>
         <h1 className="text-[22px] font-medium text-text-primary leading-tight mt-1.5">
@@ -219,7 +219,7 @@ export default function AdminStudiosPage() {
         </div>
       </div>
 
-      <div className="border border-white/[0.06] rounded-lg overflow-hidden bg-bg-card">
+      <Card padding="none" className="overflow-hidden">
         <HeaderRow />
         {filtered.length === 0 ? (
           <div className="px-5 py-16 text-center">
@@ -239,7 +239,7 @@ export default function AdminStudiosPage() {
             <Row key={item.id} item={item} last={i === filtered.length - 1} />
           ))
         )}
-      </div>
+      </Card>
     </WorkspaceLayout>
   );
 }

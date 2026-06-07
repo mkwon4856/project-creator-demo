@@ -3,9 +3,9 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { WorkspaceLayout } from '@/components/layout';
-import { Badge, Button, Card, Pill, toast } from '@/components/ui';
+import { Badge, Button, Card, Pill, statusToBadgeVariant, toast } from '@/components/ui';
 import type { CreatorGrade, PaymentStatus } from '@/lib/db.types';
-import { formatCompactKRW } from '@/lib/mockAdmin';
+import { formatCompactKRW } from '@/lib/formatCurrency';
 import { createClient as createBrowserSupabaseClient } from '@/lib/supabase/client';
 import { useCurrentProfile } from '@/lib/supabase/hooks';
 
@@ -49,43 +49,16 @@ function formatDate(s: string | null): string {
   });
 }
 
-function StatusPill({ status }: { status: PaymentStatus }) {
-  if (status === 'completed') {
-    return (
-      <Pill variant="status" status="paid" size="sm">
-        완료
-      </Pill>
-    );
-  }
-  return (
-    <Pill variant="status" status="review" size="sm">
-      대기
-    </Pill>
-  );
-}
+const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
+  pending: '대기',
+  completed: '완료',
+};
 
-function FilterPill({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: ReactNode;
-}) {
+function StatusBadge({ status }: { status: PaymentStatus }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={[
-        'inline-flex items-center rounded-full px-3 py-1 text-xs font-medium transition-colors duration-150 ease-out border whitespace-nowrap',
-        active
-          ? 'bg-ube text-white border-ube'
-          : 'bg-transparent border-white/10 text-text-secondary hover:border-white/20 hover:text-text-primary',
-      ].join(' ')}
-    >
-      {children}
-    </button>
+    <Badge variant={statusToBadgeVariant(status)} size="sm">
+      {PAYMENT_STATUS_LABELS[status]}
+    </Badge>
   );
 }
 
@@ -107,7 +80,7 @@ function SummaryCard({
         <span
           className={[
             'text-2xl font-medium tracking-tight tabular-nums leading-tight',
-            highlight ? 'text-ube-bright' : 'text-text-primary',
+            highlight ? 'text-primary' : 'text-text-primary',
           ].join(' ')}
         >
           {value}
@@ -122,7 +95,7 @@ function HeaderRow() {
   return (
     <div
       role="row"
-      className={`grid ${GRID} items-center gap-3 px-5 py-3 bg-bg-elevated text-[11px] uppercase tracking-wider text-text-secondary`}
+      className={`grid ${GRID} items-center gap-3 px-5 py-3 bg-bg-elevated text-xs font-medium text-text-secondary uppercase`}
     >
       <span>크리에이터</span>
       <span>캠페인</span>
@@ -152,12 +125,12 @@ function Row({
       role="row"
       className={[
         `grid ${GRID} items-center gap-3 px-5 py-3 transition-colors duration-150 ease-out hover:bg-bg-hover`,
-        last ? '' : 'border-b border-white/[0.06]',
+        last ? '' : 'border-b border-border',
       ].join(' ')}
     >
       <div className="flex items-center gap-2 min-w-0">
         <span className="text-sm text-text-primary truncate">{item.creatorName}</span>
-        <Badge variant="ube" size="sm">
+        <Badge variant="primary" size="sm">
           {item.creatorGrade}
         </Badge>
       </div>
@@ -173,7 +146,7 @@ function Row({
         {formatCompactKRW(item.reward)}
       </span>
 
-      <span className="text-sm tabular-nums text-green-400 text-right">
+      <span className="text-sm tabular-nums text-success text-right">
         +{formatCompactKRW(item.platformFee)}
       </span>
 
@@ -181,7 +154,7 @@ function Row({
         {formatCompactKRW(item.amount)}
       </span>
 
-      <StatusPill status={item.status} />
+      <StatusBadge status={item.status} />
 
       <span className="text-xs text-text-secondary tabular-nums">
         {formatDate(item.paidAt)}
@@ -377,7 +350,7 @@ export default function AdminPayoutsPage() {
       notificationCount={badgeCounts.notification}
     >
       <header className="mb-6">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-ube-bright">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-primary">
           관리자 · 정산 지급
         </span>
         <h1 className="text-[22px] font-medium text-text-primary leading-tight mt-1.5">
@@ -412,9 +385,9 @@ export default function AdminPayoutsPage() {
 
       <div className="flex items-center gap-2 flex-wrap mb-4">
         {STATUS_FILTERS.map((f) => (
-          <FilterPill
+          <Pill
             key={f.id}
-            active={statusFilter === f.id}
+            variant={statusFilter === f.id ? 'active' : 'default'}
             onClick={() => setStatusFilter(f.id)}
           >
             {f.label}
@@ -426,11 +399,11 @@ export default function AdminPayoutsPage() {
             >
               {counts[f.id]}
             </span>
-          </FilterPill>
+          </Pill>
         ))}
       </div>
 
-      <div className="border border-white/[0.06] rounded-lg overflow-hidden bg-bg-card mb-12">
+      <Card padding="none" className="overflow-hidden mb-12">
         <HeaderRow />
         {filtered.length === 0 ? (
           <div className="px-5 py-16 text-center">
@@ -456,7 +429,7 @@ export default function AdminPayoutsPage() {
             />
           ))
         )}
-      </div>
+      </Card>
     </WorkspaceLayout>
   );
 }

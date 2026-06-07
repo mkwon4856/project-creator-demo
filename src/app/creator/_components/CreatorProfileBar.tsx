@@ -2,6 +2,8 @@
 
 import { BadgeCheck } from 'lucide-react';
 
+import { Badge, Card } from '@/components/ui';
+
 import { type Creator, formatSubscribers } from '@/lib/mockCreators';
 
 interface CreatorProfileBarProps {
@@ -20,14 +22,14 @@ function MetaItem({ icon, value, label }: { icon: string; value: string; label: 
 
 export function CreatorProfileBar({ creator }: CreatorProfileBarProps) {
   return (
-    <section
+    <Card
       aria-label="크리에이터 프로필"
-      className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 sm:p-5 rounded-lg bg-bg-card border border-white/[0.06] mb-6"
+      padding="md"
+      className="flex flex-col sm:flex-row sm:items-center gap-4"
     >
       <div className="flex items-center gap-3 sm:gap-4">
         <span
-          className="inline-flex w-12 h-12 rounded-full items-center justify-center text-[22px] leading-none shrink-0"
-          style={{ background: 'rgba(251, 191, 36, 0.15)' }}
+          className="inline-flex w-12 h-12 rounded-full items-center justify-center text-[22px] leading-none shrink-0 bg-warning/15"
           aria-hidden
         >
           {creator.emoji}
@@ -35,13 +37,13 @@ export function CreatorProfileBar({ creator }: CreatorProfileBarProps) {
         <div className="flex flex-col min-w-0 flex-1 sm:hidden">
           <div className="flex items-center gap-2">
             <h2 className="text-base font-medium text-text-primary truncate">{creator.name}</h2>
-            <span className="bg-bg-hover text-text-secondary px-1.5 py-0.5 text-[10px] rounded font-medium leading-none">
+            <Badge variant="neutral" size="xs">
               {creator.grade}티어
-            </span>
+            </Badge>
             {creator.isVerified && (
               <BadgeCheck
                 size={15}
-                className="text-ube-bright shrink-0"
+                className="text-primary shrink-0"
                 aria-label="인증 크리에이터"
               />
             )}
@@ -53,13 +55,13 @@ export function CreatorProfileBar({ creator }: CreatorProfileBarProps) {
       <div className="hidden sm:flex flex-col min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <h2 className="text-base font-medium text-text-primary truncate">{creator.name}</h2>
-          <span className="bg-bg-hover text-text-secondary px-1.5 py-0.5 text-[10px] rounded font-medium leading-none">
+          <Badge variant="neutral" size="xs">
             {creator.grade}티어
-          </span>
+          </Badge>
           {creator.isVerified && (
             <BadgeCheck
               size={15}
-              className="text-ube-bright shrink-0"
+              className="text-primary shrink-0"
               aria-label="인증 크리에이터"
             />
           )}
@@ -87,6 +89,6 @@ export function CreatorProfileBar({ creator }: CreatorProfileBarProps) {
           label="완료 캠페인"
         />
       </div>
-    </section>
+    </Card>
   );
 }

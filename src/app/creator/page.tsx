@@ -1,21 +1,23 @@
 'use client';
 
 import { ArrowRight } from 'lucide-react';
+import Link from 'next/link';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 
-import { WorkspaceLayout } from '@/components/layout';
+import { PageHeader, WorkspaceLayout } from '@/components/layout';
 import { ProfileCompletion } from '@/components/creator/ProfileCompletion';
 import {
   WelcomeModal,
   WELCOME_SEEN_KEY,
 } from '@/components/onboarding/WelcomeModal';
+import { Button, StatCard } from '@/components/ui';
 import type { Database } from '@/lib/db.types';
 import { CURRENT_CREATOR, type Creator, type CreatorGrade } from '@/lib/mockCreators';
 import { useCurrentCreator } from '@/lib/supabase/hooks';
 
 import { ActivityTable } from './_components/ActivityTable';
 import { CreatorProfileBar } from './_components/CreatorProfileBar';
-import { EarningsOverview } from './_components/EarningsOverview';
+import { formatEarningsMoney, useEarningsStats } from './_components/EarningsOverview';
 import { RecommendedCampaigns } from './_components/RecommendedCampaigns';
 import { getCreatorSidebar } from './_config/sidebar';
 
@@ -42,10 +44,6 @@ function rowToCreator(row: CreatorRow): Creator {
   };
 }
 
-/**
- * Count platform entries in the creators.platforms JSON array that have a
- * non-empty URL. Returns 0 when the field is null or malformed.
- */
 function countConnectedPlatforms(raw: unknown): number {
   if (!Array.isArray(raw)) return 0;
   let count = 0;
@@ -58,7 +56,7 @@ function countConnectedPlatforms(raw: unknown): number {
   return count;
 }
 
-function SectionHeader({
+function SectionTitle({
   title,
   href,
   cta = '전체 보기',
@@ -68,17 +66,44 @@ function SectionHeader({
   cta?: ReactNode;
 }) {
   return (
-    <div className="flex items-end justify-between gap-3 mb-4">
-      <h2 className="text-base font-medium text-text-primary leading-tight">{title}</h2>
+    <div className="flex items-center justify-between gap-3 mb-4">
+      <h2 className="text-lg font-semibold text-text-primary leading-tight">{title}</h2>
       {href && (
-        <a
-          href={href}
-          className="inline-flex items-center gap-1 text-xs text-ube-bright hover:text-white transition-colors duration-150 ease-out"
-        >
-          {cta}
-          <ArrowRight size={12} aria-hidden />
-        </a>
+        <Link href={href}>
+          <Button variant="ghost" size="sm" icon={<ArrowRight size={14} />} iconPosition="right">
+            {cta}
+          </Button>
+        </Link>
       )}
+    </div>
+  );
+}
+
+function CreatorDashboardStats() {
+  const { stats, inProgressCount } = useEarningsStats();
+
+  return (
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
+      <StatCard
+        label="진행 중 활동"
+        value={String(inProgressCount)}
+        sub="제작 중인 캠페인"
+      />
+      <StatCard
+        label="검수 대기"
+        value={String(stats.reviewCount)}
+        sub={stats.reviewCount > 0 ? '검토 대기 중' : '대기 항목 없음'}
+      />
+      <StatCard
+        label="이번 달 수익"
+        value={formatEarningsMoney(stats.thisMonth)}
+        sub={`${stats.thisMonthPaidCount}건 지급`}
+      />
+      <StatCard
+        label="누적 수익"
+        value={formatEarningsMoney(stats.allTime)}
+        sub={`${stats.paidCount}건 완료`}
+      />
     </div>
   );
 }
@@ -125,32 +150,33 @@ export default function CreatorWorkspacePage() {
       sidebarSections={getCreatorSidebar('browse')}
       notificationCount={3}
     >
-      <CreatorProfileBar creator={creator} />
+      <div className="max-w-7xl mx-auto px-4 md:px-6 space-y-10">
+        <PageHeader title="대시보드" />
 
-      {row && (
-        <ProfileCompletion
-          displayName={row.display_name}
-          handle={row.handle}
-          bio={row.bio ?? ''}
-          connectedPlatforms={connectedPlatforms}
-          subscribers={row.subscribers ?? 0}
-        />
-      )}
+        <CreatorProfileBar creator={creator} />
 
-      <section className="mb-9">
-        <SectionHeader title="수익 현황" href="/creator/earnings" />
-        <EarningsOverview />
-      </section>
+        {row && (
+          <ProfileCompletion
+            displayName={row.display_name}
+            handle={row.handle}
+            bio={row.bio ?? ''}
+            connectedPlatforms={connectedPlatforms}
+            subscribers={row.subscribers ?? 0}
+          />
+        )}
 
-      <section className="mb-9">
-        <SectionHeader title="추천 캠페인" href="/creator/discover" />
-        <RecommendedCampaigns />
-      </section>
+        <CreatorDashboardStats />
 
-      <section className="mb-9">
-        <SectionHeader title="내 활동" href="/creator/activity" />
-        <ActivityTable />
-      </section>
+        <section>
+          <SectionTitle title="추천 캠페인" href="/creator" />
+          <RecommendedCampaigns />
+        </section>
+
+        <section>
+          <SectionTitle title="최근 활동" href="/creator/activity" />
+          <ActivityTable limit={5} />
+        </section>
+      </div>
 
       <WelcomeModal
         open={showWelcome}

@@ -11,14 +11,14 @@ import {
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { WorkspaceLayout } from '@/components/layout';
-import { Badge, Button, EmptyState, Pill, toast } from '@/components/ui';
+import { Alert, Badge, Button, Card, EmptyState, Pill, statusToBadgeVariant, toast } from '@/components/ui';
 import type {
   CampaignThumbnailJson,
   CreatorGrade,
   MissionType,
   SubmissionStatus,
 } from '@/lib/db.types';
-import { formatCompactKRW } from '@/lib/mockAdmin';
+import { formatCompactKRW } from '@/lib/formatCurrency';
 import { createClient as createBrowserSupabaseClient } from '@/lib/supabase/client';
 import { useCurrentStudio } from '@/lib/supabase/hooks';
 
@@ -94,64 +94,19 @@ function thumbnailFromJson(json: unknown): { from: string; to: string; emoji: st
   return DEFAULT_THUMBNAIL;
 }
 
-function StatusPill({ status }: { status: SubmissionStatus }) {
-  if (status === 'making') {
-    return (
-      <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium leading-none border bg-bg-hover text-text-secondary border-white/10 whitespace-nowrap">
-        제작 중
-      </span>
-    );
-  }
-  if (status === 'review') {
-    return (
-      <Pill variant="status" status="review" size="sm">
-        검수 중
-      </Pill>
-    );
-  }
-  if (status === 'approved') {
-    return (
-      <Pill variant="status" status="live" size="sm">
-        승인됨
-      </Pill>
-    );
-  }
-  if (status === 'paid') {
-    return (
-      <Pill variant="status" status="paid" size="sm">
-        정산 완료
-      </Pill>
-    );
-  }
-  return (
-    <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium leading-none border bg-red-500/15 text-red-400 border-red-500/30 whitespace-nowrap">
-      거절됨
-    </span>
-  );
-}
+const SUBMISSION_STATUS_LABELS: Record<SubmissionStatus, string> = {
+  making: '제작 중',
+  review: '검수 중',
+  approved: '승인됨',
+  paid: '정산 완료',
+  rejected: '거절됨',
+};
 
-function FilterPill({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: ReactNode;
-}) {
+function StatusBadge({ status }: { status: SubmissionStatus }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={[
-        'inline-flex items-center rounded-full px-3 py-1 text-xs font-medium transition-colors duration-150 ease-out border whitespace-nowrap',
-        active
-          ? 'bg-ube text-white border-ube'
-          : 'bg-transparent border-white/10 text-text-secondary hover:border-white/20 hover:text-text-primary',
-      ].join(' ')}
-    >
-      {children}
-    </button>
+    <Badge variant={statusToBadgeVariant(status)} size="sm">
+      {SUBMISSION_STATUS_LABELS[status]}
+    </Badge>
   );
 }
 
@@ -159,7 +114,7 @@ function HeaderRow() {
   return (
     <div
       role="row"
-      className={`grid ${GRID} items-center gap-3 px-5 py-3 bg-bg-elevated text-[11px] uppercase tracking-wider text-text-secondary`}
+      className={`grid ${GRID} items-center gap-3 px-5 py-3 bg-bg-elevated text-xs font-medium text-text-secondary uppercase`}
     >
       <span aria-hidden />
       <span>캠페인</span>
@@ -196,7 +151,7 @@ function Row({
       role="row"
       className={[
         `grid ${GRID} items-center gap-3 px-5 py-3 transition-colors duration-150 ease-out hover:bg-bg-hover`,
-        last ? '' : 'border-b border-white/[0.06]',
+        last ? '' : 'border-b border-border',
       ].join(' ')}
     >
       <span
@@ -227,7 +182,7 @@ function Row({
             {item.creator.handle}
           </span>
         </div>
-        <Badge variant="ube" size="sm">
+        <Badge variant="primary" size="sm">
           {item.creator.grade}
         </Badge>
       </div>
@@ -243,7 +198,7 @@ function Row({
             href={item.contentUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-xs text-ube-bright hover:text-white transition-colors duration-150 ease-out truncate max-w-full"
+            className="inline-flex items-center gap-1 text-xs text-primary hover:text-white transition-colors duration-150 ease-out truncate max-w-full"
             title={item.contentUrl}
           >
             <span className="truncate">{item.contentUrl}</span>
@@ -260,7 +215,7 @@ function Row({
         {formatCompactKRW(item.reward)}
       </span>
 
-      <StatusPill status={item.status} />
+      <StatusBadge status={item.status} />
 
       <div className="flex items-center justify-end gap-2">
         {item.status === 'review' ? (
@@ -501,7 +456,7 @@ export default function StudioReviewPage() {
     >
       <header className="mb-6 flex items-end justify-between gap-3 flex-wrap">
         <div>
-          <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-ube-bright">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-primary">
             게임사 · 콘텐츠 검수
           </span>
           <h1 className="text-[22px] font-medium text-text-primary leading-tight mt-1.5">
@@ -517,10 +472,10 @@ export default function StudioReviewPage() {
       </header>
 
       {!studio && (
-        <div className="rounded-lg border border-amber-500/40 bg-amber-500/5 px-4 py-3 text-xs text-amber-300 mb-6">
+        <Alert variant="warning" className="mb-6">
           스튜디오 프로필이 없습니다. 회원가입 시 role을 <code>studio</code>로 선택해야
           이 페이지가 작동합니다.
-        </div>
+        </Alert>
       )}
 
       {submissions.length > 0 && (
@@ -535,9 +490,9 @@ export default function StudioReviewPage() {
                   ? submissions.length
                   : submissions.filter((s) => s.status === f.id).length;
               return (
-                <FilterPill
+                <Pill
                   key={f.id}
-                  active={statusFilter === f.id}
+                  variant={statusFilter === f.id ? 'active' : 'default'}
                   onClick={() => setStatusFilter(f.id)}
                 >
                   {f.label}
@@ -549,7 +504,7 @@ export default function StudioReviewPage() {
                   >
                     {count}
                   </span>
-                </FilterPill>
+                </Pill>
               );
             })}
           </div>
@@ -558,21 +513,21 @@ export default function StudioReviewPage() {
             <span className="text-[11px] uppercase tracking-wider text-text-muted mr-1">
               캠페인
             </span>
-            <FilterPill
-              active={campaignFilter === 'all'}
+            <Pill
+              variant={campaignFilter === 'all' ? 'active' : 'default'}
               onClick={() => setCampaignFilter('all')}
             >
               전체 캠페인
               <span className="ml-1.5 text-text-muted tabular-nums">
                 {submissions.length}
               </span>
-            </FilterPill>
+            </Pill>
             {campaignOptions.map(({ id, name }) => {
               const count = submissions.filter((s) => s.campaign.id === id).length;
               return (
-                <FilterPill
+                <Pill
                   key={id}
-                  active={campaignFilter === id}
+                  variant={campaignFilter === id ? 'active' : 'default'}
                   onClick={() => setCampaignFilter(id)}
                 >
                   {name}
@@ -584,7 +539,7 @@ export default function StudioReviewPage() {
                   >
                     {count}
                   </span>
-                </FilterPill>
+                </Pill>
               );
             })}
           </div>
@@ -592,15 +547,15 @@ export default function StudioReviewPage() {
       )}
 
       {submissions.length === 0 ? (
-        <div className="border border-white/[0.06] rounded-lg bg-bg-card">
+        <Card padding="none">
           <EmptyState
             icon={<FileCheck size={24} aria-hidden />}
             title="검수할 콘텐츠가 없습니다"
             description="크리에이터가 콘텐츠를 제출하면 여기에 나타납니다."
           />
-        </div>
+        </Card>
       ) : (
-        <div className="border border-white/[0.06] rounded-lg overflow-hidden bg-bg-card">
+        <Card padding="none" className="overflow-hidden">
           <HeaderRow />
           {filtered.length === 0 ? (
             <div className="px-5 py-16 text-center">
@@ -623,7 +578,7 @@ export default function StudioReviewPage() {
               />
             ))
           )}
-        </div>
+        </Card>
       )}
     </WorkspaceLayout>
   );

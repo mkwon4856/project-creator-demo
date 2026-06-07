@@ -11,8 +11,8 @@ export interface EmptyStateAction {
 }
 
 export interface EmptyStateProps {
-  /** Lucide-react icon (already sized 24-28px) or any ReactNode. */
-  icon: ReactNode;
+  /** Optional icon — omitted for dashboard-style empty states. */
+  icon?: ReactNode;
   title: string;
   description: string;
   primaryAction?: EmptyStateAction;
@@ -43,14 +43,16 @@ export function EmptyState({
       role="status"
       aria-live="polite"
     >
-      <div
-        aria-hidden
-        className="w-14 h-14 rounded-full bg-bg-elevated border border-white/10 flex items-center justify-center mx-auto mb-4 text-text-muted"
-      >
-        {icon}
-      </div>
+      {icon && (
+        <div
+          aria-hidden
+          className="w-14 h-14 rounded-full bg-bg-elevated border border-border flex items-center justify-center mx-auto mb-4 text-text-muted"
+        >
+          {icon}
+        </div>
+      )}
 
-      <h3 className="text-base font-medium text-text-primary mb-2">{title}</h3>
+      <h3 className="text-sm font-medium text-text-primary mb-2">{title}</h3>
 
       <p className="text-sm text-text-secondary mb-6 max-w-sm mx-auto leading-relaxed">
         {description}
@@ -68,7 +70,7 @@ export function EmptyState({
           {secondaryAction && (
             <Link
               href={secondaryAction.href}
-              className="text-xs text-ube-bright hover:underline transition-colors duration-150 ease-out"
+              className="text-xs text-primary hover:underline transition-colors duration-150 ease-out"
             >
               {secondaryAction.label}
             </Link>
@@ -77,7 +79,7 @@ export function EmptyState({
       )}
 
       {tip && (
-        <div className="mt-6 max-w-sm mx-auto rounded-lg bg-bg-elevated border border-white/10 p-3 text-xs text-text-secondary leading-relaxed text-left">
+        <div className="mt-6 max-w-sm mx-auto rounded-lg bg-bg-elevated border border-border p-3 text-xs text-text-secondary leading-relaxed text-left">
           <span aria-hidden className="mr-1.5">💡</span>
           {tip}
         </div>

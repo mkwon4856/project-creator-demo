@@ -4,13 +4,13 @@ import { Search } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { WorkspaceLayout } from '@/components/layout';
-import { Input, Pill, toast } from '@/components/ui';
+import { Badge, Card, Input, Pill, statusToBadgeVariant, toast } from '@/components/ui';
 import type {
   CampaignStatus,
   CampaignThumbnailJson,
   Database,
 } from '@/lib/db.types';
-import { formatCompactKRW } from '@/lib/mockAdmin';
+import { formatCompactKRW } from '@/lib/formatCurrency';
 import { createClient as createBrowserSupabaseClient } from '@/lib/supabase/client';
 import { useCurrentProfile } from '@/lib/supabase/hooks';
 
@@ -66,57 +66,18 @@ function thumbnailFromJson(json: unknown): { from: string; to: string; emoji: st
   return DEFAULT_THUMBNAIL;
 }
 
-function StatusPill({ status }: { status: CampaignStatus }) {
-  if (status === 'draft') {
-    return (
-      <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium leading-none border bg-bg-hover text-text-secondary border-white/10 whitespace-nowrap">
-        초안
-      </span>
-    );
-  }
-  if (status === 'recruiting') {
-    return (
-      <Pill variant="status" status="recruiting" size="sm">
-        모집중
-      </Pill>
-    );
-  }
-  if (status === 'live') {
-    return (
-      <Pill variant="status" status="live" size="sm">
-        진행중
-      </Pill>
-    );
-  }
-  return (
-    <Pill variant="status" status="completed" size="sm">
-      완료
-    </Pill>
-  );
-}
+const STATUS_LABELS: Record<CampaignStatus, string> = {
+  draft: '초안',
+  recruiting: '모집중',
+  live: '진행중',
+  completed: '완료',
+};
 
-function FilterPill({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: ReactNode;
-}) {
+function StatusBadge({ status }: { status: CampaignStatus }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={[
-        'inline-flex items-center rounded-full px-3 py-1 text-xs font-medium transition-colors duration-150 ease-out border whitespace-nowrap',
-        active
-          ? 'bg-ube text-white border-ube'
-          : 'bg-transparent border-white/10 text-text-secondary hover:border-white/20 hover:text-text-primary',
-      ].join(' ')}
-    >
-      {children}
-    </button>
+    <Badge variant={statusToBadgeVariant(status)} size="sm">
+      {STATUS_LABELS[status]}
+    </Badge>
   );
 }
 
@@ -124,7 +85,7 @@ function HeaderRow() {
   return (
     <div
       role="row"
-      className={`grid ${GRID} items-center gap-3 px-5 py-3 bg-bg-elevated text-[11px] uppercase tracking-wider text-text-secondary`}
+      className={`grid ${GRID} items-center gap-3 px-5 py-3 bg-bg-elevated text-xs font-medium text-text-secondary uppercase`}
     >
       <span aria-hidden />
       <span>캠페인</span>
@@ -170,7 +131,7 @@ function Row({ item, last }: { item: CampaignWithCounts; last: boolean }) {
       role="row"
       className={[
         `grid ${GRID} items-center gap-3 px-5 py-3 transition-colors duration-150 ease-out hover:bg-bg-hover`,
-        last ? '' : 'border-b border-white/[0.06]',
+        last ? '' : 'border-b border-border',
       ].join(' ')}
     >
       <span
@@ -192,7 +153,7 @@ function Row({ item, last }: { item: CampaignWithCounts; last: boolean }) {
 
       <span className="text-xs text-text-secondary truncate">{item.genre || '—'}</span>
 
-      <StatusPill status={item.status} />
+      <StatusBadge status={item.status} />
 
       <span className="text-sm font-medium tabular-nums text-text-primary text-right">
         {formatCompactKRW(item.total_budget)}
@@ -325,7 +286,7 @@ export default function AdminCampaignsPage() {
       notificationCount={badgeCounts.notification}
     >
       <header className="mb-6">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-ube-bright">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-primary">
           관리자 · 디렉터리
         </span>
         <h1 className="text-[22px] font-medium text-text-primary leading-tight mt-1.5">
@@ -337,9 +298,9 @@ export default function AdminCampaignsPage() {
       <div className="flex items-center gap-3 flex-wrap mb-4">
         <div className="flex items-center gap-2 flex-wrap">
           {STATUS_FILTERS.map((f) => (
-            <FilterPill
+            <Pill
               key={f.id}
-              active={statusFilter === f.id}
+              variant={statusFilter === f.id ? 'active' : 'default'}
               onClick={() => setStatusFilter(f.id)}
             >
               {f.label}
@@ -351,7 +312,7 @@ export default function AdminCampaignsPage() {
               >
                 {counts[f.id]}
               </span>
-            </FilterPill>
+            </Pill>
           ))}
         </div>
         <div className="ml-auto w-full max-w-xs">
@@ -365,7 +326,7 @@ export default function AdminCampaignsPage() {
         </div>
       </div>
 
-      <div className="border border-white/[0.06] rounded-lg overflow-hidden bg-bg-card">
+      <Card padding="none" className="overflow-hidden">
         <HeaderRow />
         {filtered.length === 0 ? (
           <div className="px-5 py-16 text-center">
@@ -385,7 +346,7 @@ export default function AdminCampaignsPage() {
             <Row key={item.id} item={item} last={i === filtered.length - 1} />
           ))
         )}
-      </div>
+      </Card>
     </WorkspaceLayout>
   );
 }

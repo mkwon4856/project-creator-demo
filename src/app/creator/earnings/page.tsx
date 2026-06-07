@@ -4,13 +4,13 @@ import { Film, Radio, Video, type LucideIcon } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { WorkspaceLayout } from '@/components/layout';
-import { Card, Pill, toast } from '@/components/ui';
+import { Alert, Badge, Card, statusToBadgeVariant, toast } from '@/components/ui';
 import type {
   MissionType,
   PaymentRow,
   SubmissionStatus,
 } from '@/lib/db.types';
-import { formatCompactKRW } from '@/lib/mockAdmin';
+import { formatCompactKRW } from '@/lib/formatCurrency';
 import { CURRENT_CREATOR } from '@/lib/mockCreators';
 import { createClient as createBrowserSupabaseClient } from '@/lib/supabase/client';
 import { useCurrentCreator } from '@/lib/supabase/hooks';
@@ -56,39 +56,19 @@ function formatShortDate(s: string | null): string {
   return d.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
 }
 
-function StatusPill({ status }: { status: SubmissionStatus }) {
-  if (status === 'making') {
-    return (
-      <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium leading-none border bg-bg-hover text-text-secondary border-white/10 whitespace-nowrap">
-        제작 중
-      </span>
-    );
-  }
-  if (status === 'review') {
-    return (
-      <Pill variant="status" status="review" size="sm">
-        검수 중
-      </Pill>
-    );
-  }
-  if (status === 'approved') {
-    return (
-      <Pill variant="status" status="live" size="sm">
-        승인됨
-      </Pill>
-    );
-  }
-  if (status === 'paid') {
-    return (
-      <Pill variant="status" status="paid" size="sm">
-        정산 완료
-      </Pill>
-    );
-  }
+const EARNING_STATUS_LABELS: Record<SubmissionStatus, string> = {
+  making: '제작 중',
+  review: '검수 중',
+  approved: '승인됨',
+  paid: '정산 완료',
+  rejected: '거절됨',
+};
+
+function StatusBadge({ status }: { status: SubmissionStatus }) {
   return (
-    <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium leading-none border bg-red-500/15 text-red-400 border-red-500/30 whitespace-nowrap">
-      거절됨
-    </span>
+    <Badge variant={statusToBadgeVariant(status)} size="sm">
+      {EARNING_STATUS_LABELS[status]}
+    </Badge>
   );
 }
 
@@ -128,7 +108,7 @@ function HeaderRow() {
   return (
     <div
       role="row"
-      className={`grid ${GRID} items-center gap-3 px-5 py-3 bg-bg-elevated text-[11px] uppercase tracking-wider text-text-secondary`}
+      className={`grid ${GRID} items-center gap-3 px-5 py-3 bg-bg-elevated text-xs font-medium text-text-secondary uppercase`}
     >
       <span>캠페인</span>
       <span>미션</span>
@@ -161,7 +141,7 @@ function Row({
       role="row"
       className={[
         `grid ${GRID} items-center gap-3 px-5 py-3 transition-colors duration-150 ease-out hover:bg-bg-hover`,
-        last ? '' : 'border-b border-white/[0.06]',
+        last ? '' : 'border-b border-border',
       ].join(' ')}
     >
       <div className="flex flex-col min-w-0">
@@ -194,7 +174,7 @@ function Row({
         {formatCompactKRW(net)}
       </span>
 
-      <StatusPill status={item.status} />
+      <StatusBadge status={item.status} />
     </div>
   );
 }
@@ -352,7 +332,7 @@ export default function CreatorEarningsPage() {
       sidebarSections={getCreatorSidebar('earnings')}
     >
       <header className="mb-6">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-ube-bright">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-primary">
           크리에이터 · 수익
         </span>
         <h1 className="text-[22px] font-medium text-text-primary leading-tight mt-1.5">
@@ -364,10 +344,10 @@ export default function CreatorEarningsPage() {
       </header>
 
       {!creator && (
-        <div className="rounded-lg border border-amber-500/40 bg-amber-500/5 px-4 py-3 text-xs text-amber-300 mb-6">
+        <Alert variant="warning" className="mb-6">
           크리에이터 프로필이 없습니다. 회원가입 시 role을 <code>creator</code>로 선택해야
           이 페이지가 작동합니다.
-        </div>
+        </Alert>
       )}
 
       <section className="mb-9">
@@ -396,7 +376,7 @@ export default function CreatorEarningsPage() {
           </span>
         </div>
 
-        <div className="border border-white/[0.06] rounded-lg overflow-hidden bg-bg-card">
+        <Card padding="none" className="overflow-hidden">
           <div className="overflow-x-auto">
             <div className="min-w-[820px]">
               <HeaderRow />
@@ -428,7 +408,7 @@ export default function CreatorEarningsPage() {
               )}
             </div>
           </div>
-        </div>
+        </Card>
       </section>
     </WorkspaceLayout>
   );

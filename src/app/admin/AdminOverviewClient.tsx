@@ -4,6 +4,7 @@ import { Calendar } from 'lucide-react';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { WorkspaceLayout } from '@/components/layout';
+import { Badge } from '@/components/ui';
 import type { CreatorGrade } from '@/lib/db.types';
 import { useCurrentProfile } from '@/lib/supabase/hooks';
 import { createClient as createBrowserSupabaseClient } from '@/lib/supabase/client';
@@ -42,12 +43,17 @@ interface PaymentRow {
 
 const EMPTY_TIER_COUNTS: TierCounts = { A: 0, B: 0, C: 0, D: 0, E: 0 };
 
+function completedPayments(payments: PaymentRow[]): PaymentRow[] {
+  return payments.filter((p) => p.status === 'completed');
+}
+
 function buildMonthlySeries(payments: PaymentRow[]): GmvDataPoint[] {
+  const completed = completedPayments(payments);
   const now = new Date();
   const months: GmvDataPoint[] = [];
   for (let i = 5; i >= 0; i -= 1) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const monthPayments = payments.filter((p) => {
+    const monthPayments = completed.filter((p) => {
       if (!p.paid_at) return false;
       const pd = new Date(p.paid_at);
       return pd.getFullYear() === d.getFullYear() && pd.getMonth() === d.getMonth();
@@ -134,11 +140,12 @@ export default function AdminOverviewClient({ activityFeed }: AdminOverviewClien
       }
     }
 
+    const completed = payments ? completedPayments(payments) : [];
     const gmv = payments
-      ? payments.reduce((sum, p) => sum + (p.amount ?? 0) + (p.platform_fee ?? 0), 0)
+      ? completed.reduce((sum, p) => sum + (p.amount ?? 0) + (p.platform_fee ?? 0), 0)
       : undefined;
     const platformFee = payments
-      ? payments.reduce((sum, p) => sum + (p.platform_fee ?? 0), 0)
+      ? completed.reduce((sum, p) => sum + (p.platform_fee ?? 0), 0)
       : undefined;
 
     const activeCampaigns = campaigns
@@ -147,19 +154,16 @@ export default function AdminOverviewClient({ activityFeed }: AdminOverviewClien
 
     const verifiedCreators = creators ? creators.length : undefined;
 
-    const hasAnyDbData =
-      (gmv !== undefined && gmv > 0) ||
-      (activeCampaigns !== undefined && activeCampaigns > 0) ||
-      (verifiedCreators !== undefined && verifiedCreators > 0);
+    const hasDbConnection = payments !== null || campaigns !== null || creators !== null;
 
     return {
-      gmv: gmv && gmv > 0 ? gmv : undefined,
-      platformFee: platformFee && platformFee > 0 ? platformFee : undefined,
+      gmv: gmv ?? 0,
+      platformFee: platformFee ?? 0,
       gmvGrowthPercent,
       feeGrowthPercent,
-      activeCampaigns,
-      verifiedCreators,
-      fromDb: hasAnyDbData,
+      activeCampaigns: activeCampaigns ?? 0,
+      verifiedCreators: verifiedCreators ?? 0,
+      fromDb: hasDbConnection,
     };
   }, [payments, campaigns, creators]);
 
@@ -213,10 +217,10 @@ export default function AdminOverviewClient({ activityFeed }: AdminOverviewClien
             확인하세요.
           </p>
         </div>
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-bg-card border border-white/10 text-xs text-text-secondary">
+        <Badge variant="neutral" size="sm" className="gap-1.5 px-2.5 py-1.5">
           <Calendar size={13} aria-hidden />
           <span>최근 30일</span>
-        </span>
+        </Badge>
       </header>
 
       <section className="mb-7">

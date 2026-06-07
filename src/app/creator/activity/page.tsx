@@ -11,14 +11,14 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react
 
 import { WorkspaceLayout } from '@/components/layout';
 import { SubmitUrlModal } from '@/components/creator/SubmitUrlModal';
-import { Button, Pill, toast } from '@/components/ui';
+import { Alert, Badge, Button, Card, Pill, statusToBadgeVariant, toast } from '@/components/ui';
 import type { DisplayActivity } from '@/lib/api/submissions';
 import type {
   CampaignThumbnailJson,
   MissionType,
   SubmissionStatus,
 } from '@/lib/db.types';
-import { formatCompactKRW } from '@/lib/mockAdmin';
+import { formatCompactKRW } from '@/lib/formatCurrency';
 import { CURRENT_CREATOR } from '@/lib/mockCreators';
 import { createClient as createBrowserSupabaseClient } from '@/lib/supabase/client';
 import { useCurrentCreator } from '@/lib/supabase/hooks';
@@ -89,64 +89,19 @@ function thumbnailFromJson(json: unknown): { from: string; to: string; emoji: st
   return DEFAULT_THUMBNAIL;
 }
 
-function StatusPill({ status }: { status: SubmissionStatus }) {
-  if (status === 'making') {
-    return (
-      <Pill variant="status" status="recruiting" size="sm">
-        제작 중
-      </Pill>
-    );
-  }
-  if (status === 'review') {
-    return (
-      <Pill variant="status" status="review" size="sm">
-        검수 중
-      </Pill>
-    );
-  }
-  if (status === 'approved') {
-    return (
-      <Pill variant="status" status="live" size="sm">
-        승인됨
-      </Pill>
-    );
-  }
-  if (status === 'paid') {
-    return (
-      <Pill variant="status" status="paid" size="sm">
-        정산 완료
-      </Pill>
-    );
-  }
-  return (
-    <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium leading-none border bg-red-500/15 text-red-400 border-red-500/30 whitespace-nowrap">
-      반려됨
-    </span>
-  );
-}
+const ACTIVITY_STATUS_LABELS: Record<SubmissionStatus, string> = {
+  making: '제작 중',
+  review: '검수 중',
+  approved: '승인됨',
+  paid: '정산 완료',
+  rejected: '반려됨',
+};
 
-function FilterPill({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: ReactNode;
-}) {
+function StatusBadge({ status }: { status: SubmissionStatus }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={[
-        'inline-flex items-center rounded-full px-3 py-1 text-xs font-medium transition-colors duration-150 ease-out border whitespace-nowrap',
-        active
-          ? 'bg-ube text-white border-ube'
-          : 'bg-transparent border-white/10 text-text-secondary hover:border-white/20 hover:text-text-primary',
-      ].join(' ')}
-    >
-      {children}
-    </button>
+    <Badge variant={statusToBadgeVariant(status)} size="sm">
+      {ACTIVITY_STATUS_LABELS[status]}
+    </Badge>
   );
 }
 
@@ -154,7 +109,7 @@ function HeaderRow() {
   return (
     <div
       role="row"
-      className={`grid ${GRID} items-center gap-3 px-5 py-3 bg-bg-elevated text-[11px] uppercase tracking-wider text-text-secondary`}
+      className={`grid ${GRID} items-center gap-3 px-5 py-3 bg-bg-elevated text-xs font-medium text-text-secondary uppercase`}
     >
       <span aria-hidden />
       <span>캠페인</span>
@@ -186,7 +141,7 @@ function Row({
       role="row"
       className={[
         `grid ${GRID} items-center gap-3 px-5 py-3 transition-colors duration-150 ease-out hover:bg-bg-hover`,
-        last ? '' : 'border-b border-white/[0.06]',
+        last ? '' : 'border-b border-border',
       ].join(' ')}
     >
       <span
@@ -217,7 +172,7 @@ function Row({
             href={item.contentUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-xs text-ube-bright hover:text-white transition-colors duration-150 ease-out truncate max-w-full"
+            className="inline-flex items-center gap-1 text-xs text-primary hover:text-white transition-colors duration-150 ease-out truncate max-w-full"
             title={item.contentUrl}
           >
             <span className="truncate">{item.contentUrl}</span>
@@ -230,7 +185,7 @@ function Row({
 
       <span className="text-xs text-text-secondary">{getTimeAgo(item.submittedAt)}</span>
 
-      <StatusPill status={item.status} />
+      <StatusBadge status={item.status} />
 
       <span className="text-sm font-medium tabular-nums text-text-primary text-right">
         {formatCompactKRW(item.reward)}
@@ -242,13 +197,13 @@ function Row({
             URL 제출
           </Button>
         ) : item.status === 'review' ? (
-          <span className="text-[11px] text-amber-400">검수 중</span>
+          <span className="text-[11px] text-warning">검수 중</span>
         ) : item.status === 'approved' ? (
-          <span className="text-[11px] text-green-400">승인됨</span>
+          <span className="text-[11px] text-success">승인됨</span>
         ) : item.status === 'paid' ? (
-          <span className="text-[11px] text-green-400">정산 완료</span>
+          <span className="text-[11px] text-success">정산 완료</span>
         ) : (
-          <span className="text-[11px] text-red-400">반려됨</span>
+          <span className="text-[11px] text-danger">반려됨</span>
         )}
       </div>
     </div>
@@ -413,7 +368,7 @@ export default function CreatorActivityPage() {
       notificationCount={3}
     >
       <header className="mb-6">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-ube-bright">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-primary">
           크리에이터 · 내 활동
         </span>
         <h1 className="text-[22px] font-medium text-text-primary leading-tight mt-1.5">
@@ -425,35 +380,36 @@ export default function CreatorActivityPage() {
       </header>
 
       {!creator && (
-        <div className="rounded-lg border border-amber-500/40 bg-amber-500/5 px-4 py-3 text-xs text-amber-300 mb-6">
+        <Alert variant="warning" className="mb-6">
           크리에이터 프로필이 없습니다. 회원가입 시 role을 <code>creator</code>로 선택해야
           이 페이지가 작동합니다.
-        </div>
+        </Alert>
       )}
 
       {rows.length > 0 && (
         <div className="flex items-center gap-2 flex-wrap mb-4">
           {STATUS_FILTERS.map((f) => (
-            <FilterPill
+            <Pill
               key={f.id}
-              active={statusFilter === f.id}
+              variant={statusFilter === f.id ? 'active' : 'default'}
+              size="md"
               onClick={() => setStatusFilter(f.id)}
             >
               {f.label}
               <span
                 className={[
                   'ml-1.5 tabular-nums',
-                  statusFilter === f.id ? 'text-white/70' : 'text-text-muted',
+                  statusFilter === f.id ? 'text-bg/70' : 'text-text-muted',
                 ].join(' ')}
               >
                 {counts[f.id]}
               </span>
-            </FilterPill>
+            </Pill>
           ))}
         </div>
       )}
 
-      <div className="border border-white/[0.06] rounded-lg overflow-hidden bg-bg-card">
+      <Card padding="none" className="overflow-hidden">
         <div className="overflow-x-auto">
           <div className="min-w-[760px]">
             <HeaderRow />
@@ -482,7 +438,7 @@ export default function CreatorActivityPage() {
             )}
           </div>
         </div>
-      </div>
+      </Card>
 
       <SubmitUrlModal
         open={pending !== null}

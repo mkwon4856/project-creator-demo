@@ -1,9 +1,11 @@
 'use client';
 
 import { Check, Plus, Search } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
-import { CAMPAIGNS, type Campaign } from '@/lib/mockCampaigns';
+import { Card, Input, SelectableCard } from '@/components/ui';
+import { fetchCampaigns, transformDbCampaign } from '@/lib/api/campaigns';
+import type { Campaign } from '@/lib/campaigns/types';
 
 import type { SelectedGame } from '../_types';
 
@@ -45,7 +47,7 @@ function GameThumb({ campaign, selected }: { campaign: Campaign; selected: boole
         </span>
       )}
       {selected && (
-        <span className="absolute top-2 right-2 inline-flex w-6 h-6 rounded-full bg-ube items-center justify-center text-white">
+        <span className="absolute top-2 right-2 inline-flex w-6 h-6 rounded-full bg-primary items-center justify-center text-bg">
           <Check size={14} aria-hidden />
         </span>
       )}
@@ -55,15 +57,29 @@ function GameThumb({ campaign, selected }: { campaign: Campaign; selected: boole
 
 export function StepGame({ selected, onSelect }: StepGameProps) {
   const [query, setQuery] = useState('');
+  const [games, setGames] = useState<Campaign[]>([]);
+  const [loading, setLoading] = useState(true);
   const selectedKey = selected?.sourceId;
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetchCampaigns().then((rows) => {
+      if (cancelled) return;
+      setGames(rows.map(transformDbCampaign));
+      setLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return CAMPAIGNS;
-    return CAMPAIGNS.filter((c) =>
+    if (!q) return games;
+    return games.filter((c) =>
       `${c.name} ${c.developer} ${c.genre}`.toLowerCase().includes(q),
     );
-  }, [query]);
+  }, [games, query]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -74,58 +90,57 @@ export function StepGame({ selected, onSelect }: StepGameProps) {
         </p>
       </div>
 
-      <label className="flex items-center gap-2 px-3 py-2 rounded-md w-full max-w-md bg-bg-card border border-white/10 focus-within:border-ube focus-within:shadow-[0_0_0_3px_var(--ube-tint)] transition-all duration-150 ease-out">
-        <Search size={14} aria-hidden className="text-text-muted shrink-0" />
-        <input
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="게임 검색…"
-          className="flex-1 min-w-0 bg-transparent border-none outline-none text-sm text-text-primary placeholder:text-text-muted"
-          aria-label="게임 검색"
-        />
-      </label>
+      <Input
+        type="search"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="게임 검색…"
+        aria-label="게임 검색"
+        icon={<Search size={14} aria-hidden />}
+        containerClassName="max-w-md"
+      />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <button
-          type="button"
-          className="rounded-lg border border-dashed border-white/15 bg-transparent p-4 flex flex-col items-center justify-center gap-2 text-text-secondary hover:border-ube hover:text-ube-bright transition-colors duration-150 ease-out cursor-pointer min-h-[180px]"
-          onClick={() => {
-            if (typeof window !== 'undefined') window.alert('게임 등록 기능은 곧 추가됩니다.');
-          }}
-        >
-          <span className="inline-flex w-8 h-8 rounded-full bg-bg-hover items-center justify-center">
-            <Plus size={16} aria-hidden />
-          </span>
-          <span className="text-sm">새 게임 추가</span>
-        </button>
+      {loading ? (
+        <p className="text-sm text-text-secondary py-8 text-center">불러오는 중…</p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <Card
+            padding="md"
+            hover
+            onClick={() => {
+              if (typeof window !== 'undefined') window.alert('게임 등록 기능은 곧 추가됩니다.');
+            }}
+            className="border-dashed flex flex-col items-center justify-center gap-2 text-text-secondary min-h-[180px]"
+          >
+            <span className="inline-flex w-8 h-8 rounded-full bg-surface-hover items-center justify-center">
+              <Plus size={16} aria-hidden />
+            </span>
+            <span className="text-sm">새 게임 추가</span>
+          </Card>
 
-        {filtered.map((c) => {
-          const isSelected = c.id === selectedKey;
-          return (
-            <button
-              key={c.id}
-              type="button"
-              onClick={() => onSelect(campaignToSelectedGame(c))}
-              className={[
-                'text-left rounded-lg overflow-hidden border bg-bg-card transition-all duration-150 ease-out',
-                isSelected
-                  ? 'border-ube shadow-[0_0_0_2px_var(--ube-tint)]'
-                  : 'border-white/[0.06] hover:border-white/20',
-              ].join(' ')}
-              aria-pressed={isSelected}
-            >
-              <GameThumb campaign={c} selected={isSelected} />
-              <div className="p-3 flex flex-col gap-0.5">
-                <span className="text-sm font-medium text-text-primary truncate">{c.name}</span>
-                <span className="text-xs text-text-secondary truncate">
-                  {c.developer} · {c.genre}
-                </span>
-              </div>
-            </button>
-          );
-        })}
-      </div>
+          {filtered.map((c) => {
+            const isSelected = c.id === selectedKey;
+            return (
+              <SelectableCard
+                key={c.id}
+                padding="none"
+                selected={isSelected}
+                onClick={() => onSelect(campaignToSelectedGame(c))}
+                className="text-left overflow-hidden"
+                aria-pressed={isSelected}
+              >
+                <GameThumb campaign={c} selected={isSelected} />
+                <div className="p-3 flex flex-col gap-0.5">
+                  <span className="text-sm font-medium text-text-primary truncate">{c.name}</span>
+                  <span className="text-xs text-text-secondary truncate">
+                    {c.developer} · {c.genre}
+                  </span>
+                </div>
+              </SelectableCard>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

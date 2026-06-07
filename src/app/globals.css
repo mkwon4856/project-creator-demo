@@ -2,35 +2,46 @@
 
 @layer base {
   :root {
-    /* Background System (4 levels) */
-    --bg-base: #0A0A0F;
-    --bg-elevated: #13131A;
-    --bg-card: #1A1A24;
-    --bg-hover: #22222E;
+    /* Design tokens */
+    --color-bg: #141517;
+    --color-surface: #1E2023;
+    --color-surface-hover: #26282C;
+    --color-border: #2E3033;
+    --color-text-primary: #ECECEE;
+    --color-text-secondary: #9DA1A8;
+    --color-text-muted: #6B6F76;
+    --color-primary: #A78BFA;
+    --color-primary-hover: #B89FFC;
+    --color-primary-dim: rgba(167, 139, 250, 0.12);
+    --color-success: #34D399;
+    --color-danger: #F87171;
+    --color-warning: #FBBF24;
 
-    /* Borders */
-    --border-subtle: rgba(255, 255, 255, 0.06);
-    --border-default: rgba(255, 255, 255, 0.10);
-    --border-strong: rgba(255, 255, 255, 0.18);
+    /* Legacy aliases (existing utility class names) */
+    --bg-base: var(--color-bg);
+    --bg-elevated: #1A1C1F;
+    --bg-card: var(--color-surface);
+    --bg-hover: var(--color-surface-hover);
 
-    /* Text */
-    --text-primary: #F4F4F5;
-    --text-secondary: #A1A1AA;
-    --text-muted: #71717A;
+    --border-subtle: rgba(46, 48, 51, 0.5);
+    --border-default: var(--color-border);
+    --border-strong: rgba(236, 236, 238, 0.18);
 
-    /* Ube (dark-optimized, downshifted for stronger CTAs) */
-    --ube: #7B5EA7;
-    --ube-bright: #B89AD8;
-    --ube-dark: #5F4685;
-    --ube-tint: rgba(123, 94, 167, 0.16);
-    --ube-tint-strong: rgba(123, 94, 167, 0.24);
+    --text-primary: var(--color-text-primary);
+    --text-secondary: var(--color-text-secondary);
+    --text-muted: var(--color-text-muted);
 
-    /* Semantic (dark-tuned) */
-    --green: #34D399;
+    --ube: var(--color-primary);
+    --ube-bright: var(--color-primary-hover);
+    --ube-dark: #7C5CE0;
+    --ube-tint: var(--color-primary-dim);
+    --ube-tint-strong: rgba(167, 139, 250, 0.2);
+
+    --green: var(--color-success);
     --green-tint: rgba(52, 211, 153, 0.15);
-    --amber: #FBBF24;
+    --amber: var(--color-warning);
     --amber-tint: rgba(251, 191, 36, 0.15);
-    --red: #F87171;
+    --red: var(--color-danger);
     --red-tint: rgba(248, 113, 113, 0.15);
 
     /* Radius */
@@ -43,7 +54,7 @@
     --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
     --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
     --shadow-lg: 0 24px 80px rgba(0, 0, 0, 0.6);
-    --glow-ube: 0 0 24px rgba(123, 94, 167, 0.35);
+    --glow-ube: 0 0 24px rgba(167, 139, 250, 0.35);
   }
 
   /* Three text size tiers */
@@ -53,7 +64,7 @@
   html { font-size: 16px; }
 
   body {
-    font-family: 'Pretendard', 'Inter', -apple-system, system-ui, sans-serif;
+    font-family: "Pretendard Variable", Pretendard, -apple-system, sans-serif;
     color: var(--text-primary);
     background: var(--bg-base);
   }
@@ -61,26 +72,36 @@
 
 /* Tailwind v4 — expose tokens as utility colors (e.g. bg-ube, text-ube-bright, bg-bg-card) */
 @theme {
-  --color-ube: var(--ube);
-  --color-ube-bright: var(--ube-bright);
-  --color-ube-dark: var(--ube-dark);
-  --color-ube-tint: var(--ube-tint);
-  --color-ube-tint-strong: var(--ube-tint-strong);
+  --color-bg: #141517;
+  --color-surface: #1E2023;
+  --color-surface-hover: #26282C;
+  --color-border: #2E3033;
+  --color-text-primary: #ECECEE;
+  --color-text-secondary: #9DA1A8;
+  --color-text-muted: #6B6F76;
+  --color-primary: #A78BFA;
+  --color-primary-hover: #B89FFC;
+  --color-primary-dim: rgba(167, 139, 250, 0.12);
+  --color-success: #34D399;
+  --color-danger: #F87171;
+  --color-warning: #FBBF24;
 
-  --color-bg-base: var(--bg-base);
-  --color-bg-elevated: var(--bg-elevated);
-  --color-bg-card: var(--bg-card);
-  --color-bg-hover: var(--bg-hover);
+  --color-ube: var(--color-primary);
+  --color-ube-bright: var(--color-primary-hover);
+  --color-ube-dark: #7C5CE0;
+  --color-ube-tint: var(--color-primary-dim);
+  --color-ube-tint-strong: rgba(167, 139, 250, 0.2);
 
-  --color-text-primary: var(--text-primary);
-  --color-text-secondary: var(--text-secondary);
-  --color-text-muted: var(--text-muted);
+  --color-bg-base: var(--color-bg);
+  --color-bg-elevated: #1A1C1F;
+  --color-bg-card: var(--color-surface);
+  --color-bg-hover: var(--color-surface-hover);
 
-  --color-border-subtle: var(--border-subtle);
-  --color-border-default: var(--border-default);
-  --color-border-strong: var(--border-strong);
+  --color-border-subtle: rgba(46, 48, 51, 0.5);
+  --color-border-default: #2E3033;
+  --color-border-strong: rgba(236, 236, 238, 0.18);
 
-  --font-sans: 'Pretendard', 'Inter', system-ui, sans-serif;
+  --font-sans: "Pretendard Variable", Pretendard, -apple-system, sans-serif;
 
   --shadow-glow-ube: var(--glow-ube);
 }

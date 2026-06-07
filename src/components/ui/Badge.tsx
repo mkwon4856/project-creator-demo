@@ -3,6 +3,7 @@
 import { forwardRef, type HTMLAttributes, type ReactNode } from 'react';
 
 export type BadgeVariant =
+  | 'primary'
   | 'ube'
   | 'ube-glow'
   | 'success'
@@ -20,46 +21,64 @@ export interface BadgeProps extends Omit<HTMLAttributes<HTMLSpanElement>, 'child
 }
 
 const SIZE_CLASSES: Record<BadgeSize, string> = {
-  xs: 'px-1.5 py-0.5 text-[10px]',
-  sm: 'px-2 py-0.5 text-xs',
+  xs: 'px-2 py-0.5 text-[10px]',
+  sm: 'px-2.5 py-0.5 text-xs',
 };
 
 const VARIANT_CLASSES: Record<BadgeVariant, string> = {
-  ube:
-    'bg-ube/15 text-ube-bright border border-ube/30',
-  'ube-glow':
-    'bg-ube/20 text-ube-bright border border-ube/50',
-  success:
-    'bg-green-500/15 text-green-400 border border-green-500/30',
-  warning:
-    'bg-amber-500/15 text-amber-400 border border-amber-500/30',
-  danger:
-    'bg-red-500/15 text-red-400 border border-red-500/30',
-  neutral:
-    'bg-bg-hover text-text-secondary border border-white/10',
+  primary: 'bg-primary-dim text-primary',
+  ube: 'bg-primary-dim text-primary',
+  'ube-glow': 'bg-primary-dim text-primary',
+  success: 'bg-success/12 text-success',
+  warning: 'bg-warning/12 text-warning',
+  danger: 'bg-danger/12 text-danger',
+  neutral: 'bg-surface-hover text-text-secondary',
 };
 
+/** 상태 문자열 → Badge variant (active/approved/completed → success 등) */
+export function statusToBadgeVariant(
+  status: string,
+): Extract<BadgeVariant, 'success' | 'warning' | 'danger' | 'neutral'> {
+  const key = status.toLowerCase();
+  if (
+    key === 'active' ||
+    key === 'approved' ||
+    key === 'completed' ||
+    key === 'live' ||
+    key === 'paid'
+  ) {
+    return 'success';
+  }
+  if (
+    key === 'pending' ||
+    key === 'draft' ||
+    key === 'processing' ||
+    key === 'review' ||
+    key === 'recruiting'
+  ) {
+    return 'warning';
+  }
+  if (key === 'rejected' || key === 'closed') {
+    return 'danger';
+  }
+  return 'neutral';
+}
+
 export const Badge = forwardRef<HTMLSpanElement, BadgeProps>(function Badge(
-  { variant = 'neutral', size = 'xs', icon, children, className = '', style, ...rest },
+  { variant = 'neutral', size = 'sm', icon, children, className = '', ...rest },
   ref,
 ) {
-  const glowStyle =
-    variant === 'ube-glow'
-      ? { boxShadow: '0 0 12px rgba(155,126,200,0.3)' }
-      : undefined;
-
   return (
     <span
       ref={ref}
       className={[
-        'inline-flex items-center gap-1 rounded font-medium leading-none whitespace-nowrap',
+        'inline-flex items-center gap-1 rounded-full font-medium leading-none whitespace-nowrap',
         SIZE_CLASSES[size],
         VARIANT_CLASSES[variant],
         className,
       ]
         .filter(Boolean)
         .join(' ')}
-      style={{ ...glowStyle, ...style }}
       {...rest}
     >
       {icon && <span className="inline-flex shrink-0">{icon}</span>}

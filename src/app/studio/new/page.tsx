@@ -233,10 +233,10 @@ export default function CampaignWizardPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-bg-base text-text-primary">
-      <header className="flex items-center justify-between px-8 py-4 border-b border-white/[0.06] bg-bg-base">
+      <header className="flex items-center justify-between gap-3 px-4 sm:px-6 md:px-8 py-3 md:py-4 border-b border-border bg-bg-base">
         <span className="text-base font-semibold tracking-tight">
-          Project <span className="text-ube-bright">Creator</span>
-          <span className="ml-2 text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-ube/10 text-ube-bright align-middle">
+          Project <span className="text-primary">Creator</span>
+          <span className="ml-2 text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-primary-dim text-primary align-middle">
             새 캠페인
           </span>
         </span>
@@ -253,9 +253,9 @@ export default function CampaignWizardPage() {
       {restored && (
         <div
           role="status"
-          className="flex items-center justify-between gap-3 px-8 py-2.5 border-b border-white/[0.06] bg-ube-tint"
+          className="flex items-center justify-between gap-3 px-4 sm:px-6 md:px-8 py-2.5 border-b border-border bg-primary-dim"
         >
-          <span className="inline-flex items-center gap-1.5 text-xs text-ube-bright">
+          <span className="inline-flex items-center gap-1.5 text-xs text-primary">
             <History size={12} aria-hidden />
             이전에 작성하던 캠페인을 이어서 작성합니다.
           </span>
@@ -272,7 +272,7 @@ export default function CampaignWizardPage() {
       <Stepper current={step} onJump={(s) => setStep(s)} />
 
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_360px] min-h-0">
-        <main className="overflow-y-auto px-10 py-8">
+        <main className="overflow-y-auto px-4 sm:px-6 md:px-10 py-6 md:py-8 min-w-0">
           {step === 1 && <StepGame selected={data.game} onSelect={handleSelectGame} />}
           {step === 2 && <StepBudget data={data} onChange={updateData} />}
           {step === 3 && <StepMissions data={data} onChange={updateData} />}
@@ -289,7 +289,7 @@ export default function CampaignWizardPage() {
         <Summary data={data} />
       </div>
 
-      <footer className="flex items-center justify-between gap-4 px-8 py-4 border-t border-white/[0.06] bg-bg-base">
+      <footer className="flex items-center justify-between gap-2 sm:gap-4 px-4 sm:px-6 md:px-8 py-3 md:py-4 border-t border-border bg-bg-base">
         <div className="min-w-[120px]">
           {step > 1 && (
             <Button variant="ghost" size="md" icon={<ArrowLeft size={14} />} onClick={goBack}>

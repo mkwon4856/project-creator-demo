@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useId, useState } from 'react';
 
 import { WorkspaceLayout } from '@/components/layout';
-import { Button, Card, Input, toast } from '@/components/ui';
+import { Alert, Button, Card, Input, Textarea, toast } from '@/components/ui';
 import { createClient as createBrowserSupabaseClient } from '@/lib/supabase/client';
 import { useCurrentProfile, useCurrentStudio } from '@/lib/supabase/hooks';
 
@@ -137,7 +137,7 @@ export default function StudioSettingsPage() {
       sidebarSections={getStudioSidebar('settings')}
     >
       <header className="mb-6">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-ube-bright">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-primary">
           게임사 · 설정
         </span>
         <h1 className="text-[22px] font-medium text-text-primary leading-tight mt-1.5">
@@ -147,10 +147,10 @@ export default function StudioSettingsPage() {
       </header>
 
       {!studio && (
-        <div className="rounded-lg border border-amber-500/40 bg-amber-500/5 px-4 py-3 text-xs text-amber-300 mb-6">
+        <Alert variant="warning" className="mb-6">
           스튜디오 프로필이 없습니다. 회원가입 시 role을 <code>studio</code>로 선택해야
           이 페이지가 작동합니다.
-        </div>
+        </Alert>
       )}
 
       <Card variant="default" padding="lg" className="mb-6">
@@ -173,17 +173,14 @@ export default function StudioSettingsPage() {
           />
         </div>
 
-        <div className="mb-4 flex flex-col gap-1.5">
-          <label htmlFor={descId} className="text-xs font-medium text-text-secondary">
-            소개
-          </label>
-          <textarea
+        <div className="mb-4">
+          <Textarea
             id={descId}
+            label="소개"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={3}
             placeholder="게임사 소개"
-            className="min-h-[100px] bg-bg-card border border-white/10 rounded-md p-3.5 text-sm text-text-primary placeholder:text-text-muted outline-none focus:border-ube focus:shadow-[0_0_0_3px_var(--ube-tint)] resize-vertical transition-all duration-150 ease-out"
           />
         </div>
 

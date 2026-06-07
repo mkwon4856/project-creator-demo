@@ -1,6 +1,7 @@
 'use client';
 
-import { formatBudget } from '@/lib/mockCampaigns';
+import { Card } from '@/components/ui';
+import { formatBudget } from '@/lib/campaigns/types';
 
 import {
   calcEstimatedCreators,
@@ -47,7 +48,7 @@ export function Summary({ data }: SummaryProps) {
       </span>
 
       {game ? (
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-bg-card border border-white/[0.06]">
+        <Card padding="sm" className="flex items-center gap-3">
           <span
             className="inline-flex w-10 h-10 rounded-md items-center justify-center text-xl leading-none shrink-0"
             style={{
@@ -61,17 +62,17 @@ export function Summary({ data }: SummaryProps) {
             <span className="text-sm font-medium text-text-primary truncate">{game.name}</span>
             <span className="text-xs text-text-secondary truncate">{game.developer}</span>
           </div>
-        </div>
+        </Card>
       ) : (
-        <div className="rounded-lg border border-dashed border-white/15 p-4 text-center text-xs text-text-secondary">
+        <Card padding="md" className="border-dashed text-center text-xs text-text-secondary">
           1단계에서 게임을 선택하면 요약이 표시됩니다.
-        </div>
+        </Card>
       )}
 
       <div className="flex flex-col">
         <SummaryRow
           label="총 예산"
-          value={<span className="text-ube-bright">{formatBudget(data.totalBudget)}</span>}
+          value={<span className="text-primary">{formatBudget(data.totalBudget)}</span>}
         />
         <SummaryRow
           label="활성 미션"
@@ -95,18 +96,15 @@ export function Summary({ data }: SummaryProps) {
         />
       </div>
 
-      <div
-        className="rounded-lg p-4 border border-ube/30 flex flex-col gap-1"
-        style={{ background: 'var(--ube-tint)' }}
-      >
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-ube-bright">
+      <Card variant="featured" padding="md" className="flex flex-col gap-1">
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-primary">
           플랫폼 수수료 (15%)
         </span>
-        <span className="text-2xl text-ube-bright font-medium tabular-nums leading-tight">
+        <span className="text-2xl text-primary font-medium tabular-nums leading-tight">
           {formatBudget(platformFee)}
         </span>
-        <span className="text-[11px] text-ube-bright/85">정산 지급 성공 시 부과됩니다</span>
-      </div>
+        <span className="text-[11px] text-text-secondary">정산 지급 성공 시 부과됩니다</span>
+      </Card>
     </aside>
   );
 }

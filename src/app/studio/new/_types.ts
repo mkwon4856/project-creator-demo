@@ -3,7 +3,7 @@ import type {
   CampaignPlatform,
   CampaignRates,
   CampaignThumbnail,
-} from '@/lib/mockCampaigns';
+} from '@/lib/campaigns/types';
 
 export type MissionId = keyof CampaignMissions;
 
@@ -25,7 +25,7 @@ export interface ContentGuidelines {
  * care whether the source was the mock library or a DB game.
  */
 export interface SelectedGame {
-  /** Original id if the game came from `mockCampaigns` — used as a select key only. */
+  /** Original campaign id when selected from the game library — used as a select key only. */
   sourceId?: string;
   name: string;
   developer: string;

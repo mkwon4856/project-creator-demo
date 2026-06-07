@@ -11,14 +11,13 @@ import {
 } from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
 
-import { Button, Pill } from '@/components/ui';
+import { Badge, Button, Card, statusToBadgeVariant } from '@/components/ui';
 import { ApplyButton } from '@/components/campaign/ApplyButton';
 import {
   transformDbCampaign,
   type CampaignWithMissions,
 } from '@/lib/api/campaigns';
 import {
-  CAMPAIGNS,
   formatBudget,
   formatRate,
   getMissionRate,
@@ -27,15 +26,9 @@ import {
   type CampaignMissions,
   type CampaignRates,
   type MissionKind,
-} from '@/lib/mockCampaigns';
+} from '@/lib/campaigns/types';
 import { CURRENT_CREATOR, type CreatorGrade } from '@/lib/mockCreators';
 import { createClient as createBrowserSupabaseClient } from '@/lib/supabase/client';
-
-const STATUS_TO_PILL = {
-  live: 'live',
-  recruiting: 'recruiting',
-  completed: 'completed',
-} as const;
 
 const STATUS_LABEL = {
   live: '진행중',
@@ -87,7 +80,7 @@ function MetricCard({
   valueClass?: string;
 }) {
   return (
-    <div className="rounded-lg border border-white/[0.06] bg-bg-elevated p-4 flex flex-col gap-1">
+    <Card variant="default" padding="md" className="bg-bg-elevated flex flex-col gap-1">
       <span className="text-[10px] font-semibold uppercase tracking-wider text-text-secondary">
         {label}
       </span>
@@ -95,7 +88,7 @@ function MetricCard({
         {value}
       </span>
       <span className="text-[11px] text-text-secondary">{sub}</span>
-    </div>
+    </Card>
   );
 }
 
@@ -118,7 +111,8 @@ function RateMatrix({
   highlightTier?: CreatorGrade;
 }) {
   return (
-    <div className="border border-white/10 rounded-lg overflow-hidden">
+    <div className="overflow-x-auto -mx-1 px-1">
+      <div className="border border-border rounded-lg overflow-hidden min-w-[520px]">
       <div className="grid grid-cols-[140px_repeat(5,1fr)] bg-bg-elevated">
         <div className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-text-secondary">
           미션
@@ -128,7 +122,7 @@ function RateMatrix({
             key={tier}
             className={[
               'px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-center',
-              tier === highlightTier ? 'text-ube-bright bg-ube/10' : 'text-text-secondary',
+              tier === highlightTier ? 'text-primary bg-primary-dim' : 'text-text-secondary',
             ].join(' ')}
           >
             {tier}티어
@@ -156,7 +150,7 @@ function RateMatrix({
                   className={[
                     'px-3 py-3 text-sm tabular-nums text-center',
                     isHighlight
-                      ? 'bg-ube/10 text-ube-bright font-medium'
+                      ? 'bg-primary-dim text-primary font-medium'
                       : enabled
                         ? 'text-text-primary'
                         : 'text-text-muted',
@@ -169,6 +163,7 @@ function RateMatrix({
           </div>
         );
       })}
+      </div>
     </div>
   );
 }
@@ -211,19 +206,9 @@ export function CampaignDetailContent({
   variant = 'page',
   onClose,
 }: CampaignDetailContentProps) {
-  // Cheap synchronous mock lookup first — covers all legacy ids without a roundtrip.
-  const [state, setState] = useState<LoadState>(() => {
-    const mock = CAMPAIGNS.find((c) => c.id === campaignId);
-    return mock ? { kind: 'found', campaign: mock } : { kind: 'loading' };
-  });
+  const [state, setState] = useState<LoadState>({ kind: 'loading' });
 
   useEffect(() => {
-    // Re-evaluate when the requested id changes.
-    const mock = CAMPAIGNS.find((c) => c.id === campaignId);
-    if (mock) {
-      setState({ kind: 'found', campaign: mock });
-      return;
-    }
     setState({ kind: 'loading' });
 
     let cancelled = false;
@@ -247,7 +232,7 @@ export function CampaignDetailContent({
       <div className="p-10 text-center">
         <p className="text-base text-text-primary mb-2">캠페인을 찾을 수 없습니다</p>
         <p className="text-sm text-text-secondary">
-          캠페인 ID <code className="text-ube-bright">{campaignId}</code>가 존재하지 않습니다.
+          캠페인 ID <code className="text-primary">{campaignId}</code>가 존재하지 않습니다.
         </p>
       </div>
     );
@@ -295,31 +280,30 @@ export function CampaignDetailContent({
         />
 
         {variant === 'modal' && onClose && (
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="sm"
             onClick={onClose}
             aria-label="닫기"
-            className="absolute top-3 right-3 inline-flex w-8 h-8 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm text-white hover:bg-black/60 transition-colors duration-150 ease-out"
+            className="absolute top-3 right-3 w-8 h-8 p-0 rounded-full bg-black/40 backdrop-blur-sm text-white hover:bg-black/60 hover:text-white"
           >
             <X size={16} aria-hidden />
-          </button>
+          </Button>
         )}
 
         <div className="absolute left-5 bottom-4 right-5 flex flex-col gap-2">
           <div className="flex items-center gap-2 flex-wrap">
-            <Pill variant="status" status={STATUS_TO_PILL[campaign.status]} size="sm">
+            <Badge variant={statusToBadgeVariant(campaign.status)} size="sm">
               {STATUS_LABEL[campaign.status]}
-            </Pill>
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium text-white bg-white/20 backdrop-blur-sm">
+            </Badge>
+            <Badge variant="neutral" size="sm" className="bg-white/20 text-white backdrop-blur-sm">
               예산 {percent}% 사용
-            </span>
+            </Badge>
             {copy.tags.map((t) => (
-              <span
-                key={t}
-                className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] text-white/85 bg-white/10 backdrop-blur-sm"
-              >
+              <Badge key={t} variant="neutral" size="sm" className="bg-white/10 text-white/85 backdrop-blur-sm">
                 {t}
-              </span>
+              </Badge>
             ))}
           </div>
           <h1 className="text-2xl font-medium text-white leading-tight">{campaign.name}</h1>
@@ -346,21 +330,19 @@ export function CampaignDetailContent({
               const active = i === 0;
               const isModalDisabled = variant === 'modal' && !active;
               return (
-                <button
+                <Button
                   key={label}
                   type="button"
+                  variant="ghost"
+                  size="sm"
                   disabled={isModalDisabled}
                   className={[
-                    'px-3 py-2.5 text-sm transition-colors duration-150 ease-out',
-                    'border-b-2 -mb-px',
-                    active
-                      ? 'text-text-primary border-ube'
-                      : 'text-text-secondary border-transparent hover:text-text-primary',
-                    isModalDisabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
+                    'rounded-none border-b-2 -mb-px px-3 py-2.5',
+                    active ? 'text-text-primary border-primary' : 'border-transparent',
                   ].join(' ')}
                 >
                   {label}
-                </button>
+                </Button>
               );
             },
           )}
@@ -379,7 +361,7 @@ export function CampaignDetailContent({
             label="집행액"
             value={formatBudget(campaign.spentBudget)}
             sub={`${percent}% 사용`}
-            valueClass="text-ube-bright"
+            valueClass="text-primary"
           />
           <MetricCard
             label="참여 크리에이터"
@@ -390,7 +372,7 @@ export function CampaignDetailContent({
             label="제출 콘텐츠"
             value="12"
             sub="2건 검수 대기"
-            valueClass="text-green-400"
+            valueClass="text-success"
           />
         </section>
 
@@ -406,7 +388,7 @@ export function CampaignDetailContent({
             <span className="text-[10px] font-semibold uppercase tracking-wider text-text-secondary">
               티어별 미션 단가
             </span>
-            <span className="text-[11px] text-ube-bright">
+            <span className="text-[11px] text-primary">
               내 티어 {myTier} · 강조 표시됨
             </span>
           </div>
@@ -428,11 +410,11 @@ export function CampaignDetailContent({
           <span className="text-[10px] font-semibold uppercase tracking-wider text-text-secondary">
             일정
           </span>
-          <div className="rounded-lg border border-white/[0.06] bg-bg-elevated overflow-hidden">
+          <Card padding="none" className="bg-bg-elevated overflow-hidden">
             <ScheduleRow label="모집 기간" value={copy.schedule.recruitment} />
             <ScheduleRow label="콘텐츠 제출 마감" value={copy.schedule.submission} />
             <ScheduleRow label="정산일" value={copy.schedule.settlement} />
-          </div>
+          </Card>
         </section>
       </div>
 
@@ -444,7 +426,7 @@ export function CampaignDetailContent({
           .filter(Boolean)
           .join(' ')}
       >
-        <span className="inline-flex items-center gap-1.5 text-xs text-ube-bright">
+        <span className="inline-flex items-center gap-1.5 text-xs text-primary">
           <Sparkles size={13} aria-hidden />
           <span className="tabular-nums">{matchScore}%</span>
           <span className="text-text-secondary">내 채널과 매칭</span>

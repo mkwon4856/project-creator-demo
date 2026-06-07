@@ -2,18 +2,18 @@
 
 import { Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
-import { Badge, Card, Pill, type BadgeVariant } from '@/components/ui';
+import { Badge, Card, EmptyState, Pill, type BadgeVariant } from '@/components/ui';
+import { fetchOpenCampaigns } from '@/lib/api/campaigns';
 import {
-  CAMPAIGNS as MOCK_CAMPAIGNS,
   formatRate,
   getMissionRate,
   STATUS_LABELS,
   type Campaign,
   type CampaignRates,
   type MissionKind,
-} from '@/lib/mockCampaigns';
+} from '@/lib/campaigns/types';
 import { CURRENT_CREATOR, type CreatorGrade } from '@/lib/mockCreators';
 import { useCurrentCreator } from '@/lib/supabase/hooks';
 
@@ -171,17 +171,25 @@ function describeMissions(missions: Campaign['missions']): string {
 function MatchBadge({ score }: { score: number }) {
   if (score >= 70) {
     return (
-      <span className="absolute top-2 right-2 inline-flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-medium text-ube-bright bg-black/60 backdrop-blur-sm">
+      <Badge
+        variant="primary"
+        size="sm"
+        className="absolute top-2 right-2 gap-1 bg-black/60 backdrop-blur-sm"
+      >
         <Sparkles size={11} aria-hidden />
         <span className="tabular-nums">{score}%</span>
-      </span>
+      </Badge>
     );
   }
   if (score >= 50) {
     return (
-      <span className="absolute top-2 right-2 text-[10px] font-medium tabular-nums text-text-secondary bg-black/50 backdrop-blur-sm px-1.5 py-0.5 rounded">
+      <Badge
+        variant="neutral"
+        size="xs"
+        className="absolute top-2 right-2 tabular-nums bg-black/50 backdrop-blur-sm"
+      >
         {score}%
-      </span>
+      </Badge>
     );
   }
   return null;
@@ -203,10 +211,10 @@ function getDynamicTag(
   const spentRatio =
     campaign.totalBudget > 0 ? campaign.spentBudget / campaign.totalBudget : 0;
 
-  if (campaign.status === 'completed') return { label: '완료 ✅', variant: 'neutral' };
+  if (campaign.status === 'completed') return { label: '완료 ✅', variant: 'success' };
   if (joinRatio >= 0.85) return { label: '종료임박 🔥', variant: 'danger' };
   if (spentRatio >= 0.9) return { label: '마감임박', variant: 'warning' };
-  if (campaign.isNew) return { label: '신규 🆕', variant: 'ube-glow' };
+  if (campaign.isNew) return { label: '신규 🆕', variant: 'primary' };
   if (campaign.status === 'recruiting' && joinRatio < 0.3) {
     return { label: '모집중 ✨', variant: 'success' };
   }
@@ -320,10 +328,21 @@ function RecommendedCard({
 export function RecommendedCampaigns() {
   const router = useRouter();
   const { data: creatorRow } = useCurrentCreator();
-  // Demo: always render the local CAMPAIGNS mock. DB fetch is intentionally
-  // disabled so edits to mockCampaigns.ts show up without stale DB rows.
-  const [campaigns] = useState<Campaign[]>(MOCK_CAMPAIGNS);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterId>('all');
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetchOpenCampaigns().then((rows) => {
+      if (cancelled) return;
+      setCampaigns(rows);
+      setLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const creator: MatchCreator = useMemo(() => {
     if (creatorRow) {
@@ -387,7 +406,18 @@ export function RecommendedCampaigns() {
         </div>
       </div>
 
-      {filtered.length === 0 ? (
+      {loading ? (
+        <div className="rounded-lg border border-border px-6 py-12 text-center text-sm text-text-secondary">
+          불러오는 중…
+        </div>
+      ) : campaigns.length === 0 ? (
+        <Card padding="none">
+          <EmptyState
+            title="아직 모집 중인 캠페인이 없어요"
+            description="새 캠페인이 등록되면 여기에 표시됩니다."
+          />
+        </Card>
+      ) : filtered.length === 0 ? (
         <div className="rounded-lg border border-dashed border-white/10 px-6 py-12 text-center text-sm text-text-secondary">
           조건에 맞는 캠페인이 없어요.
         </div>

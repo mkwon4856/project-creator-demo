@@ -1,7 +1,8 @@
 'use client';
 
 import type { Json } from '@/lib/db.types';
-import { CAMPAIGNS } from '@/lib/mockCampaigns';
+import { isSeedEnabled } from '@/lib/envFlags';
+import { SEED_CAMPAIGN_TEMPLATES } from '@/lib/seed/campaignTemplates';
 import { createClient as createBrowserSupabaseClient } from '@/lib/supabase/client';
 
 const STATUS_MAP: Record<'live' | 'recruiting' | 'completed', 'live' | 'recruiting' | 'completed'> = {
@@ -16,19 +17,44 @@ const TYPE_MULTIPLIER = { shortform: 1, longform: 3, live: 2 } as const;
 
 export interface SeedResult {
   inserted: number;
+  skipped: number;
   errors: string[];
 }
 
 /**
- * Insert the 6 mock campaigns (with their 3 mission rows each) under the given
- * studio. Safe to re-run, but it will create duplicates — the demo workflow is
- * to "Reset demo" or wipe DB rows first.
+ * Insert the mock campaigns (with their 3 mission rows each) under the given
+ * studio. Idempotent: skips campaigns that already exist (matched by name).
  */
 export async function seedCampaigns(studioId: string): Promise<SeedResult> {
-  const supabase = createBrowserSupabaseClient();
-  const result: SeedResult = { inserted: 0, errors: [] };
+  if (!isSeedEnabled()) {
+    return {
+      inserted: 0,
+      skipped: 0,
+      errors: ['Seed is disabled in this environment.'],
+    };
+  }
 
-  for (const camp of CAMPAIGNS) {
+  const supabase = createBrowserSupabaseClient();
+  const result: SeedResult = { inserted: 0, skipped: 0, errors: [] };
+
+  const { data: existing, error: existingErr } = await supabase
+    .from('campaigns')
+    .select('name')
+    .eq('studio_id', studioId);
+
+  if (existingErr) {
+    result.errors.push(`기존 캠페인 조회 실패: ${existingErr.message}`);
+    return result;
+  }
+
+  const existingNames = new Set((existing ?? []).map((row) => row.name));
+
+  for (const camp of SEED_CAMPAIGN_TEMPLATES) {
+    if (existingNames.has(camp.name)) {
+      result.skipped += 1;
+      continue;
+    }
+
     const thumbnail: Json = {
       from: camp.thumbnail.from,
       to: camp.thumbnail.to,
@@ -81,7 +107,8 @@ export async function seedCampaigns(studioId: string): Promise<SeedResult> {
       result.errors.push(`${camp.name} missions: ${missionErr.message}`);
     }
 
-    result.inserted++;
+    existingNames.add(camp.name);
+    result.inserted += 1;
   }
 
   return result;

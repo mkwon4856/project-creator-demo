@@ -3,6 +3,7 @@
 import { Database, RotateCcw } from 'lucide-react';
 import { useState } from 'react';
 
+import { isDemoBannerEnabled, isSeedEnabled } from '@/lib/envFlags';
 import { seedCampaigns } from '@/lib/seed';
 import { useAppStore } from '@/lib/store';
 import { createClient as createBrowserSupabaseClient } from '@/lib/supabase/client';
@@ -17,10 +18,15 @@ const DEFAULT_MESSAGE = '🎮 샘플 데이터로 구성된 데모입니다. 실
 const HAS_SUPABASE_ENV =
   !!process.env.NEXT_PUBLIC_SUPABASE_URL &&
   !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const IS_DEV = process.env.NODE_ENV !== 'production';
 
 export function DemoBanner({ message = DEFAULT_MESSAGE }: DemoBannerProps) {
   const [seeding, setSeeding] = useState(false);
+
+  if (!isDemoBannerEnabled()) {
+    return null;
+  }
+
+  const showSeedButton = HAS_SUPABASE_ENV && isSeedEnabled();
 
   const handleReset = () => {
     useAppStore.getState().clearDemo();
@@ -30,7 +36,7 @@ export function DemoBanner({ message = DEFAULT_MESSAGE }: DemoBannerProps) {
   };
 
   const handleSeed = async () => {
-    if (seeding) return;
+    if (seeding || !isSeedEnabled()) return;
     setSeeding(true);
     try {
       const supabase = createBrowserSupabaseClient();
@@ -51,8 +57,13 @@ export function DemoBanner({ message = DEFAULT_MESSAGE }: DemoBannerProps) {
         return;
       }
       const r = await seedCampaigns(studio.id);
+      if (r.errors.length === 1 && r.errors[0] === 'Seed is disabled in this environment.') {
+        alert('이 환경에서는 시드가 비활성화되어 있습니다.');
+        return;
+      }
       const summary =
         `✅ ${r.inserted}개 캠페인 시드 완료` +
+        (r.skipped > 0 ? ` · ${r.skipped}개 건너뜀(이미 존재)` : '') +
         (r.errors.length ? `\n\n에러:\n${r.errors.join('\n')}` : '');
       alert(summary);
       window.location.reload();
@@ -62,8 +73,6 @@ export function DemoBanner({ message = DEFAULT_MESSAGE }: DemoBannerProps) {
       setSeeding(false);
     }
   };
-
-  const showSeedButton = HAS_SUPABASE_ENV && IS_DEV;
 
   return (
     <div className="bg-ube/10 border-b border-ube/20 px-8 py-2">

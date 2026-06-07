@@ -12,7 +12,7 @@ import {
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { WorkspaceLayout } from '@/components/layout';
-import { Badge, Button, EmptyState, Input, toast } from '@/components/ui';
+import { Badge, Button, Card, EmptyState, Input, Pill, toast } from '@/components/ui';
 import type { CreatorGrade, Database } from '@/lib/db.types';
 import { formatSubscribers } from '@/lib/mockCreators';
 import { createClient as createBrowserSupabaseClient } from '@/lib/supabase/client';
@@ -100,31 +100,6 @@ function safeGrade(g: string | null | undefined): CreatorGrade {
   return 'E';
 }
 
-function FilterPill({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={[
-        'inline-flex items-center rounded-full px-3 py-1 text-xs font-medium transition-colors duration-150 ease-out border whitespace-nowrap cursor-pointer',
-        active
-          ? 'bg-ube text-white border-ube'
-          : 'bg-transparent border-white/10 text-text-secondary hover:border-white/20 hover:text-text-primary',
-      ].join(' ')}
-    >
-      {children}
-    </button>
-  );
-}
-
 interface CreatorCardData {
   row: CreatorRow;
   grade: CreatorGrade;
@@ -140,7 +115,7 @@ function CreatorCard({ data }: { data: CreatorCardData }) {
   };
 
   return (
-    <article className="bg-bg-card border border-white/[0.06] rounded-lg overflow-hidden hover:border-ube/40 transition-colors duration-150 ease-out flex flex-col">
+    <Card padding="none" hover className="overflow-hidden flex flex-col">
       <div
         className={`relative h-24 bg-gradient-to-br ${GRADE_GRADIENT[grade]}`}
       >
@@ -153,7 +128,7 @@ function CreatorCard({ data }: { data: CreatorCardData }) {
           </span>
         </div>
         <span className="absolute top-2 right-2">
-          <Badge variant="ube" size="sm">
+          <Badge variant="primary" size="sm">
             {grade}
           </Badge>
         </span>
@@ -168,7 +143,7 @@ function CreatorCard({ data }: { data: CreatorCardData }) {
             {row.is_verified && (
               <BadgeCheck
                 size={13}
-                className="text-ube-bright shrink-0"
+                className="text-primary shrink-0"
                 aria-label="인증"
               />
             )}
@@ -229,7 +204,7 @@ function CreatorCard({ data }: { data: CreatorCardData }) {
           </Button>
         </div>
       </div>
-    </article>
+    </Card>
   );
 }
 
@@ -328,7 +303,7 @@ export default function StudioCreatorDirectoryPage() {
       notificationCount={3}
     >
       <header className="mb-6">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-ube-bright">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-primary">
           게임사 · 탐색
         </span>
         <h1 className="text-[22px] font-medium text-text-primary leading-tight mt-1.5">
@@ -343,25 +318,25 @@ export default function StudioCreatorDirectoryPage() {
         <div className="flex flex-col gap-3 mb-6">
           <div className="flex items-center gap-2 flex-wrap">
             {GRADE_FILTERS.map((f) => (
-              <FilterPill
+              <Pill
                 key={f.id}
-                active={grade === f.id}
+                variant={grade === f.id ? 'active' : 'default'}
                 onClick={() => setGrade(f.id)}
               >
                 {f.label}
-              </FilterPill>
+              </Pill>
             ))}
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
             {PLATFORM_FILTERS.map((f) => (
-              <FilterPill
+              <Pill
                 key={f.id}
-                active={platform === f.id}
+                variant={platform === f.id ? 'active' : 'default'}
                 onClick={() => setPlatform(f.id)}
               >
                 {f.label}
-              </FilterPill>
+              </Pill>
             ))}
           </div>
 
@@ -371,13 +346,13 @@ export default function StudioCreatorDirectoryPage() {
                 정렬
               </span>
               {SORT_OPTIONS.map((opt) => (
-                <FilterPill
+                <Pill
                   key={opt.id}
-                  active={sortKey === opt.id}
+                  variant={sortKey === opt.id ? 'active' : 'default'}
                   onClick={() => setSortKey(opt.id)}
                 >
                   {opt.label}
-                </FilterPill>
+                </Pill>
               ))}
             </div>
             <div className="w-full md:w-auto md:min-w-[280px]">
@@ -394,21 +369,21 @@ export default function StudioCreatorDirectoryPage() {
       )}
 
       {totalCreators === 0 ? (
-        <div className="border border-white/[0.06] rounded-lg bg-bg-card">
+        <Card padding="none">
           <EmptyState
             icon={<UserSearch size={24} aria-hidden />}
             title="등록된 크리에이터가 없습니다"
             description="크리에이터가 가입하면 여기에 표시됩니다."
           />
-        </div>
+        </Card>
       ) : filtered.length === 0 ? (
-        <div className="border border-white/[0.06] rounded-lg bg-bg-card">
+        <Card padding="none">
           <EmptyState
             icon={<UserSearch size={24} aria-hidden />}
             title="조건에 맞는 크리에이터가 없습니다"
             description="필터를 변경해보세요."
           />
-        </div>
+        </Card>
       ) : (
         <>
           <div className="text-xs text-text-secondary mb-3 tabular-nums">
