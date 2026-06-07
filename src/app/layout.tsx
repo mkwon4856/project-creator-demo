@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Analytics } from '@vercel/analytics/react';
 
 import { ToastContainer } from '@/components/ui';
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '@/lib/siteConfig';
@@ -48,6 +49,7 @@ export default function RootLayout({
         {children}
         {modal}
         <ToastContainer />
+        <Analytics />
       </body>
     </html>
   );

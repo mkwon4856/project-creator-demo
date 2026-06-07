@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 import { Bullets, LegalIntro, LegalTitle, Section } from '../_components/Section';
-import { SITE_NAME } from '@/lib/siteConfig';
+import { SITE_NAME, CONTACT_EMAIL } from '@/lib/siteConfig';
 
 export const metadata: Metadata = {
   title: '이용약관',
@@ -116,6 +116,16 @@ export default function TermsPage() {
           이루어지지 않을 경우 관할법원은 서울중앙지방법원으로 합니다.
         </p>
       </Section>
+
+      <p className="text-sm text-text-secondary pt-6 mt-2">
+        문의:{' '}
+        <a
+          href={`mailto:${CONTACT_EMAIL}`}
+          className="text-text-primary hover:text-primary transition-colors duration-150 ease-out"
+        >
+          {CONTACT_EMAIL}
+        </a>
+      </p>
     </>
   );
 }

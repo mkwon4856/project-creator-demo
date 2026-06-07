@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 import { Bullets, LegalIntro, LegalTitle, Section } from '../_components/Section';
-import { SITE_NAME } from '@/lib/siteConfig';
+import { SITE_NAME, CONTACT_EMAIL } from '@/lib/siteConfig';
 
 export const metadata: Metadata = {
   title: '개인정보처리방침',
@@ -132,6 +132,16 @@ export default function PrivacyPage() {
           30일 전부터 사전 고지합니다.
         </p>
       </Section>
+
+      <p className="text-sm text-text-secondary pt-6 mt-2">
+        문의:{' '}
+        <a
+          href={`mailto:${CONTACT_EMAIL}`}
+          className="text-text-primary hover:text-primary transition-colors duration-150 ease-out"
+        >
+          {CONTACT_EMAIL}
+        </a>
+      </p>
     </>
   );
 }

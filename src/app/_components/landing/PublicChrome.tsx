@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui';
-import { SITE_NAME, splitSiteName } from '@/lib/siteConfig';
+import { SITE_NAME, CONTACT_EMAIL, splitSiteName } from '@/lib/siteConfig';
 
 export function Logo({ size = 'md' }: { size?: 'sm' | 'md' }) {
   const cls =
@@ -75,6 +75,12 @@ export function FooterBar() {
         >
           개인정보처리방침
         </Link>
+        <a
+          href={`mailto:${CONTACT_EMAIL}`}
+          className="hover:text-text-primary transition-colors duration-150 ease-out"
+        >
+          문의하기
+        </a>
       </nav>
       <span className="text-xs text-text-secondary">
         © 2026 {SITE_NAME}. All rights reserved.

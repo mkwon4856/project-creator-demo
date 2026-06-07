@@ -5,6 +5,9 @@ export const SITE_DESCRIPTION =
 
 export const SITE_TAGLINE = '게임 마케팅, 크리에이터와 함께';
 
+/** 추후 도메인 메일로 교체 예정 */
+export const CONTACT_EMAIL = 'you1006a@gmail.com';
+
 const DEFAULT_SITE_URL = 'http://localhost:3000';
 
 export function getSiteUrl(): string {
