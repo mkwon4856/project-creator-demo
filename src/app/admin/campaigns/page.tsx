@@ -1,359 +1,204 @@
-'use client';
+'use client'
+import { useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import type { Campaign, Mission } from '@/lib/db.types'
 
-import { Search } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
-
-import { WorkspaceLayout } from '@/components/layout';
-import { Badge, Card, Input, Pill, statusToBadgeVariant, toast } from '@/components/ui';
-import type {
-  CampaignStatus,
-  Campaign,
-} from '@/lib/db.types';
-import { formatCompactKRW } from '@/lib/formatCurrency';
-import { createClient as createBrowserSupabaseClient } from '@/lib/supabase/client';
-import { useCurrentProfile } from '@/lib/supabase/hooks';
-
-import { getAdminSidebar } from '../_config/sidebar';
-import { useAdminBadgeCounts } from '../_hooks/useAdminBadgeCounts';
-
-type CampaignRow = Campaign;
-
-const HAS_SUPABASE_ENV =
-  Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
-  Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
-
-const GRID =
-  'grid-cols-[40px_1.4fr_1fr_0.7fr_0.9fr_0.9fr_1.1fr_0.7fr_0.7fr_0.9fr]';
-
-const DEFAULT_THUMBNAIL = { from: '#1a0a3e', to: '#4a1a6e', emoji: '🎮' };
-
-type StatusFilter = 'all' | CampaignStatus;
-
-const STATUS_FILTERS: { id: StatusFilter; label: string }[] = [
-  { id: 'all', label: '전체' },
-  { id: 'draft', label: '초안' },
-  { id: 'active', label: '모집중' },
-  { id: 'in_progress', label: '진행중' },
-  { id: 'completed', label: '완료' },
-];
-
-interface CampaignWithCounts extends CampaignRow {
-  studioName: string;
-  applicantsCount: number;
-  submissionsCount: number;
-  thumbnailParsed: { from: string; to: string; emoji: string };
+const CONTENT_TYPE_LABELS: Record<string, string> = {
+  live: '라이브',
+  longform: '롱폼',
+  shortform: '숏폼',
 }
 
-function formatCreatedDate(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleDateString('ko-KR', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
+type CampaignWithRelations = Campaign & {
+  missions: Mission[]
+  studios: { company_name: string } | null
 }
 
-function thumbnailFromJson(json: unknown): { from: string; to: string; emoji: string } {
-  if (json && typeof json === 'object') {
-    const t = json as { from?: string; to?: string; emoji?: string };
-    return {
-      from: t.from ?? DEFAULT_THUMBNAIL.from,
-      to: t.to ?? DEFAULT_THUMBNAIL.to,
-      emoji: t.emoji ?? DEFAULT_THUMBNAIL.emoji,
-    };
-  }
-  return DEFAULT_THUMBNAIL;
-}
-
-const STATUS_LABELS: Record<CampaignStatus, string> = {
-  draft: '초안',
-  pending: '대기',
-  active: '모집중',
-  in_progress: '진행중',
-  reviewing: '검수중',
-  completed: '완료',
-  cancelled: '취소',
-};
-
-function StatusBadge({ status }: { status: CampaignStatus }) {
-  return (
-    <Badge variant={statusToBadgeVariant(status)} size="sm">
-      {STATUS_LABELS[status]}
-    </Badge>
-  );
-}
-
-function HeaderRow() {
-  return (
-    <div
-      role="row"
-      className={`grid ${GRID} items-center gap-3 px-5 py-3 bg-bg-elevated text-xs font-medium text-text-secondary uppercase`}
-    >
-      <span aria-hidden />
-      <span>캠페인</span>
-      <span>게임사</span>
-      <span>장르</span>
-      <span>상태</span>
-      <span className="text-right">예산</span>
-      <span>집행액</span>
-      <span className="text-right">크리에이터</span>
-      <span className="text-right">제출</span>
-      <span>등록일</span>
-    </div>
-  );
-}
-
-function BudgetBar({ total, spent }: { total: number; spent: number }) {
-  const pct = total > 0 ? Math.min(100, Math.round((spent / total) * 100)) : 0;
-  return (
-    <div className="flex flex-col gap-1 min-w-0">
-      <div className="flex items-center justify-between gap-2 text-[11px] tabular-nums">
-        <span className="text-text-secondary">{formatCompactKRW(spent)}</span>
-        <span className="text-text-muted">{pct}%</span>
-      </div>
-      <div className="h-1 w-full rounded-full bg-bg-hover overflow-hidden">
-        <div
-          className="h-full rounded-full transition-[width] duration-500 ease-out"
-          style={{
-            width: `${pct}%`,
-            background:
-              pct >= 100
-                ? 'var(--text-secondary)'
-                : 'linear-gradient(90deg, var(--ube-bright), var(--ube))',
-          }}
-        />
-      </div>
-    </div>
-  );
-}
-
-function Row({ item, last }: { item: CampaignWithCounts; last: boolean }) {
-  return (
-    <div
-      role="row"
-      className={[
-        `grid ${GRID} items-center gap-3 px-5 py-3 transition-colors duration-150 ease-out hover:bg-bg-hover`,
-        last ? '' : 'border-b border-border',
-      ].join(' ')}
-    >
-      <span
-        className="w-8 h-8 rounded-md flex items-center justify-center text-[15px] leading-none"
-        style={{
-          background: `linear-gradient(135deg, ${item.thumbnailParsed.from}, ${item.thumbnailParsed.to})`,
-        }}
-        aria-hidden
-      >
-        {item.thumbnailParsed.emoji}
-      </span>
-
-      <div className="flex flex-col min-w-0">
-        <span className="text-sm font-medium text-text-primary truncate">{item.title}</span>
-        <span className="text-[11px] text-text-secondary truncate">{item.game_name}</span>
-      </div>
-
-      <span className="text-xs text-text-secondary truncate">{item.studioName}</span>
-
-      <span className="text-xs text-text-secondary truncate">{item.genre || '—'}</span>
-
-      <StatusBadge status={item.status} />
-
-      <span className="text-sm font-medium tabular-nums text-text-primary text-right">
-        {formatCompactKRW(item.total_budget)}
-      </span>
-
-      {/* TODO(rebuild): spent_budget removed; source spend from settlements/payments */}
-      <BudgetBar total={item.total_budget} spent={0} />
-
-      <span className="text-sm tabular-nums text-text-secondary text-right">
-        {item.applicantsCount}
-        {/* TODO(rebuild): target_creators removed; source from missions */}
-        <span className="text-text-muted text-[11px]"> / {0}</span>
-      </span>
-
-      <span className="text-sm tabular-nums text-text-secondary text-right">
-        {item.submissionsCount}
-      </span>
-
-      <span className="text-xs text-text-secondary tabular-nums">
-        {formatCreatedDate(item.created_at)}
-      </span>
-    </div>
-  );
-}
+type Tab = 'pending' | 'active' | 'all'
 
 export default function AdminCampaignsPage() {
-  const { data: profile, loading: profileLoading } = useCurrentProfile();
-  const badgeCounts = useAdminBadgeCounts();
-  const [campaigns, setCampaigns] = useState<CampaignWithCounts[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
-  const [search, setSearch] = useState('');
-
-  const fetchCampaigns = useCallback(async () => {
-    if (!HAS_SUPABASE_ENV) {
-      setCampaigns([]);
-      setLoading(false);
-      return;
-    }
-    const supabase = createBrowserSupabaseClient();
-    const { data, error } = await supabase
-      .from('campaigns')
-      .select(
-        `
-        *,
-        studios ( company_name ),
-        applications ( id ),
-        submissions ( id )
-      `,
-      )
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      toast.error(`캠페인 조회 실패: ${error.message}`);
-      setCampaigns([]);
-      setLoading(false);
-      return;
-    }
-
-    const subs = data ?? [];
-    const rows: CampaignWithCounts[] = subs.map((c) => {
-      const raw = c as unknown as CampaignRow & {
-        studios:
-          | { company_name?: string }
-          | { company_name?: string }[]
-          | null;
-        applications: { id: string }[] | null;
-        submissions: { id: string }[] | null;
-      };
-      const studio = Array.isArray(raw.studios) ? raw.studios[0] : raw.studios;
-      return {
-        ...(raw as CampaignRow),
-        studioName: studio?.company_name ?? '—',
-        applicantsCount: raw.applications?.length ?? 0,
-        submissionsCount: raw.submissions?.length ?? 0,
-        thumbnailParsed: thumbnailFromJson(raw.thumbnail_url),
-      };
-    });
-    setCampaigns(rows);
-    setLoading(false);
-  }, []);
+  const [campaigns, setCampaigns] = useState<CampaignWithRelations[]>([])
+  const [loading, setLoading] = useState(true)
+  const [tab, setTab] = useState<Tab>('pending')
+  const [processing, setProcessing] = useState<string | null>(null)
+  const [adminNote, setAdminNote] = useState<Record<string, string>>({})
+  const supabase = createClient()
 
   useEffect(() => {
-    void fetchCampaigns();
-  }, [fetchCampaigns]);
+    supabase
+      .from('campaigns')
+      .select('*, missions(*), studios(company_name)')
+      .order('created_at', { ascending: false })
+      .then(({ data }) => {
+        setCampaigns((data ?? []) as CampaignWithRelations[])
+        setLoading(false)
+      })
+  }, [])
 
-  const counts = useMemo(() => {
-    const c: Record<StatusFilter, number> = {
-      all: campaigns.length,
-      draft: 0,
-      pending: 0,
-      active: 0,
-      in_progress: 0,
-      reviewing: 0,
-      completed: 0,
-      cancelled: 0,
-    };
-    for (const r of campaigns) c[r.status]++;
-    return c;
-  }, [campaigns]);
-
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return campaigns.filter((c) => {
-      if (statusFilter !== 'all' && c.status !== statusFilter) return false;
-      if (q) {
-        const hay = `${c.title} ${c.game_name} ${c.genre}`.toLowerCase();
-        if (!hay.includes(q)) return false;
-      }
-      return true;
-    });
-  }, [campaigns, statusFilter, search]);
-
-  if (profileLoading || loading) {
-    return (
-      <div className="min-h-screen bg-bg-base flex items-center justify-center">
-        <span className="text-text-secondary text-sm">불러오는 중…</span>
-      </div>
-    );
+  const handleApprove = async (campaign: CampaignWithRelations) => {
+    setProcessing(campaign.id)
+    await supabase
+      .from('campaigns')
+      .update({ status: 'active', admin_note: adminNote[campaign.id] ?? null, launched_at: new Date().toISOString() })
+      .eq('id', campaign.id)
+    setCampaigns(prev => prev.map(c => c.id === campaign.id ? { ...c, status: 'active' } : c))
+    setProcessing(null)
   }
 
-  const adminName = profile?.email?.trim() || '민석';
-  const initials = adminName.slice(0, 2).toUpperCase();
+  const handleHold = async (campaign: CampaignWithRelations) => {
+    if (!adminNote[campaign.id]?.trim()) {
+      alert('홀드 사유를 입력해주세요')
+      return
+    }
+    setProcessing(campaign.id)
+    await supabase
+      .from('campaigns')
+      .update({ status: 'pending', admin_note: adminNote[campaign.id] })
+      .eq('id', campaign.id)
+    setProcessing(null)
+  }
+
+  const filtered = campaigns.filter(c => {
+    if (tab === 'pending') return c.status === 'pending'
+    if (tab === 'active') return c.status === 'active'
+    return true
+  })
+
+  const pendingCount = campaigns.filter(c => c.status === 'pending').length
+
+  if (loading) return (
+    <div className="min-h-screen bg-[#0A0A0F] flex items-center justify-center">
+      <div className="text-white/30">로딩 중...</div>
+    </div>
+  )
 
   return (
-    <WorkspaceLayout
-      persona="admin"
-      userName={adminName}
-      userAvatar={initials}
-      userBadge="관리자"
-      sidebarSections={getAdminSidebar('campaigns', {
-        review: badgeCounts.review,
-        payouts: badgeCounts.payouts,
-      })}
-      notificationCount={badgeCounts.notification}
-    >
-      <header className="mb-6">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-primary">
-          관리자 · 디렉터리
-        </span>
-        <h1 className="text-[22px] font-medium text-text-primary leading-tight mt-1.5">
-          캠페인
-        </h1>
-        <p className="text-sm text-text-secondary mt-1">플랫폼의 모든 캠페인</p>
-      </header>
+    <div className="min-h-screen bg-[#0A0A0F] px-4 py-8">
+      <div className="max-w-3xl mx-auto space-y-6">
 
-      <div className="flex items-center gap-3 flex-wrap mb-4">
-        <div className="flex items-center gap-2 flex-wrap">
-          {STATUS_FILTERS.map((f) => (
-            <Pill
-              key={f.id}
-              variant={statusFilter === f.id ? 'active' : 'default'}
-              onClick={() => setStatusFilter(f.id)}
+        <h1 className="text-2xl font-black text-white" style={{ fontFamily: 'Arial Black' }}>
+          캠페인 승인 관리
+        </h1>
+
+        {/* 탭 */}
+        <div className="flex gap-2">
+          {([
+            { key: 'pending', label: `대기중 (${pendingCount})` },
+            { key: 'active', label: '승인됨' },
+            { key: 'all', label: '전체' },
+          ] as { key: Tab; label: string }[]).map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => setTab(key)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                tab === key
+                  ? 'bg-[#9B7EC8] text-white'
+                  : 'bg-white/5 text-white/50 hover:bg-white/10'
+              }`}
             >
-              {f.label}
-              <span
-                className={[
-                  'ml-1.5 tabular-nums',
-                  statusFilter === f.id ? 'text-white/70' : 'text-text-muted',
-                ].join(' ')}
-              >
-                {counts[f.id]}
-              </span>
-            </Pill>
+              {label}
+            </button>
           ))}
         </div>
-        <div className="ml-auto w-full max-w-xs">
-          <Input
-            type="search"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="캠페인 검색"
-            icon={<Search size={14} aria-hidden />}
-          />
-        </div>
-      </div>
 
-      <Card padding="none" className="overflow-hidden">
-        <HeaderRow />
+        {/* 캠페인 목록 */}
         {filtered.length === 0 ? (
-          <div className="px-5 py-16 text-center">
-            <p className="text-sm text-text-primary mb-1">
-              {campaigns.length === 0
-                ? '캠페인이 없습니다.'
-                : '필터에 맞는 캠페인이 없습니다.'}
-            </p>
-            <p className="text-xs text-text-secondary">
-              {campaigns.length === 0
-                ? '게임사가 캠페인을 생성하면 여기에 표시됩니다.'
-                : '다른 상태나 검색어를 시도해 보세요.'}
-            </p>
+          <div className="bg-white/5 rounded-xl p-8 text-center border border-dashed border-white/10">
+            <p className="text-white/30 text-sm">캠페인이 없습니다</p>
           </div>
         ) : (
-          filtered.map((item, i) => (
-            <Row key={item.id} item={item} last={i === filtered.length - 1} />
-          ))
+          <div className="space-y-4">
+            {filtered.map(campaign => (
+              <div key={campaign.id} className="bg-white/5 rounded-xl p-5 border border-white/5 space-y-4">
+                {/* 헤더 */}
+                <div className="flex justify-between items-start">
+                  <div>
+                    <div className="font-bold text-white">{campaign.title}</div>
+                    <div className="text-xs text-white/40 mt-0.5">
+                      {campaign.studios?.company_name} · {campaign.game_name}
+                    </div>
+                    <div className="text-xs text-[#E5B567] mt-1">
+                      총 예산: ₩{campaign.total_budget.toLocaleString()}
+                    </div>
+                  </div>
+                  <span className={`text-xs px-2 py-1 rounded-full ${
+                    campaign.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
+                    campaign.status === 'active' ? 'bg-[#9B7EC8]/20 text-[#9B7EC8]' :
+                    'bg-white/10 text-white/40'
+                  }`}>
+                    {campaign.status === 'pending' ? '승인 대기' :
+                     campaign.status === 'active' ? '승인됨' : campaign.status}
+                  </span>
+                </div>
+
+                {/* 미션 가이드 */}
+                {campaign.missions.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="text-xs text-white/40 font-medium">미션 가이드 검토</div>
+                    {campaign.missions.map(mission => (
+                      <div key={mission.id} className="bg-white/5 rounded-lg p-3">
+                        <div className="flex gap-2 items-center mb-1">
+                          <span className="text-xs font-medium text-[#9B7EC8]">
+                            {CONTENT_TYPE_LABELS[mission.content_type]}
+                          </span>
+                          <span className="text-xs text-white/30">
+                            {mission.allowed_grades.join('/')}등급
+                          </span>
+                          {mission.is_auto_generated && (
+                            <span className="text-xs text-[#E5B567]/60">자동배분</span>
+                          )}
+                        </div>
+                        {mission.guide_draft ? (
+                          <p className="text-xs text-white/50">{mission.guide_draft}</p>
+                        ) : (
+                          <p className="text-xs text-white/20 italic">가이드 없음</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Admin 메모 + 액션 (pending만) */}
+                {campaign.status === 'pending' && (
+                  <div className="space-y-3 pt-2 border-t border-white/5">
+                    <input
+                      className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#9B7EC8]"
+                      placeholder="Admin 메모 (홀드 시 게임사에 전달됩니다)"
+                      value={adminNote[campaign.id] ?? ''}
+                      onChange={e => setAdminNote(prev => ({ ...prev, [campaign.id]: e.target.value }))}
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleHold(campaign)}
+                        disabled={processing === campaign.id}
+                        className="flex-1 py-2 rounded-lg text-sm font-medium border border-white/10 text-white/50 hover:bg-white/5 transition-all disabled:opacity-30"
+                      >
+                        홀드 — 수정 요청
+                      </button>
+                      <button
+                        onClick={() => handleApprove(campaign)}
+                        disabled={processing === campaign.id}
+                        className="flex-2 flex-grow py-2 rounded-lg text-sm font-bold text-white transition-all disabled:opacity-30 hover:opacity-90"
+                        style={{ background: '#9B7EC8' }}
+                      >
+                        {processing === campaign.id ? '처리 중...' : '승인하기 ✓'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* 승인된 캠페인의 admin_note */}
+                {campaign.status !== 'pending' && campaign.admin_note && (
+                  <div className="text-xs text-white/30 pt-2 border-t border-white/5">
+                    메모: {campaign.admin_note}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         )}
-      </Card>
-    </WorkspaceLayout>
-  );
+
+      </div>
+    </div>
+  )
 }

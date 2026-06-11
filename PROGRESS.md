@@ -133,7 +133,18 @@ creator: `page`, `profile`, `settings`, `activity`, `earnings`, `_components/Rec
 
 ---
 
-## 남은 타입 에러: **8건** (`npx tsc --noEmit` 기준, Task 2~7 후 동일)
+## Task 8 — Admin 캠페인 승인 페이지 (완료, 2026-06-11)
+
+- `src/app/admin/campaigns/page.tsx` 전면 교체: 새 스키마 기반 캠페인 승인 관리(다크 디자인).
+- `campaigns(+missions, +studios(company_name))` 조회, 탭(대기중/승인됨/전체) + 대기 건수 표시.
+- 미션 가이드(`guide_draft`) 검토 표시, Admin 메모 입력.
+- 승인 → `status: 'active'` + `launched_at` 기록, 홀드(수정요청) → `admin_note` 필수 + `status: 'pending'` 유지.
+- Task 3(생성, `status: 'pending'`) → Task 8(승인, `'active'`) → Task 7(크리에이터 탐색은 `active`만 노출) 흐름이 연결됨.
+- 타입 에러 0건.
+
+---
+
+## 남은 타입 에러: **8건** (`npx tsc --noEmit` 기준, Task 2~8 후 동일)
 
 전부 **외부 모듈 미설치(TS2307)** — protected 파일이라 미수정:
 
