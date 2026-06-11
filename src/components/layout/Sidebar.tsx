@@ -3,6 +3,8 @@
 import { X } from 'lucide-react';
 import type { ReactNode } from 'react';
 
+import { LogoutButton } from './LogoutButton';
+
 export type CountVariant = 'default' | 'urgent';
 
 export interface SidebarItem {
@@ -104,7 +106,7 @@ function ItemRow({ item, onItemClick }: { item: SidebarItem; onItemClick?: (i: S
 export function Sidebar({ sections, width = 240, onItemClick, onClose }: SidebarProps) {
   return (
     <aside
-      className="shrink-0 border-r border-white/[0.06] bg-bg-base h-full overflow-y-auto"
+      className="shrink-0 border-r border-white/[0.06] bg-bg-base h-full overflow-y-auto flex flex-col"
       style={{ width }}
       aria-label="워크스페이스 사이드바"
     >
@@ -121,7 +123,7 @@ export function Sidebar({ sections, width = 240, onItemClick, onClose }: Sidebar
           </button>
         </div>
       )}
-      <nav className="py-5 flex flex-col gap-6">
+      <nav className="py-5 flex flex-col gap-6 flex-1">
         {sections.map((section) => (
           <div key={section.label} className="flex flex-col">
             <div className="px-5 pb-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-text-muted">
@@ -135,6 +137,10 @@ export function Sidebar({ sections, width = 240, onItemClick, onClose }: Sidebar
           </div>
         ))}
       </nav>
+
+      <div className="mt-auto border-t border-white/[0.06] py-3">
+        <LogoutButton />
+      </div>
     </aside>
   );
 }

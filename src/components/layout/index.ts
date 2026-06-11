@@ -10,6 +10,8 @@ export type { TopbarProps, Persona } from './Topbar';
 export { DemoBanner } from './DemoBanner';
 export type { DemoBannerProps } from './DemoBanner';
 
+export { LogoutButton } from './LogoutButton';
+
 export { Sidebar } from './Sidebar';
 export type {
   SidebarProps,
