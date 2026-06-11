@@ -75,8 +75,8 @@ export function AuthForm({ mode }: AuthFormProps) {
     const userId = data.user.id;
     if (role === 'studio') {
       const { error: studioErr } = await supabase.from('studios').insert({
-        user_id: userId,
-        name: trimmedName,
+        profile_id: userId,
+        company_name: trimmedName,
       });
       if (studioErr) {
         setError(`게임사 프로필 생성에 실패했습니다: ${studioErr.message}`);
@@ -84,20 +84,10 @@ export function AuthForm({ mode }: AuthFormProps) {
         return;
       }
     } else {
-      // Derive a tentative handle from the email local-part; user can edit later.
-      const handle = '@' + email.split('@')[0];
       const { error: creatorErr } = await supabase.from('creators').insert({
-        user_id: userId,
-        display_name: trimmedName,
-        handle,
-        grade: 'E',
-        subscribers: 0,
-        avg_views: 0,
-        rating: 0,
-        completed_campaigns: 0,
-        is_verified: false,
+        profile_id: userId,
+        name: trimmedName,
         bio: '',
-        platforms: [],
       });
       if (creatorErr) {
         setError(`크리에이터 프로필 생성에 실패했습니다: ${creatorErr.message}`);

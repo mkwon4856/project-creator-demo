@@ -157,17 +157,20 @@ creator: `page`, `profile`, `settings`, `activity`, `earnings`, `_components/Rec
 
 ---
 
-## 남은 타입 에러: **8건** (`npx tsc --noEmit` 기준, Task 2~9 후 동일)
+## Task 10 — 잔여 이슈 정리 (완료, 2026-06-11)
 
-전부 **외부 모듈 미설치(TS2307)** — protected 파일이라 미수정:
+- **10-1** admin 사이드바: `payouts` 라벨 "정산 지급" → "콘텐츠 검수"(href `/admin/payouts` 유지).
+- **10-2** `AuthForm`: 가입 시 studios/creators insert를 새 스키마 컬럼만 남김 —
+  studios `{ profile_id, company_name }`, creators `{ profile_id, name, bio }`. 구 `user_id`/`name`/`display_name`/`handle`/`grade`/`subscribers`/`avg_views`/`rating`/`completed_campaigns`/`is_verified`/`platforms` 제거(미사용 `handle` 파생도 제거).
+- **10-3** 외부 패키지 설치: `@sentry/nextjs @vercel/analytics resend` → **남은 타입 에러 8 → 0**.
+- **10-4** 크리에이터 사이드바 라벨: 캠페인 둘러보기→**캠페인 탐색**, 내 활동→**내 지원 현황**, 수익→**수익 현황**, 프로필→**채널 관리**.
+- **10-5** 게임사 사이드바: **대시보드(/studio)·캠페인 만들기(/studio/new)·설정(/studio/settings)** 3개로 축소. review/explore/applicants(및 새 기획에 없는 creators/insights/payments/analytics) 링크 제거. `StudioRouteId` 유니온은 기존 페이지의 `getStudioSidebar(...)` 호출 정합을 위해 유지.
 
-| 모듈 | 파일 |
-|------|------|
-| `@sentry/nextjs` | next.config.ts, sentry.edge/server.config.ts, global-error.tsx, instrumentation.ts, instrumentation-client.ts |
-| `@vercel/analytics/react` | layout.tsx |
-| `resend` | lib/email/resend.ts |
+---
 
-→ `npm install @sentry/nextjs @vercel/analytics resend`로 해소 가능(별도 결정 필요).
+## 타입 에러: **0건** 🎉 (`npx tsc --noEmit`)
+
+Task 10-3에서 외부 의존성(Sentry/Analytics/Resend) 설치로 기존 8건(TS2307)을 전부 해소. 전체 타입체크 클린.
 
 ---
 

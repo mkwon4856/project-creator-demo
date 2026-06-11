@@ -62,7 +62,7 @@ export function getAdminSidebar(
         {
           id: 'payouts',
           icon: <Receipt size={16} />,
-          label: '정산 지급',
+          label: '콘텐츠 검수',
           href: '/admin/payouts',
           ...(counts?.payouts ? { count: counts.payouts } : {}),
           active: isActive('payouts'),

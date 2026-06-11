@@ -28,14 +28,14 @@ export function getCreatorSidebar(activeId: CreatorRouteId): SidebarSection[] {
         {
           id: 'browse',
           icon: <Compass size={16} />,
-          label: '캠페인 둘러보기',
+          label: '캠페인 탐색',
           href: '/creator',
           active: isActive('browse'),
         },
         {
           id: 'activity',
           icon: <FileText size={16} />,
-          label: '내 활동',
+          label: '내 지원 현황',
           href: '/creator/activity',
           count: 3,
           active: isActive('activity'),
@@ -43,14 +43,14 @@ export function getCreatorSidebar(activeId: CreatorRouteId): SidebarSection[] {
         {
           id: 'earnings',
           icon: <Wallet size={16} />,
-          label: '수익',
+          label: '수익 현황',
           href: '/creator/earnings',
           active: isActive('earnings'),
         },
         {
           id: 'profile',
           icon: <UserCircle size={16} />,
-          label: '프로필',
+          label: '채널 관리',
           href: '/creator/profile',
           active: isActive('profile'),
         },
