@@ -96,7 +96,18 @@ creator: `page`, `profile`, `settings`, `activity`, `earnings`, `_components/Rec
 
 ---
 
-## 남은 타입 에러: **8건** (`npx tsc --noEmit` 기준, Task 2·3·4 후 동일)
+## Task 5 — 게임사 대시보드 재개발 (완료, 2026-06-11)
+
+- `src/app/studio/page.tsx` 전면 교체: 새 스키마 기준 다크 대시보드.
+- `useStudio` + `createClient`로 `campaigns`(`studio_id` 기준) 조회, `Campaign` 타입 사용.
+- 헤더(인사 + `studio.balance` 잔여예산 + 캠페인 만들기), 요약 카드 4개(진행중/완료/전체/총 집행예산),
+  진행중 캠페인 리스트(빈 상태 CTA 포함), 전체 캠페인 리스트. 상태 배지 = 새 `CampaignStatus` 7종 매핑.
+- 디자인: 다크 `#0A0A0F` / 우베 `#9B7EC8` / 골드 `#E5B567` / Arial Black. 기존 WorkspaceLayout 미사용(독립 페이지).
+- 타입 에러 0건.
+
+---
+
+## 남은 타입 에러: **8건** (`npx tsc --noEmit` 기준, Task 2~5 후 동일)
 
 전부 **외부 모듈 미설치(TS2307)** — protected 파일이라 미수정:
 
