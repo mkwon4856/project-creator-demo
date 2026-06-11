@@ -74,7 +74,11 @@ export default function NewCampaignPage() {
   }
 
   const handleSubmit = async () => {
-    if (!studio) return
+    if (!studio) {
+      console.error('studio not found:', studio)
+      alert('게임사 정보를 불러오지 못했습니다. 페이지를 새로고침해주세요.')
+      return
+    }
     setSubmitting(true)
     try {
       const { data: campaign, error } = await createCampaign({
