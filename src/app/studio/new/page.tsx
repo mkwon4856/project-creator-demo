@@ -74,6 +74,7 @@ export default function NewCampaignPage() {
   }
 
   const handleSubmit = async () => {
+    console.log('studio:', studio)
     if (!studio) return
     setSubmitting(true)
     try {
