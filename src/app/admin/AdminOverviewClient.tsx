@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { WorkspaceLayout } from '@/components/layout';
 import { Badge } from '@/components/ui';
-import type { CreatorGrade } from '@/lib/db.types';
+import type { Grade } from '@/lib/db.types';
 import { useCurrentProfile } from '@/lib/supabase/hooks';
 import { createClient as createBrowserSupabaseClient } from '@/lib/supabase/client';
 
@@ -29,7 +29,7 @@ interface CampaignRow {
 
 interface CreatorRow {
   id: string;
-  grade: CreatorGrade | null;
+  grade: Grade | null;
   is_verified: boolean | null;
 }
 

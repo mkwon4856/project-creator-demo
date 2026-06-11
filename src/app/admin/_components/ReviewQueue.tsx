@@ -4,7 +4,7 @@ import { Film, Radio, Video } from 'lucide-react';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 
 import { Badge, Button, statusToBadgeVariant, toast } from '@/components/ui';
-import type { CampaignThumbnailJson, CreatorGrade } from '@/lib/db.types';
+import type { CampaignThumbnailJson, Grade } from '@/lib/db.types';
 import { formatCompactKRW } from '@/lib/formatCurrency';
 import {
   useAppStore,
@@ -51,7 +51,7 @@ interface QueueRow {
   thumbnail: { from: string; to: string; emoji: string };
   creatorName: string;
   creatorEmoji: string;
-  creatorGrade: CreatorGrade;
+  creatorGrade: Grade;
   mission: ActivityMission;
   submittedAgo: string;
   reward: number;
@@ -290,7 +290,7 @@ export function ReviewQueue() {
             ? (mission.type as ActivityMission)
             : 'shortform';
 
-        const grade = (creator?.grade as CreatorGrade | undefined) ?? 'E';
+        const grade = (creator?.grade as Grade | undefined) ?? 'E';
 
         const queueStatus: QueueStatus = raw.status === 'approved' ? 'approved' : 'review';
 

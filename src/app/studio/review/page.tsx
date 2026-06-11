@@ -14,8 +14,8 @@ import { WorkspaceLayout } from '@/components/layout';
 import { Alert, Badge, Button, Card, EmptyState, Pill, statusToBadgeVariant, toast } from '@/components/ui';
 import type {
   CampaignThumbnailJson,
-  CreatorGrade,
-  MissionType,
+  Grade,
+  ContentType,
   SubmissionStatus,
 } from '@/lib/db.types';
 import { formatCompactKRW } from '@/lib/formatCurrency';
@@ -31,7 +31,7 @@ const HAS_SUPABASE_ENV =
 const GRID =
   'grid-cols-[40px_1.3fr_1fr_0.8fr_1.2fr_0.7fr_0.8fr_0.7fr_180px]';
 
-const MISSION_META: Record<MissionType, { label: string; icon: LucideIcon }> = {
+const MISSION_META: Record<ContentType, { label: string; icon: LucideIcon }> = {
   shortform: { label: '숏폼', icon: Film },
   longform: { label: '롱폼', icon: Video },
   live: { label: '라이브', icon: Radio },
@@ -43,10 +43,9 @@ type StatusFilter = 'all' | SubmissionStatus;
 
 const STATUS_FILTERS: { id: StatusFilter; label: string }[] = [
   { id: 'all', label: '전체' },
-  { id: 'review', label: '검수 중' },
+  { id: 'pending', label: '검수 중' },
   { id: 'approved', label: '승인됨' },
   { id: 'rejected', label: '거절됨' },
-  { id: 'paid', label: '정산 완료' },
 ];
 
 interface Submission {
@@ -64,9 +63,9 @@ interface Submission {
   creator: {
     displayName: string;
     handle: string;
-    grade: CreatorGrade;
+    grade: Grade;
   };
-  mission: MissionType;
+  mission: ContentType;
 }
 
 function getTimeAgo(dateStr: string | null): string {
@@ -95,10 +94,8 @@ function thumbnailFromJson(json: unknown): { from: string; to: string; emoji: st
 }
 
 const SUBMISSION_STATUS_LABELS: Record<SubmissionStatus, string> = {
-  making: '제작 중',
-  review: '검수 중',
+  pending: '검수 중',
   approved: '승인됨',
-  paid: '정산 완료',
   rejected: '거절됨',
 };
 
@@ -218,7 +215,7 @@ function Row({
       <StatusBadge status={item.status} />
 
       <div className="flex items-center justify-end gap-2">
-        {item.status === 'review' ? (
+        {item.status === 'pending' ? (
           <>
             <Button variant="ghost" size="sm" disabled={busy} onClick={() => onReject(item.id)}>
               거절
@@ -319,14 +316,14 @@ export default function StudioReviewPage() {
             : application.missions
           : null;
 
-      const missionType: MissionType =
+      const missionType: ContentType =
         mission?.type === 'shortform' ||
         mission?.type === 'longform' ||
         mission?.type === 'live'
-          ? (mission.type as MissionType)
+          ? (mission.type as ContentType)
           : 'shortform';
 
-      const grade = (creator?.grade as CreatorGrade | undefined) ?? 'E';
+      const grade = (creator?.grade as Grade | undefined) ?? 'E';
 
       return {
         id: raw.id,
@@ -373,7 +370,7 @@ export default function StudioReviewPage() {
     });
   }, [submissions, statusFilter, campaignFilter]);
 
-  const pendingCount = submissions.filter((s) => s.status === 'review').length;
+  const pendingCount = submissions.filter((s) => s.status === 'pending').length;
 
   const handleApprove = async (submissionId: string) => {
     setBusyId(submissionId);

@@ -13,7 +13,7 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react
 
 import { WorkspaceLayout } from '@/components/layout';
 import { Badge, Button, Card, EmptyState, Input, Pill, toast } from '@/components/ui';
-import type { CreatorGrade, Database } from '@/lib/db.types';
+import type { Grade, Database } from '@/lib/db.types';
 import { formatSubscribers } from '@/lib/mockCreators';
 import { createClient as createBrowserSupabaseClient } from '@/lib/supabase/client';
 import { useCurrentStudio } from '@/lib/supabase/hooks';
@@ -30,7 +30,7 @@ const HAS_SUPABASE_ENV =
 // Filters
 // ─────────────────────────────────────────────────────────────────────────────
 
-type GradeFilter = 'all' | CreatorGrade;
+type GradeFilter = 'all' | Grade;
 type PlatformFilter = 'all' | PlatformKey;
 type SortKey = 'subscribers' | 'rating' | 'campaigns';
 
@@ -87,7 +87,8 @@ function parseConnectedPlatforms(raw: unknown): Set<PlatformKey> {
 // Card visuals
 // ─────────────────────────────────────────────────────────────────────────────
 
-const GRADE_GRADIENT: Record<CreatorGrade, string> = {
+const GRADE_GRADIENT: Record<Grade, string> = {
+  S: 'from-amber-900/40 to-amber-600/20',
   A: 'from-purple-900/40 to-purple-600/20',
   B: 'from-indigo-900/40 to-indigo-600/20',
   C: 'from-blue-900/40 to-blue-600/20',
@@ -95,14 +96,14 @@ const GRADE_GRADIENT: Record<CreatorGrade, string> = {
   E: 'from-slate-800/40 to-slate-600/20',
 };
 
-function safeGrade(g: string | null | undefined): CreatorGrade {
+function safeGrade(g: string | null | undefined): Grade {
   if (g === 'A' || g === 'B' || g === 'C' || g === 'D' || g === 'E') return g;
   return 'E';
 }
 
 interface CreatorCardData {
   row: CreatorRow;
-  grade: CreatorGrade;
+  grade: Grade;
   platforms: Set<PlatformKey>;
 }
 

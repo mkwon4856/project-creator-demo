@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { WorkspaceLayout } from '@/components/layout';
 import { Alert, Badge, Card, statusToBadgeVariant, toast } from '@/components/ui';
 import type {
-  MissionType,
+  ContentType,
   PaymentRow,
   SubmissionStatus,
 } from '@/lib/db.types';
@@ -27,7 +27,7 @@ const PLATFORM_FEE_RATE = 0.15;
 const GRID =
   'grid-cols-[1.5fr_0.9fr_0.8fr_0.8fr_0.9fr_0.9fr_0.9fr_0.9fr]';
 
-const MISSION_META: Record<MissionType, { label: string; icon: LucideIcon }> = {
+const MISSION_META: Record<ContentType, { label: string; icon: LucideIcon }> = {
   shortform: { label: '숏폼', icon: Film },
   longform: { label: '롱폼', icon: Video },
   live: { label: '라이브', icon: Radio },
@@ -41,7 +41,7 @@ interface EarningRow {
   reviewedAt: string | null;
   campaignName: string;
   developer: string;
-  mission: MissionType;
+  mission: ContentType;
 }
 
 interface MonthBucket {
@@ -57,10 +57,8 @@ function formatShortDate(s: string | null): string {
 }
 
 const EARNING_STATUS_LABELS: Record<SubmissionStatus, string> = {
-  making: '제작 중',
-  review: '검수 중',
+  pending: '진행 중',
   approved: '승인됨',
-  paid: '정산 완료',
   rejected: '거절됨',
 };
 
@@ -168,7 +166,7 @@ function Row({
       <span
         className={[
           'text-sm font-medium tabular-nums text-right',
-          item.status === 'paid' ? 'text-green-400' : 'text-text-primary',
+          item.status === 'approved' ? 'text-green-400' : 'text-text-primary',
         ].join(' ')}
       >
         {formatCompactKRW(net)}
@@ -253,11 +251,11 @@ export default function CreatorEarningsPage() {
             : application.missions
           : null;
 
-      const missionType: MissionType =
+      const missionType: ContentType =
         mission?.type === 'shortform' ||
         mission?.type === 'longform' ||
         mission?.type === 'live'
-          ? (mission.type as MissionType)
+          ? (mission.type as ContentType)
           : 'shortform';
 
       return {

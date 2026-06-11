@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react
 
 import { WorkspaceLayout } from '@/components/layout';
 import { Badge, Button, Card, Pill, statusToBadgeVariant, toast } from '@/components/ui';
-import type { CreatorGrade, PaymentStatus } from '@/lib/db.types';
+import type { Grade, PaymentStatus } from '@/lib/db.types';
 import { formatCompactKRW } from '@/lib/formatCurrency';
 import { createClient as createBrowserSupabaseClient } from '@/lib/supabase/client';
 import { useCurrentProfile } from '@/lib/supabase/hooks';
@@ -24,6 +24,7 @@ type StatusFilter = 'all' | PaymentStatus;
 const STATUS_FILTERS: { id: StatusFilter; label: string }[] = [
   { id: 'all', label: '전체' },
   { id: 'pending', label: '대기' },
+  { id: 'processing', label: '처리 중' },
   { id: 'completed', label: '완료' },
 ];
 
@@ -35,7 +36,7 @@ interface PayoutRow {
   paidAt: string | null;
   reward: number;
   creatorName: string;
-  creatorGrade: CreatorGrade;
+  creatorGrade: Grade;
   campaignName: string;
   developer: string;
 }
@@ -51,6 +52,7 @@ function formatDate(s: string | null): string {
 
 const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
   pending: '대기',
+  processing: '처리 중',
   completed: '완료',
 };
 
@@ -252,7 +254,7 @@ export default function AdminPayoutsPage() {
               .campaigns)
         : null;
 
-      const grade = (creator?.grade as CreatorGrade | undefined) ?? 'E';
+      const grade = (creator?.grade as Grade | undefined) ?? 'E';
 
       return {
         id: raw.id,
@@ -289,6 +291,7 @@ export default function AdminPayoutsPage() {
     const c: Record<StatusFilter, number> = {
       all: payouts.length,
       pending: summary.pending,
+      processing: payouts.filter((p) => p.status === 'processing').length,
       completed: summary.completed,
     };
     return c;

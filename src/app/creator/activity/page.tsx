@@ -15,7 +15,7 @@ import { Alert, Badge, Button, Card, Pill, statusToBadgeVariant, toast } from '@
 import type { DisplayActivity } from '@/lib/api/submissions';
 import type {
   CampaignThumbnailJson,
-  MissionType,
+  ContentType,
   SubmissionStatus,
 } from '@/lib/db.types';
 import { formatCompactKRW } from '@/lib/formatCurrency';
@@ -32,7 +32,7 @@ const HAS_SUPABASE_ENV =
 const GRID =
   'grid-cols-[40px_1.4fr_0.7fr_1.2fr_0.7fr_0.9fr_0.8fr_140px]';
 
-const MISSION_META: Record<MissionType, { label: string; icon: LucideIcon }> = {
+const MISSION_META: Record<ContentType, { label: string; icon: LucideIcon }> = {
   shortform: { label: '숏폼', icon: Film },
   longform: { label: '롱폼', icon: Video },
   live: { label: '라이브', icon: Radio },
@@ -44,10 +44,8 @@ type StatusFilter = 'all' | SubmissionStatus;
 
 const STATUS_FILTERS: { id: StatusFilter; label: string }[] = [
   { id: 'all', label: '전체' },
-  { id: 'making', label: '제작 중' },
-  { id: 'review', label: '검수 중' },
+  { id: 'pending', label: '진행 중' },
   { id: 'approved', label: '승인됨' },
-  { id: 'paid', label: '정산 완료' },
   { id: 'rejected', label: '반려됨' },
 ];
 
@@ -61,7 +59,7 @@ interface ActivityRow {
   campaignName: string;
   developer: string;
   thumbnail: { from: string; to: string; emoji: string };
-  mission: MissionType;
+  mission: ContentType;
 }
 
 function getTimeAgo(dateStr: string | null): string {
@@ -90,10 +88,8 @@ function thumbnailFromJson(json: unknown): { from: string; to: string; emoji: st
 }
 
 const ACTIVITY_STATUS_LABELS: Record<SubmissionStatus, string> = {
-  making: '제작 중',
-  review: '검수 중',
+  pending: '진행 중',
   approved: '승인됨',
-  paid: '정산 완료',
   rejected: '반려됨',
 };
 
@@ -192,16 +188,12 @@ function Row({
       </span>
 
       <div className="flex items-center justify-end">
-        {item.status === 'making' ? (
+        {item.status === 'pending' ? (
           <Button variant="primary" size="sm" onClick={() => onSubmit(item)}>
             URL 제출
           </Button>
-        ) : item.status === 'review' ? (
-          <span className="text-[11px] text-warning">검수 중</span>
         ) : item.status === 'approved' ? (
           <span className="text-[11px] text-success">승인됨</span>
-        ) : item.status === 'paid' ? (
-          <span className="text-[11px] text-success">정산 완료</span>
         ) : (
           <span className="text-[11px] text-danger">반려됨</span>
         )}
@@ -298,11 +290,11 @@ export default function CreatorActivityPage() {
             : application.missions
           : null;
 
-      const missionType: MissionType =
+      const missionType: ContentType =
         mission?.type === 'shortform' ||
         mission?.type === 'longform' ||
         mission?.type === 'live'
-          ? (mission.type as MissionType)
+          ? (mission.type as ContentType)
           : 'shortform';
 
       return {
@@ -331,10 +323,8 @@ export default function CreatorActivityPage() {
   const counts = useMemo(() => {
     const c: Record<StatusFilter, number> = {
       all: rows.length,
-      making: 0,
-      review: 0,
+      pending: 0,
       approved: 0,
-      paid: 0,
       rejected: 0,
     };
     for (const r of rows) c[r.status]++;

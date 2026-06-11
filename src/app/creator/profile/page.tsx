@@ -6,7 +6,7 @@ import { useEffect, useId, useState } from 'react';
 import { WorkspaceLayout } from '@/components/layout';
 import { ProfileCompletion } from '@/components/creator/ProfileCompletion';
 import { Alert, Badge, Button, Card, Input, Textarea, toast } from '@/components/ui';
-import type { CreatorGrade, Database, Json } from '@/lib/db.types';
+import type { Grade, Database, Json } from '@/lib/db.types';
 import { CURRENT_CREATOR, formatSubscribers } from '@/lib/mockCreators';
 import { createClient as createBrowserSupabaseClient } from '@/lib/supabase/client';
 
@@ -57,7 +57,7 @@ const EMPTY_PLATFORMS: PlatformsState = {
   chzzk: { url: '', subscribers: 0 },
 };
 
-function gradeForSubscribers(n: number): CreatorGrade {
+function gradeForSubscribers(n: number): Grade {
   if (n >= 500_000) return 'A';
   if (n >= 100_000) return 'B';
   if (n >= 30_000) return 'C';
@@ -222,7 +222,7 @@ export default function CreatorProfilePage() {
     platforms.youtube.subscribers + platforms.soop.subscribers + platforms.chzzk.subscribers;
   const computedGrade = gradeForSubscribers(totalSubscribers);
 
-  const currentGrade: CreatorGrade = creator?.grade ?? 'E';
+  const currentGrade: Grade = creator?.grade ?? 'E';
   const avgViews = creator?.avg_views ?? 0;
   const rating = Number(creator?.rating ?? 0);
   const completedCampaigns = creator?.completed_campaigns ?? 0;

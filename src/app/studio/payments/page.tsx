@@ -7,8 +7,8 @@ import { WorkspaceLayout } from '@/components/layout';
 import { Alert, Badge, Card, statusToBadgeVariant, toast } from '@/components/ui';
 import type {
   CampaignStatus,
-  CreatorGrade,
-  MissionType,
+  Grade,
+  ContentType,
   PaymentStatus,
 } from '@/lib/db.types';
 import { formatCompactKRW } from '@/lib/formatCurrency';
@@ -24,7 +24,7 @@ const HAS_SUPABASE_ENV =
 const GRID =
   'grid-cols-[1.3fr_1fr_0.7fr_0.9fr_0.9fr_0.9fr_0.7fr_0.8fr]';
 
-const MISSION_META: Record<MissionType, { label: string; icon: LucideIcon }> = {
+const MISSION_META: Record<ContentType, { label: string; icon: LucideIcon }> = {
   shortform: { label: '숏폼', icon: Film },
   longform: { label: '롱폼', icon: Video },
   live: { label: '라이브', icon: Radio },
@@ -39,8 +39,8 @@ interface PaymentRow {
   reward: number;
   campaignName: string;
   creatorName: string;
-  creatorGrade: CreatorGrade;
-  mission: MissionType;
+  creatorGrade: Grade;
+  mission: ContentType;
 }
 
 function formatDate(s: string | null): string {
@@ -54,6 +54,7 @@ function formatDate(s: string | null): string {
 
 const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
   pending: '대기',
+  processing: '처리 중',
   completed: '완료',
 };
 
@@ -275,14 +276,14 @@ export default function StudioPaymentsPage() {
             : ((application as { missions: { type?: string | null } }).missions)
           : null;
 
-      const missionType: MissionType =
+      const missionType: ContentType =
         mission?.type === 'shortform' ||
         mission?.type === 'longform' ||
         mission?.type === 'live'
-          ? (mission.type as MissionType)
+          ? (mission.type as ContentType)
           : 'shortform';
 
-      const grade = ((creator as { grade?: string } | null)?.grade as CreatorGrade) ?? 'E';
+      const grade = ((creator as { grade?: string } | null)?.grade as Grade) ?? 'E';
 
       return {
         id: raw.id,
@@ -309,7 +310,7 @@ export default function StudioPaymentsPage() {
       0,
     );
     const activeCampaigns = campaigns.filter(
-      (c) => (c.status as CampaignStatus) === 'live',
+      (c) => (c.status as CampaignStatus) === 'in_progress',
     ).length;
     setCampaignsSummary({ totalSpent, activeCampaigns });
     setLoading(false);

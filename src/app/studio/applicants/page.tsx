@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react
 
 import { WorkspaceLayout } from '@/components/layout';
 import { Alert, Badge, Button, Card, EmptyState, Pill, statusToBadgeVariant, toast } from '@/components/ui';
-import type { ApplicationStatus, CreatorGrade, MissionType } from '@/lib/db.types';
+import type { ApplicationStatus, Grade, ContentType } from '@/lib/db.types';
 import { createClient as createBrowserSupabaseClient } from '@/lib/supabase/client';
 import { useCurrentStudio } from '@/lib/supabase/hooks';
 
@@ -17,7 +17,7 @@ const HAS_SUPABASE_ENV =
 
 const GRID = 'grid-cols-[1.4fr_1.2fr_1fr_0.8fr_0.6fr_0.9fr_180px]';
 
-const MISSION_META: Record<MissionType, { label: string; icon: LucideIcon }> = {
+const MISSION_META: Record<ContentType, { label: string; icon: LucideIcon }> = {
   shortform: { label: '숏폼', icon: Film },
   longform: { label: '롱폼', icon: Video },
   live: { label: '라이브', icon: Radio },
@@ -32,11 +32,11 @@ interface Applicant {
     name: string;
     developer: string;
   };
-  mission: MissionType;
+  mission: ContentType;
   creator: {
     displayName: string;
     handle: string;
-    grade: CreatorGrade;
+    grade: Grade;
     subscribers: number;
   };
 }
@@ -61,14 +61,14 @@ function formatSubscribers(n: number): string {
 }
 
 const APPLICATION_STATUS_LABELS: Record<ApplicationStatus, string> = {
-  applied: '대기 중',
-  accepted: '수락됨',
+  confirmed: '확정됨',
+  completed: '완료됨',
   rejected: '거절됨',
 };
 
 const APPLICATION_BADGE_STATUS: Record<ApplicationStatus, string> = {
-  applied: 'pending',
-  accepted: 'approved',
+  confirmed: 'approved',
+  completed: 'approved',
   rejected: 'rejected',
 };
 
@@ -164,7 +164,7 @@ function Row({
       <StatusBadge status={item.status} />
 
       <div className="flex items-center justify-end gap-2">
-        {item.status === 'applied' ? (
+        {item.status === 'confirmed' ? (
           <>
             <Button variant="ghost" size="sm" disabled={busy} onClick={() => onReject(item.id)}>
               거절
@@ -257,14 +257,14 @@ export default function StudioApplicantsPage() {
       const mission = Array.isArray(raw.missions) ? raw.missions[0] : raw.missions;
       const creator = Array.isArray(raw.creators) ? raw.creators[0] : raw.creators;
 
-      const missionType: MissionType =
+      const missionType: ContentType =
         mission?.type === 'shortform' ||
         mission?.type === 'longform' ||
         mission?.type === 'live'
-          ? (mission.type as MissionType)
+          ? (mission.type as ContentType)
           : 'shortform';
 
-      const grade = (creator?.grade as CreatorGrade | undefined) ?? 'E';
+      const grade = (creator?.grade as Grade | undefined) ?? 'E';
 
       return {
         id: raw.id,
@@ -358,7 +358,7 @@ export default function StudioApplicantsPage() {
     );
   }
 
-  const pendingCount = applicants.filter((a) => a.status === 'applied').length;
+  const pendingCount = applicants.filter((a) => a.status === 'confirmed').length;
 
   return (
     <WorkspaceLayout

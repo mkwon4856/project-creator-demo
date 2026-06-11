@@ -33,8 +33,8 @@ type StatusFilter = 'all' | CampaignStatus;
 const STATUS_FILTERS: { id: StatusFilter; label: string }[] = [
   { id: 'all', label: '전체' },
   { id: 'draft', label: '초안' },
-  { id: 'recruiting', label: '모집중' },
-  { id: 'live', label: '진행중' },
+  { id: 'active', label: '모집중' },
+  { id: 'in_progress', label: '진행중' },
   { id: 'completed', label: '완료' },
 ];
 
@@ -68,9 +68,12 @@ function thumbnailFromJson(json: unknown): { from: string; to: string; emoji: st
 
 const STATUS_LABELS: Record<CampaignStatus, string> = {
   draft: '초안',
-  recruiting: '모집중',
-  live: '진행중',
+  pending: '대기',
+  active: '모집중',
+  in_progress: '진행중',
+  reviewing: '검수중',
   completed: '완료',
+  cancelled: '취소',
 };
 
 function StatusBadge({ status }: { status: CampaignStatus }) {
@@ -242,9 +245,12 @@ export default function AdminCampaignsPage() {
     const c: Record<StatusFilter, number> = {
       all: campaigns.length,
       draft: 0,
-      recruiting: 0,
-      live: 0,
+      pending: 0,
+      active: 0,
+      in_progress: 0,
+      reviewing: 0,
       completed: 0,
+      cancelled: 0,
     };
     for (const r of campaigns) c[r.status]++;
     return c;

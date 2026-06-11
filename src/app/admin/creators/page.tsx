@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react
 
 import { WorkspaceLayout } from '@/components/layout';
 import { Badge, Card, Input, Pill, toast } from '@/components/ui';
-import type { CreatorGrade, Database } from '@/lib/db.types';
+import type { Grade, Database } from '@/lib/db.types';
 import { formatSubscribers } from '@/lib/mockCreators';
 import { createClient as createBrowserSupabaseClient } from '@/lib/supabase/client';
 import { useCurrentProfile } from '@/lib/supabase/hooks';
@@ -22,7 +22,7 @@ const HAS_SUPABASE_ENV =
 const GRID =
   'grid-cols-[1.4fr_1fr_0.5fr_0.9fr_0.9fr_0.7fr_0.7fr_0.6fr_0.9fr]';
 
-type GradeFilter = 'all' | CreatorGrade;
+type GradeFilter = 'all' | Grade;
 
 const GRADE_FILTERS: { id: GradeFilter; label: string }[] = [
   { id: 'all', label: '전체' },
@@ -163,6 +163,7 @@ export default function AdminCreatorsPage() {
   const counts = useMemo(() => {
     const c: Record<GradeFilter, number> = {
       all: creators.length,
+      S: 0,
       A: 0,
       B: 0,
       C: 0,
@@ -170,8 +171,8 @@ export default function AdminCreatorsPage() {
       E: 0,
     };
     for (const r of creators) {
-      const g = r.grade as CreatorGrade;
-      if (g === 'A' || g === 'B' || g === 'C' || g === 'D' || g === 'E') {
+      const g = r.grade as Grade;
+      if (g === 'S' || g === 'A' || g === 'B' || g === 'C' || g === 'D' || g === 'E') {
         c[g]++;
       }
     }
