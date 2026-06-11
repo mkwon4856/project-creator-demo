@@ -79,6 +79,24 @@ export default function AdminCampaignsPage() {
     setProcessing(null)
   }
 
+  // 캠페인 완료 처리 — 미집행 홀드분을 게임사 크레딧으로 복귀(release) + 상태 completed
+  const handleComplete = async (campaign: CampaignWithRelations) => {
+    if (!confirm('이 캠페인을 완료 처리할까요? 미집행 예산은 게임사 크레딧으로 복귀됩니다.')) return
+    setProcessing(campaign.id)
+    const { data, error } = await supabase.rpc('release_campaign', { p_campaign_id: campaign.id })
+    if (error) {
+      alert(`완료 처리 실패: ${error.message}`)
+      setProcessing(null)
+      return
+    }
+    const released = Number(data) || 0
+    setCampaigns(prev => prev.map(c => c.id === campaign.id ? { ...c, status: 'completed' } : c))
+    setProcessing(null)
+    alert(released > 0
+      ? `캠페인이 완료되었습니다. 미집행 ₩${released.toLocaleString()}이 크레딧으로 복귀되었습니다.`
+      : '캠페인이 완료되었습니다.')
+  }
+
   const filtered = campaigns.filter(c => {
     if (tab === 'pending') return c.status === 'pending'
     if (tab === 'active') return c.status === 'active'
@@ -229,6 +247,19 @@ export default function AdminCampaignsPage() {
                     {campaign.status !== 'pending' && campaign.admin_note && (
                       <div className="text-xs text-white/30 pt-2 border-t border-white/5">
                         메모: {campaign.admin_note}
+                      </div>
+                    )}
+
+                    {/* 진행 중 캠페인 완료 처리 — 미집행 예산 복귀 */}
+                    {['active', 'in_progress', 'reviewing'].includes(campaign.status) && (
+                      <div className="pt-3 border-t border-white/5">
+                        <button
+                          onClick={e => { e.stopPropagation(); handleComplete(campaign) }}
+                          disabled={processing === campaign.id}
+                          className="w-full py-2 rounded-lg text-sm font-medium border border-green-500/30 text-green-400 hover:bg-green-500/10 transition-all disabled:opacity-30"
+                        >
+                          {processing === campaign.id ? '처리 중...' : '캠페인 완료 처리 — 미집행 예산 복귀'}
+                        </button>
                       </div>
                     )}
                   </div>

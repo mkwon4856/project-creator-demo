@@ -7,6 +7,7 @@ import { StepMissions } from './_components/StepMissions'
 import { StepReview } from './_components/StepReview'
 import { createCampaign, createMissions } from '@/lib/api/campaigns'
 import { toStudioAmount, RATE_MATRIX } from '@/lib/pricing'
+import { createClient } from '@/lib/supabase/client'
 import { useStudio } from '@/lib/supabase/hooks'
 import type { WizardState, MissionSlot } from './_types'
 import type { Grade } from '@/lib/db.types'
@@ -52,6 +53,7 @@ export default function NewCampaignPage() {
   const [step, setStep] = useState(1)
   const [state, setState] = useState<WizardState>(INITIAL)
   const [submitting, setSubmitting] = useState(false)
+  const supabase = createClient()
 
   const onChange = (patch: Partial<WizardState>) => {
     setState(prev => ({ ...prev, ...patch }))
@@ -95,6 +97,20 @@ export default function NewCampaignPage() {
         admin_note: null,
       })
       if (error || !campaign) throw error
+
+      // 예산 홀딩 — 크레딧 available에서 total_budget을 held로 이동.
+      // 잔액 부족 시 방금 만든 캠페인을 삭제(유령 캠페인 방지)하고 안내.
+      const { error: holdError } = await supabase.rpc('hold_credits', {
+        p_studio_id: studio.profile_id,
+        p_amount: state.total_budget,
+        p_campaign_id: campaign.id,
+      })
+      if (holdError) {
+        await supabase.from('campaigns').delete().eq('id', campaign.id)
+        alert('크레딧 잔액이 부족합니다. 대시보드에서 충전 후 다시 시도해주세요.')
+        setSubmitting(false)
+        return
+      }
 
       const allMissions = [...state.missions, ...state.auto_missions]
       await createMissions(allMissions.map(m => ({

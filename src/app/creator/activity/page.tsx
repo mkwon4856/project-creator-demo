@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useCreator } from '@/lib/supabase/hooks'
+import { formatHoldRemaining } from '@/lib/credits'
 import type {
   Application,
   Campaign,
@@ -38,6 +39,9 @@ type AppRow = Application & {
   missions: Pick<Mission, 'content_type' | 'creator_amount' | 'guide_draft' | 'guide_approved'> | null
 }
 
+// 새 컬럼(approved_at/paid_at)은 db.types에 없으므로 로컬 보강
+type SubRow = Submission & { approved_at: string | null; paid_at: string | null }
+
 const APP_STATUS_META: Record<ApplicationStatus, { label: string; cls: string }> = {
   confirmed: { label: '제작 중', cls: 'bg-[#9B7EC8]/20 text-[#9B7EC8]' },
   completed: { label: '완료', cls: 'bg-green-500/20 text-green-400' },
@@ -54,7 +58,7 @@ export default function CreatorActivityPage() {
   const router = useRouter()
   const { creator, loading: creatorLoading } = useCreator()
   const [apps, setApps] = useState<AppRow[]>([])
-  const [subs, setSubs] = useState<Submission[]>([])
+  const [subs, setSubs] = useState<SubRow[]>([])
   const [loading, setLoading] = useState(true)
   const [submitFor, setSubmitFor] = useState<AppRow | null>(null)
   const supabase = createClient()
@@ -74,7 +78,7 @@ export default function CreatorActivityPage() {
         .from('submissions')
         .select('*')
         .in('application_id', appIds)
-      setSubs((subData ?? []) as Submission[])
+      setSubs((subData ?? []) as SubRow[])
     } else {
       setSubs([])
     }
@@ -88,12 +92,12 @@ export default function CreatorActivityPage() {
   }, [creator])
 
   const subByApp = useMemo(() => {
-    const m = new Map<string, Submission>()
+    const m = new Map<string, SubRow>()
     for (const s of subs) m.set(s.application_id, s)
     return m
   }, [subs])
 
-  const handleSubmitted = (sub: Submission) => {
+  const handleSubmitted = (sub: SubRow) => {
     setSubs(prev => [...prev, sub])
     setSubmitFor(null)
   }
@@ -199,6 +203,15 @@ export default function CreatorActivityPage() {
                         {sub.status === 'rejected' && sub.admin_note && (
                           <p className="text-xs text-red-400/80 mt-2">거절 사유: {sub.admin_note}</p>
                         )}
+                        {sub.status === 'approved' && (
+                          <p className={`text-xs mt-2 ${sub.paid_at ? 'text-green-400' : 'text-[#E5B567]'}`}>
+                            {sub.paid_at
+                              ? '지급 완료'
+                              : sub.approved_at
+                                ? formatHoldRemaining(sub.approved_at)
+                                : '지급 대기'}
+                          </p>
+                        )}
                       </div>
                     ) : canSubmit ? (
                       <button
@@ -240,7 +253,7 @@ function SubmitModal({
 }: {
   app: AppRow
   onClose: () => void
-  onSubmitted: (sub: Submission) => void
+  onSubmitted: (sub: SubRow) => void
 }) {
   const supabase = createClient()
   const contentType = app.content_type
@@ -285,7 +298,7 @@ function SubmitModal({
       setSubmitting(false)
       return
     }
-    onSubmitted(data as Submission)
+    onSubmitted(data as SubRow)
   }
 
   return (

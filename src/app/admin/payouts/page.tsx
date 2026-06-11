@@ -62,11 +62,14 @@ export default function AdminReviewPage() {
   const handleApprove = async (submission: SubmissionWithRelations) => {
     setProcessing(submission.id)
     const c = getChecks(submission.id)
+    const now = new Date().toISOString()
     await supabase.from('submissions').update({
       ...c,
       status: 'approved',
       admin_note: notes[submission.id] ?? null,
-      reviewed_at: new Date().toISOString(),
+      reviewed_at: now,
+      // 홀드 시작 시점. 실제 지급(payout)은 홀드기간 경과 후 process-payouts에서 처리.
+      approved_at: now,
     }).eq('id', submission.id)
     setSubmissions(prev => prev.map(s => s.id === submission.id ? { ...s, status: 'approved' } : s))
     setProcessing(null)

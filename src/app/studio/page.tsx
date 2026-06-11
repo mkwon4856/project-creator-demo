@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useStudio } from '@/lib/supabase/hooks'
+import { CreditBalance } from '@/components/studio/CreditBalance'
 import type { Campaign } from '@/lib/db.types'
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
@@ -55,9 +56,7 @@ export default function StudioDashboard() {
             <h1 className="text-2xl font-black text-white" style={{ fontFamily: 'Arial Black' }}>
               안녕하세요, {studio?.company_name ?? ''}님 👋
             </h1>
-            <p className="text-white/40 text-sm mt-1">
-              잔여 예산: <span className="text-[#E5B567]">₩{(studio?.balance ?? 0).toLocaleString()}</span>
-            </p>
+            <p className="text-white/40 text-sm mt-1">캠페인 현황을 한눈에 확인하세요</p>
           </div>
           <button
             onClick={() => router.push('/studio/new')}
@@ -67,6 +66,9 @@ export default function StudioDashboard() {
             + 캠페인 만들기
           </button>
         </div>
+
+        {/* 크레딧 잔액 */}
+        <CreditBalance />
 
         {/* 요약 카드 */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">

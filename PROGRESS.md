@@ -232,3 +232,26 @@ Task 10-3에서 외부 의존성(Sentry/Analytics/Resend) 설치로 기존 8건(
 
 ### Phase 5 — 검증
 - `npx tsc --noEmit` **0 errors**. `npm run build` **성공**(33 라우트).
+
+---
+
+## Task 12 — 크레딧(예산 충전) 시스템 + 24시간 홀드 (완료, 2026-06-11)
+
+흐름: charge(충전) → hold(캠페인 생성 시 홀딩) → approve(approved_at 기록) →
+payout(홀드 경과 후 조회 시점 지급) → release(캠페인 완료 시 미집행분 복귀).
+
+- **P1 SQL** `supabase/migrations/20260611000002_credits.sql` — `studio_credits`/`credit_transactions`
+  테이블, `submissions.approved_at/paid_at` 추가, 함수 `charge/hold/payout/release_credits` +
+  오케스트레이터 `process_submission_payout`(지급+paid_at+batch+payments, RLS 우회) /
+  `release_campaign`(미집행 복귀+completed). 전부 SECURITY DEFINER. RLS는 본인 SELECT만, 쓰기는 함수로.
+  studio_credits.studio_id = profiles(id)(=auth.uid()) 기준.
+- **P2** `src/lib/credits.ts` — `HOLD_DURATION_HOURS`(기본 24) + `isHoldExpired`/`formatHoldRemaining` 등.
+- **P3 API** `/api/credits/charge`(POST, studio role, 최소 10만), `/balance`(GET), `/process-payouts`(POST,
+  본인 approved 미지급 중 홀드 경과 건을 RPC로 지급). 전부 server client.
+- **P4** `studio/new` handleSubmit — 캠페인 insert 후 `hold_credits` RPC, 실패 시 캠페인 삭제(유령 방지)+안내.
+- **P5** `admin/payouts` 승인 시 `approved_at = now()` 기록(지급은 안 함).
+- **P6** `admin/campaigns` 진행 중 카드에 "캠페인 완료 처리" 버튼 → `release_campaign` RPC.
+- **P7 UI** — `components/studio/CreditBalance.tsx`(available 강조/held/누적), `ChargeModal.tsx`(프리셋+직접입력,
+  테스트 충전). `studio/page` 헤더 아래 배치(구 `studio.balance` 표시 제거). `creator/earnings` 진입 시
+  process-payouts 호출 + 지급완료/지급대기(홀드 잔여)/검수대기 3분류. `creator/activity` 승인 건에 홀드 뱃지.
+- **P8** `npx tsc --noEmit` **0 errors**, `npm run build` **성공**(36 라우트). DEMO_GUIDE/GAPS 갱신.
