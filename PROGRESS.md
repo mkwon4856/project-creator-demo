@@ -107,7 +107,19 @@ creator: `page`, `profile`, `settings`, `activity`, `earnings`, `_components/Rec
 
 ---
 
-## 남은 타입 에러: **8건** (`npx tsc --noEmit` 기준, Task 2~5 후 동일)
+## Task 6 — 크리에이터 채널 등록 페이지 (완료, 2026-06-11)
+
+- `src/app/creator/profile/page.tsx` 전면 교체: 새 `creator_channels` 기반 채널 관리 페이지(다크 디자인).
+- `useCreator` + `createClient`로 `creator_channels`(`creator_id` 기준) 조회.
+- 채널 추가 폼(플랫폼/채널명/URL/구독자수) → `subscribersToGrade`로 등급 자동 산정,
+  `PLATFORM_CONTENT_TYPES`로 플랫폼별 지원 콘텐츠 타입 수만큼 행 insert.
+- 등록 채널을 `platform:channel_name`로 그룹핑해 카드 표시(등급·콘텐츠 타입 뱃지), 그룹 단위 삭제.
+- 이로써 Task 2에서 플레이스홀더('E'/0) 처리했던 크리에이터 등급·구독자 데이터의 **입력 소스**가 마련됨(표시 측 연동은 후속).
+- 타입 에러 0건.
+
+---
+
+## 남은 타입 에러: **8건** (`npx tsc --noEmit` 기준, Task 2~6 후 동일)
 
 전부 **외부 모듈 미설치(TS2307)** — protected 파일이라 미수정:
 
