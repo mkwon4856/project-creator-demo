@@ -24,7 +24,7 @@ export function useStudio() {
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) { setLoading(false); return }
-      supabase.from('studios').select('*').eq('profile_id', user.id).single()
+      supabase.from('studios').select('*').eq('profile_id', user.id).maybeSingle()
         .then(({ data }) => { setStudio(data); setLoading(false) })
     })
   }, [])
