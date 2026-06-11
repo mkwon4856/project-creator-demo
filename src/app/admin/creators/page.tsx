@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react
 
 import { WorkspaceLayout } from '@/components/layout';
 import { Badge, Card, Input, Pill, toast } from '@/components/ui';
-import type { Grade, Database } from '@/lib/db.types';
+import type { Grade, Creator } from '@/lib/db.types';
 import { formatSubscribers } from '@/lib/mockCreators';
 import { createClient as createBrowserSupabaseClient } from '@/lib/supabase/client';
 import { useCurrentProfile } from '@/lib/supabase/hooks';
@@ -13,7 +13,7 @@ import { useCurrentProfile } from '@/lib/supabase/hooks';
 import { getAdminSidebar } from '../_config/sidebar';
 import { useAdminBadgeCounts } from '../_hooks/useAdminBadgeCounts';
 
-type CreatorRow = Database['public']['Tables']['creators']['Row'];
+type CreatorRow = Creator;
 
 const HAS_SUPABASE_ENV =
   Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
@@ -83,37 +83,39 @@ function Row({ item, last }: { item: CreatorRow; last: boolean }) {
       ].join(' ')}
     >
       <div className="flex items-center gap-2 min-w-0">
-        <CreatorAvatar name={item.display_name} />
+        <CreatorAvatar name={item.name} />
         <span className="text-sm font-medium text-text-primary truncate">
-          {item.display_name}
+          {item.name}
         </span>
       </div>
 
-      <span className="text-xs text-text-secondary truncate">{item.handle}</span>
+      {/* TODO(rebuild): handle removed; source channel info from creator_channels */}
+      <span className="text-xs text-text-secondary truncate">{item.name}</span>
 
+      {/* TODO(rebuild): grade/subscribers/avg_views/rating/completed_campaigns/is_verified source from creator_channels */}
       <Badge variant="primary" size="sm">
-        {item.grade}
+        {'E'}
       </Badge>
 
       <span className="text-sm tabular-nums text-text-primary text-right">
-        {formatSubscribers(item.subscribers)}
+        {formatSubscribers(0)}
       </span>
 
       <span className="text-sm tabular-nums text-text-secondary text-right">
-        {formatSubscribers(item.avg_views)}
+        {formatSubscribers(0)}
       </span>
 
       <span className="inline-flex items-center justify-end gap-1 text-sm tabular-nums text-text-primary">
         <Star size={12} className="text-warning fill-warning" aria-hidden />
-        {Number(item.rating).toFixed(1)}
+        {Number(0).toFixed(1)}
       </span>
 
       <span className="text-sm tabular-nums text-text-secondary text-right">
-        {item.completed_campaigns}
+        {0}
       </span>
 
       <span className="flex items-center justify-center">
-        {item.is_verified ? (
+        {false ? (
           <Check size={14} className="text-success" aria-hidden />
         ) : (
           <X size={14} className="text-text-muted" aria-hidden />
@@ -145,7 +147,8 @@ export default function AdminCreatorsPage() {
     const { data, error } = await supabase
       .from('creators')
       .select('*')
-      .order('subscribers', { ascending: false });
+      // TODO(rebuild): subscribers moved to creator_channels; order by created_at
+      .order('created_at', { ascending: false });
 
     if (error) {
       toast.error(`크리에이터 조회 실패: ${error.message}`);
@@ -170,11 +173,9 @@ export default function AdminCreatorsPage() {
       D: 0,
       E: 0,
     };
-    for (const r of creators) {
-      const g = r.grade as Grade;
-      if (g === 'S' || g === 'A' || g === 'B' || g === 'C' || g === 'D' || g === 'E') {
-        c[g]++;
-      }
+    // TODO(rebuild): grade moved to creator_channels; default all to 'E'
+    for (const _r of creators) {
+      c.E++;
     }
     return c;
   }, [creators]);
@@ -182,9 +183,11 @@ export default function AdminCreatorsPage() {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return creators.filter((c) => {
-      if (gradeFilter !== 'all' && c.grade !== gradeFilter) return false;
+      // TODO(rebuild): grade moved to creator_channels; treat all as 'E'
+      const grade: Grade = 'E';
+      if (gradeFilter !== 'all' && grade !== gradeFilter) return false;
       if (q) {
-        const hay = `${c.display_name} ${c.handle}`.toLowerCase();
+        const hay = `${c.name}`.toLowerCase();
         if (!hay.includes(q)) return false;
       }
       return true;
@@ -199,7 +202,7 @@ export default function AdminCreatorsPage() {
     );
   }
 
-  const adminName = profile?.name?.trim() || '민석';
+  const adminName = profile?.email?.trim() || '민석';
   const initials = adminName.slice(0, 2).toUpperCase();
 
   return (

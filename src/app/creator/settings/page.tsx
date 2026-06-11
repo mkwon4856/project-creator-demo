@@ -85,8 +85,9 @@ export default function CreatorSettingsPage() {
     );
   }
 
-  const userName = creator?.display_name || CURRENT_CREATOR.name;
-  const userBadge = `${creator?.grade ?? CURRENT_CREATOR.grade}티어`;
+  const userName = creator?.name || CURRENT_CREATOR.name;
+  // TODO(rebuild): grade now derives from creator_channels
+  const userBadge = `${creator ? 'E' : CURRENT_CREATOR.grade}티어`;
 
   return (
     <WorkspaceLayout

@@ -61,11 +61,6 @@ export interface MatchCreator {
 
 export type ScoredCampaign = Campaign & { matchScore: number };
 
-function safeGrade(g: string | null | undefined): CreatorGrade {
-  if (g === 'A' || g === 'B' || g === 'C' || g === 'D' || g === 'E') return g;
-  return 'E';
-}
-
 /** Return platform type strings that have a non-empty URL in the jsonb array. */
 function connectedPlatformTypes(platforms: unknown): string[] {
   if (!Array.isArray(platforms)) return [];
@@ -346,10 +341,11 @@ export function RecommendedCampaigns() {
 
   const creator: MatchCreator = useMemo(() => {
     if (creatorRow) {
+      // TODO(rebuild): source grade/subscribers/platforms from creator_channels
       return {
-        grade: safeGrade(creatorRow.grade),
-        subscribers: creatorRow.subscribers ?? 0,
-        platforms: creatorRow.platforms,
+        grade: 'E',
+        subscribers: 0,
+        platforms: [],
       };
     }
     return {

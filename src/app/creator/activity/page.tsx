@@ -14,7 +14,6 @@ import { SubmitUrlModal } from '@/components/creator/SubmitUrlModal';
 import { Alert, Badge, Button, Card, Pill, statusToBadgeVariant, toast } from '@/components/ui';
 import type { DisplayActivity } from '@/lib/api/submissions';
 import type {
-  CampaignThumbnailJson,
   ContentType,
   SubmissionStatus,
 } from '@/lib/db.types';
@@ -77,7 +76,7 @@ function getTimeAgo(dateStr: string | null): string {
 
 function thumbnailFromJson(json: unknown): { from: string; to: string; emoji: string } {
   if (json && typeof json === 'object') {
-    const t = json as CampaignThumbnailJson;
+    const t = json as { from?: string; to?: string; emoji?: string };
     return {
       from: t.from ?? DEFAULT_THUMBNAIL.from,
       to: t.to ?? DEFAULT_THUMBNAIL.to,
@@ -344,9 +343,10 @@ export default function CreatorActivityPage() {
     );
   }
 
-  const userName = creator?.display_name || CURRENT_CREATOR.name;
+  const userName = creator?.name || CURRENT_CREATOR.name;
   const userAvatar = CURRENT_CREATOR.emoji;
-  const userBadge = `${creator?.grade ?? CURRENT_CREATOR.grade}티어`;
+  // TODO(rebuild): grade now derives from creator_channels
+  const userBadge = `${creator ? 'E' : CURRENT_CREATOR.grade}티어`;
 
   return (
     <WorkspaceLayout

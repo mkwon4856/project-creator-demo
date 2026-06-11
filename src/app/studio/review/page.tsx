@@ -13,7 +13,6 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react
 import { WorkspaceLayout } from '@/components/layout';
 import { Alert, Badge, Button, Card, EmptyState, Pill, statusToBadgeVariant, toast } from '@/components/ui';
 import type {
-  CampaignThumbnailJson,
   Grade,
   ContentType,
   SubmissionStatus,
@@ -83,7 +82,7 @@ function getTimeAgo(dateStr: string | null): string {
 
 function thumbnailFromJson(json: unknown): { from: string; to: string; emoji: string } {
   if (json && typeof json === 'object') {
-    const t = json as CampaignThumbnailJson;
+    const t = json as { from?: string; to?: string; emoji?: string };
     return {
       from: t.from ?? DEFAULT_THUMBNAIL.from,
       to: t.to ?? DEFAULT_THUMBNAIL.to,
@@ -445,7 +444,7 @@ export default function StudioReviewPage() {
   return (
     <WorkspaceLayout
       persona="studio"
-      userName={studio?.name ?? '테스트 게임사 1'}
+      userName={studio?.company_name ?? '테스트 게임사 1'}
       userAvatar="🎮"
       userBadge="게임사"
       sidebarSections={getStudioSidebar('review')}

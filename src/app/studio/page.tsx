@@ -176,7 +176,7 @@ export default function StudioMyCampaignsPage() {
 
       persona="studio"
 
-      userName={studio?.name ?? '테스트 게임사 1'}
+      userName={studio?.company_name ?? '테스트 게임사 1'}
 
       userAvatar="🎮"
 
@@ -348,7 +348,7 @@ export default function StudioMyCampaignsPage() {
 
         role="studio"
 
-        userName={studio?.name ?? '게임사'}
+        userName={studio?.company_name ?? '게임사'}
 
         onClose={closeWelcome}
 

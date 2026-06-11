@@ -1,12 +1,42 @@
-import type { CampaignThumbnailJson, Database } from '@/lib/db.types';
 import {
   type Campaign,
   type CampaignPlatform,
   type CampaignStatus,
 } from '@/lib/campaigns/types';
 
-type CampaignRow = Database['public']['Tables']['campaigns']['Row'];
-type MissionRow = Database['public']['Tables']['missions']['Row'];
+// Legacy adapter: maps demo Supabase rows (old column layout) to the UI
+// Campaign model. Intentionally decoupled from db.types so the new schema
+// does not affect it; rebuilt against the new schema in a later task.
+type ThumbnailJson = {
+  from?: string;
+  to?: string;
+  emoji?: string;
+  imageUrl?: string;
+  type?: 'url' | 'gradient';
+};
+
+interface CampaignRow {
+  id: string;
+  name: string;
+  developer: string;
+  genre: string;
+  status: 'draft' | CampaignStatus;
+  thumbnail: unknown;
+  total_budget: number;
+  spent_budget: number;
+  target_creators: number;
+  platform: string[] | null;
+}
+
+interface MissionRow {
+  type: 'shortform' | 'longform' | 'live';
+  rate_a: number;
+  rate_b: number;
+  rate_c: number;
+  rate_d: number;
+  rate_e: number;
+  enabled: boolean;
+}
 
 export type CampaignWithMissions = CampaignRow & { missions: MissionRow[] };
 
@@ -14,7 +44,7 @@ const FALLBACK_THUMBNAIL = { from: '#1a0a3e', to: '#4a1a6e', emoji: '🎮' };
 const VALID_PLATFORMS = ['mobile', 'pc', 'console'] as const;
 
 function asThumbnail(value: unknown): Campaign['thumbnail'] {
-  const t = (value ?? {}) as CampaignThumbnailJson;
+  const t = (value ?? {}) as ThumbnailJson;
   return {
     from: t.from ?? FALLBACK_THUMBNAIL.from,
     to: t.to ?? FALLBACK_THUMBNAIL.to,

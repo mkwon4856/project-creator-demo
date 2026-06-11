@@ -6,13 +6,13 @@ import { useEffect, useId, useState } from 'react';
 import { WorkspaceLayout } from '@/components/layout';
 import { ProfileCompletion } from '@/components/creator/ProfileCompletion';
 import { Alert, Badge, Button, Card, Input, Textarea, toast } from '@/components/ui';
-import type { Grade, Database, Json } from '@/lib/db.types';
+import type { Grade, Creator } from '@/lib/db.types';
 import { CURRENT_CREATOR, formatSubscribers } from '@/lib/mockCreators';
 import { createClient as createBrowserSupabaseClient } from '@/lib/supabase/client';
 
 import { getCreatorSidebar } from '../_config/sidebar';
 
-type CreatorRow = Database['public']['Tables']['creators']['Row'];
+type CreatorRow = Creator;
 
 const HAS_SUPABASE_ENV =
   Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
@@ -204,10 +204,11 @@ export default function CreatorProfilePage() {
         }
         if (data && !cancelled) {
           setCreator(data);
-          setDisplayName(data.display_name);
-          setHandle(data.handle);
+          setDisplayName(data.name);
+          // TODO(rebuild): handle/platforms now live in creator_channels
+          setHandle(data.name);
           setBio(data.bio ?? '');
-          setPlatforms(parsePlatforms(data.platforms));
+          setPlatforms(parsePlatforms(null));
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -222,10 +223,11 @@ export default function CreatorProfilePage() {
     platforms.youtube.subscribers + platforms.soop.subscribers + platforms.chzzk.subscribers;
   const computedGrade = gradeForSubscribers(totalSubscribers);
 
-  const currentGrade: Grade = creator?.grade ?? 'E';
-  const avgViews = creator?.avg_views ?? 0;
-  const rating = Number(creator?.rating ?? 0);
-  const completedCampaigns = creator?.completed_campaigns ?? 0;
+  // TODO(rebuild): source grade/avgViews/rating/completedCampaigns from creator_channels
+  const currentGrade: Grade = 'E';
+  const avgViews = 0;
+  const rating = 0;
+  const completedCampaigns = 0;
 
   const handleSave = async () => {
     if (!creator) {
@@ -246,41 +248,15 @@ export default function CreatorProfilePage() {
       const supabase = createBrowserSupabaseClient();
       const normalizedHandle = handle.startsWith('@') ? handle : `@${handle}`;
       const newGrade = gradeForSubscribers(totalSubscribers);
-      const prevGrade = creator.grade;
-
-      const platformsJson = [
-        platforms.youtube.url.trim()
-          ? {
-              type: 'youtube',
-              url: platforms.youtube.url.trim(),
-              subscribers: platforms.youtube.subscribers,
-            }
-          : null,
-        platforms.soop.url.trim()
-          ? {
-              type: 'soop',
-              url: platforms.soop.url.trim(),
-              subscribers: platforms.soop.subscribers,
-            }
-          : null,
-        platforms.chzzk.url.trim()
-          ? {
-              type: 'chzzk',
-              url: platforms.chzzk.url.trim(),
-              subscribers: platforms.chzzk.subscribers,
-            }
-          : null,
-      ].filter(Boolean) as Json;
+      // TODO(rebuild): grade now derives from creator_channels
+      const prevGrade: Grade = 'E';
 
       const { data: updated, error } = await supabase
         .from('creators')
+        // TODO(rebuild): handle/subscribers/grade/platforms now live in creator_channels
         .update({
-          display_name: displayName.trim(),
-          handle: normalizedHandle,
+          name: displayName.trim(),
           bio,
-          subscribers: totalSubscribers,
-          grade: newGrade,
-          platforms: platformsJson,
         })
         .eq('id', creator.id)
         .select()
@@ -317,7 +293,7 @@ export default function CreatorProfilePage() {
     );
   }
 
-  const userName = creator?.display_name || CURRENT_CREATOR.name;
+  const userName = creator?.name || CURRENT_CREATOR.name;
   const userAvatar = CURRENT_CREATOR.emoji;
   const userBadge = `${currentGrade}티어`;
 

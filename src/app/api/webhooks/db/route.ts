@@ -1,7 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse, type NextRequest } from 'next/server';
 
-import type { Database } from '@/lib/db.types';
 import { sendEmail } from '@/lib/email/resend';
 import {
   applicationReceivedEmail,
@@ -26,7 +25,7 @@ function createAdminClient() {
   if (!url || !serviceKey) {
     throw new Error('Supabase admin credentials are not configured');
   }
-  return createClient<Database>(url, serviceKey, {
+  return createClient(url, serviceKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 }

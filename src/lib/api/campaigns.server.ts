@@ -64,7 +64,8 @@ export const fetchCampaignById = cache(async (id: string): Promise<CampaignSeoDa
   const row = data as CampaignWithMissions;
   return {
     campaign: transformDbCampaign(row),
-    brief: row.brief ?? '',
+    // TODO(rebuild): transformDbCampaign's legacy CampaignRow has no description column yet
+    brief: (row as { description?: string | null }).description ?? '',
   };
 });
 

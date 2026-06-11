@@ -1,8 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
-import type { Database } from '@/lib/db.types';
-
 /**
  * Refresh the Supabase auth session on every request.
  * Call this from the root `middleware.ts` so cookies stay fresh and
@@ -20,7 +18,7 @@ export async function updateSession(request: NextRequest) {
 
   let response = NextResponse.next({ request });
 
-  const supabase = createServerClient<Database>(url, anonKey, {
+  const supabase = createServerClient(url, anonKey, {
     cookies: {
       getAll() {
         return request.cookies.getAll();

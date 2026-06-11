@@ -7,8 +7,7 @@ import { WorkspaceLayout } from '@/components/layout';
 import { Badge, Card, Input, Pill, statusToBadgeVariant, toast } from '@/components/ui';
 import type {
   CampaignStatus,
-  CampaignThumbnailJson,
-  Database,
+  Campaign,
 } from '@/lib/db.types';
 import { formatCompactKRW } from '@/lib/formatCurrency';
 import { createClient as createBrowserSupabaseClient } from '@/lib/supabase/client';
@@ -17,7 +16,7 @@ import { useCurrentProfile } from '@/lib/supabase/hooks';
 import { getAdminSidebar } from '../_config/sidebar';
 import { useAdminBadgeCounts } from '../_hooks/useAdminBadgeCounts';
 
-type CampaignRow = Database['public']['Tables']['campaigns']['Row'];
+type CampaignRow = Campaign;
 
 const HAS_SUPABASE_ENV =
   Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
@@ -56,7 +55,7 @@ function formatCreatedDate(iso: string): string {
 
 function thumbnailFromJson(json: unknown): { from: string; to: string; emoji: string } {
   if (json && typeof json === 'object') {
-    const t = json as CampaignThumbnailJson;
+    const t = json as { from?: string; to?: string; emoji?: string };
     return {
       from: t.from ?? DEFAULT_THUMBNAIL.from,
       to: t.to ?? DEFAULT_THUMBNAIL.to,
@@ -148,8 +147,8 @@ function Row({ item, last }: { item: CampaignWithCounts; last: boolean }) {
       </span>
 
       <div className="flex flex-col min-w-0">
-        <span className="text-sm font-medium text-text-primary truncate">{item.name}</span>
-        <span className="text-[11px] text-text-secondary truncate">{item.developer}</span>
+        <span className="text-sm font-medium text-text-primary truncate">{item.title}</span>
+        <span className="text-[11px] text-text-secondary truncate">{item.game_name}</span>
       </div>
 
       <span className="text-xs text-text-secondary truncate">{item.studioName}</span>
@@ -162,11 +161,13 @@ function Row({ item, last }: { item: CampaignWithCounts; last: boolean }) {
         {formatCompactKRW(item.total_budget)}
       </span>
 
-      <BudgetBar total={item.total_budget} spent={item.spent_budget} />
+      {/* TODO(rebuild): spent_budget removed; source spend from settlements/payments */}
+      <BudgetBar total={item.total_budget} spent={0} />
 
       <span className="text-sm tabular-nums text-text-secondary text-right">
         {item.applicantsCount}
-        <span className="text-text-muted text-[11px]"> / {item.target_creators}</span>
+        {/* TODO(rebuild): target_creators removed; source from missions */}
+        <span className="text-text-muted text-[11px]"> / {0}</span>
       </span>
 
       <span className="text-sm tabular-nums text-text-secondary text-right">
@@ -200,7 +201,7 @@ export default function AdminCampaignsPage() {
       .select(
         `
         *,
-        studios ( name ),
+        studios ( company_name ),
         applications ( id ),
         submissions ( id )
       `,
@@ -218,8 +219,8 @@ export default function AdminCampaignsPage() {
     const rows: CampaignWithCounts[] = subs.map((c) => {
       const raw = c as unknown as CampaignRow & {
         studios:
-          | { name?: string }
-          | { name?: string }[]
+          | { company_name?: string }
+          | { company_name?: string }[]
           | null;
         applications: { id: string }[] | null;
         submissions: { id: string }[] | null;
@@ -227,10 +228,10 @@ export default function AdminCampaignsPage() {
       const studio = Array.isArray(raw.studios) ? raw.studios[0] : raw.studios;
       return {
         ...(raw as CampaignRow),
-        studioName: studio?.name ?? '—',
+        studioName: studio?.company_name ?? '—',
         applicantsCount: raw.applications?.length ?? 0,
         submissionsCount: raw.submissions?.length ?? 0,
-        thumbnailParsed: thumbnailFromJson(raw.thumbnail),
+        thumbnailParsed: thumbnailFromJson(raw.thumbnail_url),
       };
     });
     setCampaigns(rows);
@@ -261,7 +262,7 @@ export default function AdminCampaignsPage() {
     return campaigns.filter((c) => {
       if (statusFilter !== 'all' && c.status !== statusFilter) return false;
       if (q) {
-        const hay = `${c.name} ${c.developer} ${c.genre}`.toLowerCase();
+        const hay = `${c.title} ${c.game_name} ${c.genre}`.toLowerCase();
         if (!hay.includes(q)) return false;
       }
       return true;
@@ -276,7 +277,7 @@ export default function AdminCampaignsPage() {
     );
   }
 
-  const adminName = profile?.name?.trim() || '민석';
+  const adminName = profile?.email?.trim() || '민석';
   const initials = adminName.slice(0, 2).toUpperCase();
 
   return (

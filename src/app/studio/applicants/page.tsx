@@ -363,7 +363,7 @@ export default function StudioApplicantsPage() {
   return (
     <WorkspaceLayout
       persona="studio"
-      userName={studio?.name ?? '테스트 게임사 1'}
+      userName={studio?.company_name ?? '테스트 게임사 1'}
       userAvatar="🎮"
       userBadge="게임사"
       sidebarSections={getStudioSidebar('applicants')}

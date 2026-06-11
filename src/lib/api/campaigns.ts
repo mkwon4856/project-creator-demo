@@ -1,6 +1,7 @@
 'use client';
 
 import type { Campaign } from '@/lib/campaigns/types';
+import type { Campaign as DbCampaign, Mission as DbMission } from '@/lib/db.types';
 import { createClient as createBrowserSupabaseClient } from '@/lib/supabase/client';
 
 import {
@@ -69,5 +70,50 @@ export async function fetchMyCampaigns(
     console.error('fetchMyCampaigns:', e);
     return [];
   }
+}
+
+// ─── New schema writers (rebuild) ───────────────────────────────
+
+export async function createCampaign(
+  data: Omit<DbCampaign, 'id' | 'created_at' | 'launched_at' | 'completed_at'>,
+) {
+  const supabase = createBrowserSupabaseClient();
+  return supabase.from('campaigns').insert(data).select().single();
+}
+
+export async function createMissions(
+  missions: Omit<DbMission, 'id' | 'created_at'>[],
+) {
+  const supabase = createBrowserSupabaseClient();
+  return supabase.from('missions').insert(missions).select();
+}
+
+export async function updateCampaignStatus(
+  id: string,
+  status: DbCampaign['status'],
+  adminNote?: string,
+) {
+  const supabase = createBrowserSupabaseClient();
+  return supabase
+    .from('campaigns')
+    .update({ status, ...(adminNote ? { admin_note: adminNote } : {}) })
+    .eq('id', id);
+}
+
+export async function getAllCampaigns() {
+  const supabase = createBrowserSupabaseClient();
+  return supabase
+    .from('campaigns')
+    .select('*, studios(company_name), missions(*)')
+    .order('created_at', { ascending: false });
+}
+
+export async function getPendingCampaigns() {
+  const supabase = createBrowserSupabaseClient();
+  return supabase
+    .from('campaigns')
+    .select('*, studios(company_name), missions(*)')
+    .eq('status', 'pending')
+    .order('created_at', { ascending: false });
 }
 

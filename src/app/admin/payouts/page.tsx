@@ -200,10 +200,10 @@ export default function AdminPayoutsPage() {
       .select(
         `
         id, amount, platform_fee, status, paid_at,
-        creators ( display_name, grade ),
+        creators ( name ),
         submissions (
           reward,
-          campaigns ( name, developer )
+          campaigns ( title, game_name )
         )
       `,
       )
@@ -224,15 +224,15 @@ export default function AdminPayoutsPage() {
         status: PaymentStatus;
         paid_at: string | null;
         creators:
-          | { display_name?: string; grade?: string | null }
-          | { display_name?: string; grade?: string | null }[]
+          | { name?: string }
+          | { name?: string }[]
           | null;
         submissions:
           | {
               reward?: number;
               campaigns:
-                | { name?: string; developer?: string }
-                | { name?: string; developer?: string }[]
+                | { title?: string; game_name?: string }
+                | { title?: string; game_name?: string }[]
                 | null;
             }
           | {
@@ -248,13 +248,14 @@ export default function AdminPayoutsPage() {
         : raw.submissions;
       const campaign = submission
         ? Array.isArray((submission as { campaigns?: unknown }).campaigns)
-          ? ((submission as { campaigns: { name?: string; developer?: string }[] })
+          ? ((submission as { campaigns: { title?: string; game_name?: string }[] })
               .campaigns[0])
-          : ((submission as { campaigns: { name?: string; developer?: string } | null })
+          : ((submission as { campaigns: { title?: string; game_name?: string } | null })
               .campaigns)
         : null;
 
-      const grade = (creator?.grade as Grade | undefined) ?? 'E';
+      // TODO(rebuild): grade moved to creator_channels; default to 'E'
+      const grade: Grade = 'E';
 
       return {
         id: raw.id,
@@ -265,10 +266,10 @@ export default function AdminPayoutsPage() {
         reward:
           (submission as { reward?: number } | null)?.reward ??
           raw.amount + raw.platform_fee,
-        creatorName: creator?.display_name ?? '알 수 없음',
+        creatorName: creator?.name ?? '알 수 없음',
         creatorGrade: grade,
-        campaignName: campaign?.name ?? '알 수 없는 캠페인',
-        developer: campaign?.developer ?? '',
+        campaignName: campaign?.title ?? '알 수 없는 캠페인',
+        developer: campaign?.game_name ?? '',
       };
     });
     setPayouts(rows);
@@ -337,7 +338,7 @@ export default function AdminPayoutsPage() {
     );
   }
 
-  const adminName = profile?.name?.trim() || '민석';
+  const adminName = profile?.email?.trim() || '민석';
   const initials = adminName.slice(0, 2).toUpperCase();
 
   return (

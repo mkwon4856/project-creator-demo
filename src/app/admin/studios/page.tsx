@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { WorkspaceLayout } from '@/components/layout';
 import { Card, Input, toast } from '@/components/ui';
-import type { Database } from '@/lib/db.types';
+import type { Studio } from '@/lib/db.types';
 import { formatCompactKRW } from '@/lib/formatCurrency';
 import { createClient as createBrowserSupabaseClient } from '@/lib/supabase/client';
 import { useCurrentProfile } from '@/lib/supabase/hooks';
@@ -13,7 +13,7 @@ import { useCurrentProfile } from '@/lib/supabase/hooks';
 import { getAdminSidebar } from '../_config/sidebar';
 import { useAdminBadgeCounts } from '../_hooks/useAdminBadgeCounts';
 
-type StudioRow = Database['public']['Tables']['studios']['Row'];
+type StudioRow = Studio;
 
 const HAS_SUPABASE_ENV =
   Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
@@ -73,16 +73,12 @@ function Row({ item, last }: { item: StudioWithCounts; last: boolean }) {
       ].join(' ')}
     >
       <div className="flex items-center gap-2 min-w-0">
-        <StudioAvatar name={item.name} />
+        <StudioAvatar name={item.company_name} />
         <div className="flex flex-col min-w-0">
           <span className="text-sm font-medium text-text-primary truncate">
-            {item.name}
+            {item.company_name}
           </span>
-          {item.description && (
-            <span className="text-[11px] text-text-secondary truncate">
-              {item.description}
-            </span>
-          )}
+          {/* TODO(rebuild): description removed from studios schema */}
         </div>
       </div>
 
@@ -166,7 +162,7 @@ export default function AdminStudiosPage() {
     const q = search.trim().toLowerCase();
     if (!q) return studios;
     return studios.filter((s) => {
-      const hay = `${s.name} ${s.description ?? ''} ${s.email}`.toLowerCase();
+      const hay = `${s.company_name} ${s.email}`.toLowerCase();
       return hay.includes(q);
     });
   }, [studios, search]);
@@ -179,7 +175,7 @@ export default function AdminStudiosPage() {
     );
   }
 
-  const adminName = profile?.name?.trim() || '민석';
+  const adminName = profile?.email?.trim() || '민석';
   const initials = adminName.slice(0, 2).toUpperCase();
 
   return (

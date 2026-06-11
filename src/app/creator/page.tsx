@@ -2,7 +2,7 @@
 
 import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 
 import { PageHeader, WorkspaceLayout } from '@/components/layout';
 import { ProfileCompletion } from '@/components/creator/ProfileCompletion';
@@ -11,8 +11,8 @@ import {
   WELCOME_SEEN_KEY,
 } from '@/components/onboarding/WelcomeModal';
 import { Button, StatCard } from '@/components/ui';
-import type { Database } from '@/lib/db.types';
-import { CURRENT_CREATOR, type Creator, type CreatorGrade } from '@/lib/mockCreators';
+import type { Creator as DbCreator } from '@/lib/db.types';
+import { CURRENT_CREATOR, type Creator } from '@/lib/mockCreators';
 import { useCurrentCreator } from '@/lib/supabase/hooks';
 
 import { ActivityTable } from './_components/ActivityTable';
@@ -21,39 +21,23 @@ import { formatEarningsMoney, useEarningsStats } from './_components/EarningsOve
 import { RecommendedCampaigns } from './_components/RecommendedCampaigns';
 import { getCreatorSidebar } from './_config/sidebar';
 
-type CreatorRow = Database['public']['Tables']['creators']['Row'];
+type CreatorRow = DbCreator;
 
 function rowToCreator(row: CreatorRow): Creator {
-  const grade = (['A', 'B', 'C', 'D', 'E'] as const).includes(
-    row.grade as CreatorGrade,
-  )
-    ? (row.grade as CreatorGrade)
-    : 'E';
+  // TODO(rebuild): source grade/subscribers/avgViews/rating/completedCampaigns/isVerified from creator_channels
   return {
     id: row.id,
-    name: row.display_name,
-    handle: row.handle,
-    grade,
+    name: row.name,
+    handle: row.name,
+    grade: 'E',
     emoji: '🐒',
-    subscribers: row.subscribers ?? 0,
-    avgViews: row.avg_views ?? 0,
-    rating: Number(row.rating ?? 0),
-    completedCampaigns: row.completed_campaigns ?? 0,
-    isVerified: row.is_verified ?? false,
+    subscribers: 0,
+    avgViews: 0,
+    rating: 0,
+    completedCampaigns: 0,
+    isVerified: false,
     bio: row.bio ?? '',
   };
-}
-
-function countConnectedPlatforms(raw: unknown): number {
-  if (!Array.isArray(raw)) return 0;
-  let count = 0;
-  for (const item of raw) {
-    if (item && typeof item === 'object') {
-      const url = (item as { url?: unknown }).url;
-      if (typeof url === 'string' && url.trim().length > 0) count += 1;
-    }
-  }
-  return count;
 }
 
 function SectionTitle({
@@ -126,10 +110,8 @@ export default function CreatorWorkspacePage() {
     setShowWelcome(false);
   };
 
-  const connectedPlatforms = useMemo(
-    () => countConnectedPlatforms(row?.platforms),
-    [row?.platforms],
-  );
+  // TODO(rebuild): source connected platforms from creator_channels
+  const connectedPlatforms = 0;
 
   if (loading) {
     return (
@@ -157,11 +139,11 @@ export default function CreatorWorkspacePage() {
 
         {row && (
           <ProfileCompletion
-            displayName={row.display_name}
-            handle={row.handle}
+            displayName={row.name}
+            handle={row.name}
             bio={row.bio ?? ''}
             connectedPlatforms={connectedPlatforms}
-            subscribers={row.subscribers ?? 0}
+            subscribers={0}
           />
         )}
 

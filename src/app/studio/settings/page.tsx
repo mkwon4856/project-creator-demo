@@ -42,9 +42,11 @@ export default function StudioSettingsPage() {
 
   useEffect(() => {
     if (studio) {
-      setName(studio.name);
-      setDescription(studio.description ?? '');
-      setLogoUrl(studio.logo_url ?? '');
+      setName(studio.company_name);
+      // description/logo_url have no backing column in the new schema.
+      // TODO(rebuild): source from a future studio profile table if reintroduced.
+      setDescription('');
+      setLogoUrl('');
     }
   }, [studio]);
 
@@ -63,9 +65,8 @@ export default function StudioSettingsPage() {
       const { error } = await supabase
         .from('studios')
         .update({
-          name: name.trim(),
-          description,
-          logo_url: logoUrl.trim() || null,
+          // description/logo_url removed from schema — only company_name persists.
+          company_name: name.trim(),
         })
         .eq('id', studio.id);
       if (error) {
@@ -131,7 +132,7 @@ export default function StudioSettingsPage() {
   return (
     <WorkspaceLayout
       persona="studio"
-      userName={studio?.name ?? '테스트 게임사 1'}
+      userName={studio?.company_name ?? '테스트 게임사 1'}
       userAvatar="🎮"
       userBadge="게임사"
       sidebarSections={getStudioSidebar('settings')}

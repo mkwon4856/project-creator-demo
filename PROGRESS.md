@@ -1,69 +1,90 @@
-# Rebuild Progress — Task 1: DB 스키마 교체
+# Rebuild Progress
 
-날짜: 2026-06-11
 브랜치: `rebuild`
 
-## 완료한 작업
+---
 
-### Task 1-1 · `src/lib/db.types.ts` 전면 교체
-- 기존 수작업 타입(ProfileRole / CreatorGrade(A~E) / CampaignStatus(draft|recruiting|live|completed) / MissionType / ApplicationStatus(applied|accepted) / SubmissionStatus(making|review) 등)을 새 기획 스키마로 완전 교체.
-- 새 enum: `Role` / `Grade(S~E)` / `Platform` / `ContentType(live|longform|shortform)` / `CampaignStatus(draft|pending|active|in_progress|reviewing|completed|cancelled)` / `MissionStatus` / `ApplicationStatus(confirmed|completed|rejected)` / `SubmissionStatus(pending|approved|rejected)` / `PaymentStatus(pending|processing|completed)` / `BatchStatus`.
-- 새 테이블 인터페이스: `Profile` `Studio` `Creator` `CreatorChannel` `Campaign` `Mission` `Application` `Submission` `SettlementBatch` `Payment` + `*Row` 별칭.
-- **주의:** 새 스키마는 기존 `Database`(Supabase 중첩 타입)와 `CampaignThumbnailJson`을 의도적으로 제거함 → 데이터 계층 다수 파일이 영향을 받음(아래 "남은 에러" 참고).
+## Task 1 — DB 스키마 교체 (완료, 2026-06-11)
 
-### Task 1-2 · `src/lib/pricing.ts` 신규 생성
-- `RATE_MATRIX` (Grade × ContentType 단가), `toStudioAmount`(÷0.7 역산), `getMaxRate`, `subscribersToGrade`, `PLATFORM_CONTENT_TYPES`.
+- `src/lib/db.types.ts` 전면 교체(새 enum/인터페이스), `src/lib/pricing.ts` 신규.
+- 구 enum 마이그레이션: `CreatorGrade→Grade`(S 추가), `MissionType→ContentType`,
+  CampaignStatus `recruiting→active`/`live→in_progress`, ApplicationStatus
+  `applied→confirmed`/`accepted→completed`, SubmissionStatus `making·review→pending`(병합)/`paid` 제거,
+  PaymentStatus `processing` 추가.
+- 결과: tsc 에러 102 → 60 (남은 60건은 Database/필드 파급 + 외부 모듈 미설치).
 
-### Task 1-3 · 타입 에러 정리 (범위 내 enum 마이그레이션)
+---
+
+## Task 2 — 데이터 계층 재구성 (완료, 2026-06-11)
+
+### 진행 결정 (사용자 승인)
+- **API 레이어: 하이브리드** — 기존 read/aggregate export 유지 + 새 스키마용 함수 추가.
+- **Supabase 훅: 교체 + 하위호환 alias** — 신규 `useProfile/useStudio/useCreator` 등으로 교체하되,
+  기존 `useCurrentProfile/Studio/Creator`(반환형 `{ data, loading }`)를 alias로 유지해 18개 호출부 무수정.
+
+### 2-1 레거시 Database 참조 제거
+- `supabase/client.ts`·`server.ts`·`middleware.ts`, `api/webhooks/db/route.ts`:
+  `createX<Database>()` 제네릭 제거 → 미타입 클라이언트(문자열 쿼리는 런타임 기반).
+- 페이지 `type XRow = Database['public']['Tables'][...]['Row']` → 새 인터페이스(`Campaign`/`Creator`/`Studio`)로 교체.
+  (creator/page는 mock `Creator`와 충돌해 `DbCreator` alias 사용)
+- `transformDbCampaign.ts`: db.types 의존 제거 → **로컬 행 타입**으로 자립(레거시 어댑터, 추후 새 스키마로 재작성).
+- `CampaignThumbnailJson` 캐스팅 → 인라인 로컬 타입(`{ from?; to?; emoji? }`)으로 교체(헬퍼 본문 보존).
+
+### 2-2 사라진 필드 참조 수정 (admin/studio/creator 영역 병렬 처리)
 적용한 매핑:
-- `CreatorGrade` → `Grade` (이름 교체, `Record<Grade>`에는 `S` 등급 항목 추가)
-- `MissionType` → `ContentType`
-- `CampaignStatus`: `recruiting` → `active`, `live` → `in_progress`
-- `ApplicationStatus`: `applied` → `confirmed`, `accepted` → `completed`
-- `SubmissionStatus`: `making`·`review` → `pending`(병합), `paid` 항목 제거
-- `PaymentStatus`: `processing` 항목 추가 (라벨/필터/카운트)
+- Creator: `display_name→name`, `handle→name`, `user_id→profile_id`.
+- Studio: `name→company_name`, `user_id→profile_id`, `description`/`logo_url` 제거.
+- Campaign: `name→title`, `developer→game_name`, `brief→description`, `thumbnail→thumbnail_url`,
+  `spent_budget→0`, `target_creators→0`.
+- Payment: `amount→net_amount`, `paid_at→created_at`, `platform_fee→0`.
+- Profile: `name` 부재 → `email` 폴백.
 
-수정한 파일 (12개):
-- `src/app/admin/_components/ReviewQueue.tsx`
-- `src/app/admin/AdminOverviewClient.tsx`
-- `src/app/admin/campaigns/page.tsx`
-- `src/app/admin/creators/page.tsx`
-- `src/app/admin/payouts/page.tsx`
-- `src/app/creator/activity/page.tsx`
-- `src/app/creator/earnings/page.tsx`
-- `src/app/creator/profile/page.tsx`
-- `src/app/studio/applicants/page.tsx`
-- `src/app/studio/creators/page.tsx`
-- `src/app/studio/payments/page.tsx`
-- `src/app/studio/review/page.tsx`
+**플레이스홀더(중요):** 새 스키마에서 크리에이터 등급/지표가 `creator_channels` 테이블로 이동했으나
+이번 작업은 채널 조인을 포함하지 않음. 따라서 `grade/subscribers/avg_views/rating/completed_campaigns/is_verified/platforms`
+참조는 **중립 기본값**(grade `'E'`, 수치 `0`, bool `false`, 배열 `[]`)으로 임시 처리하고
+`// TODO(rebuild): source from creator_channels` 주석을 남김. (admin/creators, studio/creators,
+creator/profile, creator/page, creator/settings, RecommendedCampaigns 등)
 
-> 상태 매핑은 lossy(다대일·항목 삭제)하여 일부 UI 상태 구분이 합쳐졌습니다.
-> 예) creator/activity·studio/review의 "제작 중/검수 중/정산 완료" → "진행 중/검수 중" 단일 상태로 축소.
-> 비즈니스 흐름 확정 시 재검토 필요.
+### 2-3 Supabase 훅 교체
+- `supabase/hooks.ts` 신규 훅 전면 교체 + 하위호환 alias 추가.
 
-## 남은 타입 에러: **60건** (`npx tsc --noEmit` 기준)
+### 2-4 API 레이어 (하이브리드)
+- `api/campaigns.ts`: 기존 유지 + `createCampaign`/`createMissions`/`updateCampaignStatus`/`getAllCampaigns`/`getPendingCampaigns` 추가(db 타입은 `DbCampaign`/`DbMission` alias).
+- `api/submissions.ts`: 기존 유지 + `createSubmission`/`reviewSubmission`/`getPendingSubmissions` 추가.
 
-이번 Task 1 범위에서 의도적으로 보류한 항목들입니다(사용자 결정: Database/필드 파급은 Task 2로 이관).
+### 수정 파일 (26개)
+supabase: `client.ts`, `server.ts`, `middleware.ts`, `hooks.ts`
+api: `campaigns.ts`, `campaigns.server.ts`, `submissions.ts`, `transformDbCampaign.ts`
+route: `api/webhooks/db/route.ts`
+admin: `campaigns`, `creators`, `studios`, `payouts`, `AdminOverviewClient`, `_components/ReviewQueue`
+studio: `page`, `creators`, `payments`, `review`, `applicants`, `settings`
+creator: `page`, `profile`, `settings`, `activity`, `earnings`, `_components/RecommendedCampaigns`
 
-| 코드 | 건수 | 내용 | 처리 계획 |
-|------|------|------|-----------|
-| TS2305 | 17 | db.types에 더 이상 없는 `Database`(12) · `CampaignThumbnailJson`(5) import | **Task 2** — 데이터 계층 재구성 |
-| TS2339 | 28 | 사라진/변경된 필드 참조: `Campaign.name/developer/genre/spent_budget/target_creators`, `Studio.name/description`, `Payment.amount/paid_at/platform_fee` 등 | **Task 2** — 새 인터페이스 필드명으로 정렬 |
-| TS2307 | 8 | 외부 모듈 미설치: `@sentry/nextjs`(6) · `@vercel/analytics/react`(1) · `resend`(1) | **건드리지 않음** (Sentry/Analytics/Email — `npm install`로 별도 해결) |
-| TS7006 | 6 | 암시적 any 파라미터 (`transformDbCampaign.ts`, `admin/studios`) — Database 부재의 연쇄 | Task 2에서 Database 복구 시 동반 해소 |
-| TS7053 | 1 | `admin/campaigns` 인덱싱 any — 동일 연쇄 | Task 2 |
+---
 
-### 영향 파일 (남은 에러)
-- 데이터 계층: `src/lib/supabase/{client,server,middleware,hooks}.ts`, `src/lib/api/transformDbCampaign.ts`, `src/app/api/webhooks/db/route.ts`
-- `Database`/필드 의존 페이지: `admin/campaigns`, `admin/studios`, `admin/creators`, `creator/page`, `creator/profile`, `creator/earnings`, `studio/creators`
-- `CampaignThumbnailJson` 의존: `ReviewQueue`, `admin/campaigns`, `creator/activity`, `studio/review`
-- 외부 모듈: `next.config.ts`, `sentry.*.config.ts`, `instrumentation*.ts`, `global-error.tsx`, `layout.tsx`, `lib/email/resend.ts`
+## 남은 타입 에러: **8건** (`npx tsc --noEmit` 기준, 104 → 8)
 
-## 참고
-- 레거시 mock 레이어(`src/lib/mockCreators.ts`, `src/lib/mockData.ts`)는 **자체** `CreatorGrade`/`MissionType` 타입을 보유 — db.types와 무관하며 이번 교체 대상 아님. 추후 mock 제거 시 정리.
-- Sentry/Analytics/SEO/이메일 관련 파일은 TASK 지시대로 일절 수정하지 않음.
+전부 **외부 모듈 미설치(TS2307)** — protected 파일이라 미수정:
 
-## 다음 단계 (Task 2 제안)
-1. 새 스키마 기준 `Database` 타입 재생성(또는 Supabase gen types) 및 supabase 클라이언트 제네릭 복구.
-2. `Campaign`/`Studio`/`Payment` 필드 참조를 새 필드명으로 정렬, `CampaignThumbnailJson` 대체 처리.
-3. 누락 의존성 설치 여부 결정(`@sentry/nextjs`, `@vercel/analytics`, `resend`).
+| 모듈 | 파일 |
+|------|------|
+| `@sentry/nextjs` | next.config.ts, sentry.edge/server.config.ts, global-error.tsx, instrumentation.ts, instrumentation-client.ts |
+| `@vercel/analytics/react` | layout.tsx |
+| `resend` | lib/email/resend.ts |
+
+→ `npm install @sentry/nextjs @vercel/analytics resend`로 해소 가능(별도 결정 필요).
+
+---
+
+## 알려진 캐비엇 (타입 아님 / 런타임)
+- 미타입 클라이언트의 **문자열 쿼리**가 일부 구 컬럼명을 사용(예: creator/profile `.eq('user_id')`,
+  submissions.ts의 `grade`/`content_url`/`rate_*`, ReviewQueue의 `name`/`developer`/`thumbnail`).
+  타입 에러는 없으나 실제 새 스키마 DB 연결 시 정렬 필요.
+- 크리에이터 지표는 현재 플레이스홀더(전원 'E'/0 등) — 실데이터 아님.
+- `transformDbCampaign.ts`는 구 컬럼 기준 레거시 어댑터로 자립 — 새 스키마 기준 재작성 대상.
+
+## 다음 Task 준비 상태 (제안)
+1. `creator_channels` 조인 → 등급/구독자/플랫폼 실데이터로 플레이스홀더 대체.
+2. 문자열 supabase 쿼리의 컬럼명을 새 스키마로 정렬(profile_id, content_type, platform_urls 등).
+3. 외부 의존성 설치 여부 결정(Sentry/Analytics/Resend).
+4. `transformDbCampaign` 및 데모/스토어 어댑터 새 스키마 재작성.

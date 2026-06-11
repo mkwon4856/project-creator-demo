@@ -5,7 +5,6 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { WorkspaceLayout } from '@/components/layout';
 import { Badge } from '@/components/ui';
-import type { Grade } from '@/lib/db.types';
 import { useCurrentProfile } from '@/lib/supabase/hooks';
 import { createClient as createBrowserSupabaseClient } from '@/lib/supabase/client';
 
@@ -23,14 +22,13 @@ const HAS_SUPABASE_ENV =
 interface CampaignRow {
   id: string;
   total_budget: number | null;
-  spent_budget: number | null;
+  // TODO(rebuild): spent_budget removed from campaigns schema
   status: string | null;
 }
 
 interface CreatorRow {
   id: string;
-  grade: Grade | null;
-  is_verified: boolean | null;
+  // TODO(rebuild): grade/is_verified moved to creator_channels
 }
 
 interface PaymentRow {
@@ -92,8 +90,8 @@ export default function AdminOverviewClient({ activityFeed }: AdminOverviewClien
 
     const load = async () => {
       const [campaignsRes, creatorsRes, paymentsRes] = await Promise.all([
-        supabase.from('campaigns').select('id, total_budget, spent_budget, status'),
-        supabase.from('creators').select('id, grade, is_verified'),
+        supabase.from('campaigns').select('id, total_budget, status'),
+        supabase.from('creators').select('id'),
         supabase.from('payments').select('id, amount, platform_fee, status, paid_at'),
       ]);
 
@@ -170,11 +168,9 @@ export default function AdminOverviewClient({ activityFeed }: AdminOverviewClien
   const tierCounts = useMemo<TierCounts | undefined>(() => {
     if (!creators) return undefined;
     const counts: TierCounts = { ...EMPTY_TIER_COUNTS };
-    for (const c of creators) {
-      const g = c.grade;
-      if (g === 'A' || g === 'B' || g === 'C' || g === 'D' || g === 'E') {
-        counts[g] += 1;
-      }
+    // TODO(rebuild): grade moved to creator_channels; default all to 'E'
+    for (const _c of creators) {
+      counts.E += 1;
     }
     return counts;
   }, [creators]);
@@ -192,7 +188,7 @@ export default function AdminOverviewClient({ activityFeed }: AdminOverviewClien
     );
   }
 
-  const adminName = profile?.name?.trim() || '민석';
+  const adminName = profile?.email?.trim() || '민석';
   const initials = adminName.slice(0, 2).toUpperCase();
 
   return (

@@ -4,7 +4,7 @@ import { Film, Radio, Video } from 'lucide-react';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 
 import { Badge, Button, statusToBadgeVariant, toast } from '@/components/ui';
-import type { CampaignThumbnailJson, Grade } from '@/lib/db.types';
+import type { Grade } from '@/lib/db.types';
 import { formatCompactKRW } from '@/lib/formatCurrency';
 import {
   useAppStore,
@@ -89,7 +89,7 @@ function getTimeAgo(dateStr: string | null): string {
 
 function thumbnailFromJson(json: unknown): { from: string; to: string; emoji: string } {
   if (json && typeof json === 'object') {
-    const t = json as CampaignThumbnailJson;
+    const t = json as { from?: string; to?: string; emoji?: string };
     return {
       from: t.from ?? DEFAULT_THUMBNAIL.from,
       to: t.to ?? DEFAULT_THUMBNAIL.to,

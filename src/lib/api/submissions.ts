@@ -1,6 +1,7 @@
 'use client';
 
 import type { ActivityMission, ActivityStatus, UserActivity } from '@/lib/store';
+import type { Submission } from '@/lib/db.types';
 import { createClient as createBrowserSupabaseClient } from '@/lib/supabase/client';
 
 type RateColumn = 'rate_a' | 'rate_b' | 'rate_c' | 'rate_d' | 'rate_e';
@@ -340,4 +341,42 @@ export function storeActivitiesToDisplay(
     submittedAt: a.submittedAt,
     title: a.title,
   }));
+}
+
+// ─── New schema writers (rebuild) ───────────────────────────────
+
+export async function createSubmission(
+  data: Omit<Submission, 'id' | 'created_at' | 'reviewed_at'>,
+) {
+  const supabase = createBrowserSupabaseClient();
+  return supabase.from('submissions').insert(data).select().single();
+}
+
+export async function reviewSubmission(
+  id: string,
+  result: {
+    review_url_valid: boolean;
+    review_type_match: boolean;
+    review_duration_meet: boolean;
+    review_guide_meet: boolean;
+    status: 'approved' | 'rejected';
+    admin_note?: string;
+  },
+) {
+  const supabase = createBrowserSupabaseClient();
+  return supabase
+    .from('submissions')
+    .update({ ...result, reviewed_at: new Date().toISOString() })
+    .eq('id', id);
+}
+
+export async function getPendingSubmissions() {
+  const supabase = createBrowserSupabaseClient();
+  return supabase
+    .from('submissions')
+    .select(
+      '*, applications(*, creators(name), campaigns(title, game_name)), missions(content_type, guide_approved)',
+    )
+    .eq('status', 'pending')
+    .order('created_at', { ascending: false });
 }

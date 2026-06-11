@@ -13,14 +13,14 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react
 
 import { WorkspaceLayout } from '@/components/layout';
 import { Badge, Button, Card, EmptyState, Input, Pill, toast } from '@/components/ui';
-import type { Grade, Database } from '@/lib/db.types';
+import type { Grade, Creator } from '@/lib/db.types';
 import { formatSubscribers } from '@/lib/mockCreators';
 import { createClient as createBrowserSupabaseClient } from '@/lib/supabase/client';
 import { useCurrentStudio } from '@/lib/supabase/hooks';
 
 import { getStudioSidebar } from '../_config/sidebar';
 
-type CreatorRow = Database['public']['Tables']['creators']['Row'];
+type CreatorRow = Creator;
 
 const HAS_SUPABASE_ENV =
   Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
@@ -105,11 +105,17 @@ interface CreatorCardData {
   row: CreatorRow;
   grade: Grade;
   platforms: Set<PlatformKey>;
+  // TODO(rebuild): source from creator_channels (not joined here yet).
+  handle: string;
+  isVerified: boolean;
+  subscribers: number;
+  rating: number;
+  completedCampaigns: number;
 }
 
 function CreatorCard({ data }: { data: CreatorCardData }) {
-  const { row, grade, platforms } = data;
-  const initial = row.display_name.trim().charAt(0).toUpperCase() || '?';
+  const { row, grade, platforms, handle, isVerified, subscribers, rating, completedCampaigns } = data;
+  const initial = row.name.trim().charAt(0).toUpperCase() || '?';
 
   const handleViewProfile = () => {
     toast.info('크리에이터 프로필 페이지는 곧 추가됩니다');
@@ -139,9 +145,9 @@ function CreatorCard({ data }: { data: CreatorCardData }) {
         <div className="flex flex-col gap-0.5 min-w-0">
           <div className="flex items-center gap-1.5 min-w-0">
             <h3 className="text-sm font-medium text-text-primary truncate">
-              {row.display_name}
+              {row.name}
             </h3>
-            {row.is_verified && (
+            {isVerified && (
               <BadgeCheck
                 size={13}
                 className="text-primary shrink-0"
@@ -149,7 +155,7 @@ function CreatorCard({ data }: { data: CreatorCardData }) {
               />
             )}
           </div>
-          <p className="text-xs text-text-secondary truncate">{row.handle}</p>
+          <p className="text-xs text-text-secondary truncate">{handle}</p>
         </div>
 
         {row.bio && (
@@ -162,19 +168,19 @@ function CreatorCard({ data }: { data: CreatorCardData }) {
           <span className="inline-flex items-center gap-1">
             <span aria-hidden>📺</span>
             <span className="text-text-primary font-medium">
-              {formatSubscribers(row.subscribers)}
+              {formatSubscribers(subscribers)}
             </span>
           </span>
           <span className="inline-flex items-center gap-1">
             <span aria-hidden>⭐</span>
             <span className="text-text-primary font-medium">
-              {Number(row.rating).toFixed(1)}
+              {Number(rating).toFixed(1)}
             </span>
           </span>
           <span className="inline-flex items-center gap-1">
             <span aria-hidden>🏆</span>
             <span className="text-text-primary font-medium">
-              {row.completed_campaigns}
+              {completedCampaigns}
             </span>
           </span>
         </div>
@@ -232,7 +238,8 @@ export default function StudioCreatorDirectoryPage() {
     const { data, error } = await supabase
       .from('creators')
       .select('*')
-      .order('subscribers', { ascending: false });
+      // TODO(rebuild): order by subscribers via creator_channels join (not available here).
+      .order('created_at', { ascending: false });
 
     if (error) {
       toast.error(`크리에이터 조회 실패: ${error.message}`);
@@ -251,8 +258,14 @@ export default function StudioCreatorDirectoryPage() {
   const cards = useMemo<CreatorCardData[]>(() => {
     return creators.map((row) => ({
       row,
-      grade: safeGrade(row.grade),
-      platforms: parseConnectedPlatforms(row.platforms),
+      // TODO(rebuild): source grade/platforms/stats from creator_channels (not joined here).
+      grade: safeGrade('E'),
+      platforms: parseConnectedPlatforms([]),
+      handle: '',
+      isVerified: false,
+      subscribers: 0,
+      rating: 0,
+      completedCampaigns: 0,
     }));
   }, [creators]);
 
@@ -262,7 +275,7 @@ export default function StudioCreatorDirectoryPage() {
       if (grade !== 'all' && c.grade !== grade) return false;
       if (platform !== 'all' && !c.platforms.has(platform)) return false;
       if (q) {
-        const hay = `${c.row.display_name} ${c.row.handle}`.toLowerCase();
+        const hay = `${c.row.name} ${c.handle}`.toLowerCase();
         if (!hay.includes(q)) return false;
       }
       return true;
@@ -272,12 +285,12 @@ export default function StudioCreatorDirectoryPage() {
     sorted.sort((a, b) => {
       switch (sortKey) {
         case 'rating':
-          return Number(b.row.rating) - Number(a.row.rating);
+          return Number(b.rating) - Number(a.rating);
         case 'campaigns':
-          return b.row.completed_campaigns - a.row.completed_campaigns;
+          return b.completedCampaigns - a.completedCampaigns;
         case 'subscribers':
         default:
-          return b.row.subscribers - a.row.subscribers;
+          return b.subscribers - a.subscribers;
       }
     });
     return sorted;
@@ -297,7 +310,7 @@ export default function StudioCreatorDirectoryPage() {
   return (
     <WorkspaceLayout
       persona="studio"
-      userName={studio?.name ?? '테스트 게임사 1'}
+      userName={studio?.company_name ?? '테스트 게임사 1'}
       userAvatar="🎮"
       userBadge="게임사"
       sidebarSections={getStudioSidebar('creators')}

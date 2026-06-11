@@ -212,7 +212,7 @@ export default function CreatorEarningsPage() {
         .from('payments')
         .select('*')
         .eq('creator_id', creator.id)
-        .order('paid_at', { ascending: false }),
+        .order('created_at', { ascending: false }),
     ]);
 
     if (submissionsRes.error) {
@@ -300,11 +300,11 @@ export default function CreatorEarningsPage() {
       });
     }
     for (const p of payments) {
-      if (!p.paid_at) continue;
-      const pd = new Date(p.paid_at);
+      if (!p.created_at) continue;
+      const pd = new Date(p.created_at);
       const key = `${pd.getFullYear()}-${pd.getMonth()}`;
       const bucket = buckets.find((b) => b.key === key);
-      if (bucket) bucket.amount += p.amount;
+      if (bucket) bucket.amount += p.net_amount;
     }
     return buckets;
   }, [payments]);
@@ -317,9 +317,10 @@ export default function CreatorEarningsPage() {
     );
   }
 
-  const userName = creator?.display_name || CURRENT_CREATOR.name;
+  const userName = creator?.name || CURRENT_CREATOR.name;
   const userAvatar = CURRENT_CREATOR.emoji;
-  const userBadge = `${creator?.grade ?? CURRENT_CREATOR.grade}티어`;
+  // TODO(rebuild): grade now derives from creator_channels
+  const userBadge = `${creator ? 'E' : CURRENT_CREATOR.grade}티어`;
 
   return (
     <WorkspaceLayout
@@ -389,10 +390,11 @@ export default function CreatorEarningsPage() {
                 rows.map((item, i) => {
                   const payment = paymentBySubmission.get(item.id);
                   // 실제 payments row가 있으면 그 수치를, 없으면 15% 가정으로 추정.
+                  // TODO(rebuild): platform_fee removed; derive from total_before_tax - net_amount when needed
                   const fee = payment
-                    ? payment.platform_fee
+                    ? 0
                     : Math.round(item.reward * PLATFORM_FEE_RATE);
-                  const net = payment ? payment.amount : item.reward - fee;
+                  const net = payment ? payment.net_amount : item.reward - fee;
                   return (
                     <Row
                       key={item.id}
