@@ -50,7 +50,7 @@ export function DemoBanner({ message = DEFAULT_MESSAGE }: DemoBannerProps) {
       const { data: studio } = await supabase
         .from('studios')
         .select('id')
-        .eq('user_id', user.id)
+        .eq('profile_id', user.id)
         .maybeSingle();
       if (!studio) {
         alert('Studio 프로필이 필요합니다. Studio 계정으로 가입해주세요.');

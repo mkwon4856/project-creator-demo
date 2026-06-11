@@ -1,37 +1,44 @@
 'use client';
 
-import { Check, Search, Star, X } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { Search } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { WorkspaceLayout } from '@/components/layout';
 import { Badge, Card, Input, Pill, toast } from '@/components/ui';
-import type { Grade, Creator } from '@/lib/db.types';
-import { formatSubscribers } from '@/lib/mockCreators';
+import type { Grade, Creator, CreatorChannel } from '@/lib/db.types';
 import { createClient as createBrowserSupabaseClient } from '@/lib/supabase/client';
 import { useCurrentProfile } from '@/lib/supabase/hooks';
 
 import { getAdminSidebar } from '../_config/sidebar';
 import { useAdminBadgeCounts } from '../_hooks/useAdminBadgeCounts';
 
-type CreatorRow = Creator;
-
 const HAS_SUPABASE_ENV =
   Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
   Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
-const GRID =
-  'grid-cols-[1.4fr_1fr_0.5fr_0.9fr_0.9fr_0.7fr_0.7fr_0.6fr_0.9fr]';
+const GRID = 'grid-cols-[1.6fr_0.6fr_0.9fr_0.7fr_0.9fr]';
+
+// 등급 우선순위 (S가 최상)
+const GRADE_ORDER: Grade[] = ['S', 'A', 'B', 'C', 'D', 'E'];
 
 type GradeFilter = 'all' | Grade;
 
 const GRADE_FILTERS: { id: GradeFilter; label: string }[] = [
   { id: 'all', label: '전체' },
-  { id: 'A', label: 'A티어' },
-  { id: 'B', label: 'B티어' },
-  { id: 'C', label: 'C티어' },
-  { id: 'D', label: 'D티어' },
-  { id: 'E', label: 'E티어' },
+  ...GRADE_ORDER.map((g) => ({ id: g as GradeFilter, label: `${g}티어` })),
 ];
+
+interface CreatorWithChannels extends Creator {
+  topGrade: Grade | null;
+  totalSubscribers: number;
+  channelCount: number;
+}
+
+function formatSubscribers(n: number): string {
+  if (n >= 10000) return `${(n / 10000).toFixed(1)}만`;
+  if (n >= 1000) return `${(n / 1000).toFixed(1)}천`;
+  return `${n}`;
+}
 
 function formatJoinedDate(iso: string): string {
   const d = new Date(iso);
@@ -40,6 +47,16 @@ function formatJoinedDate(iso: string): string {
     day: 'numeric',
     year: 'numeric',
   });
+}
+
+function topGradeOf(channels: CreatorChannel[]): Grade | null {
+  let best: Grade | null = null;
+  for (const ch of channels) {
+    if (best === null || GRADE_ORDER.indexOf(ch.grade) < GRADE_ORDER.indexOf(best)) {
+      best = ch.grade;
+    }
+  }
+  return best;
 }
 
 function CreatorAvatar({ name }: { name: string }) {
@@ -61,19 +78,15 @@ function HeaderRow() {
       className={`grid ${GRID} items-center gap-3 px-5 py-3 bg-bg-elevated text-xs font-medium text-text-secondary uppercase`}
     >
       <span>크리에이터</span>
-      <span>핸들</span>
       <span>등급</span>
       <span className="text-right">구독자</span>
-      <span className="text-right">평균 조회수</span>
-      <span className="text-right">평점</span>
-      <span className="text-right">캠페인</span>
-      <span className="text-center">인증</span>
+      <span className="text-right">채널</span>
       <span>가입일</span>
     </div>
   );
 }
 
-function Row({ item, last }: { item: CreatorRow; last: boolean }) {
+function Row({ item, last }: { item: CreatorWithChannels; last: boolean }) {
   return (
     <div
       role="row"
@@ -89,37 +102,22 @@ function Row({ item, last }: { item: CreatorRow; last: boolean }) {
         </span>
       </div>
 
-      {/* TODO(rebuild): handle removed; source channel info from creator_channels */}
-      <span className="text-xs text-text-secondary truncate">{item.name}</span>
-
-      {/* TODO(rebuild): grade/subscribers/avg_views/rating/completed_campaigns/is_verified source from creator_channels */}
-      <Badge variant="primary" size="sm">
-        {'E'}
-      </Badge>
+      <span>
+        {item.topGrade ? (
+          <Badge variant="primary" size="sm">
+            {item.topGrade}
+          </Badge>
+        ) : (
+          <span className="text-xs text-text-muted">미등록</span>
+        )}
+      </span>
 
       <span className="text-sm tabular-nums text-text-primary text-right">
-        {formatSubscribers(0)}
+        {item.channelCount > 0 ? formatSubscribers(item.totalSubscribers) : '—'}
       </span>
 
       <span className="text-sm tabular-nums text-text-secondary text-right">
-        {formatSubscribers(0)}
-      </span>
-
-      <span className="inline-flex items-center justify-end gap-1 text-sm tabular-nums text-text-primary">
-        <Star size={12} className="text-warning fill-warning" aria-hidden />
-        {Number(0).toFixed(1)}
-      </span>
-
-      <span className="text-sm tabular-nums text-text-secondary text-right">
-        {0}
-      </span>
-
-      <span className="flex items-center justify-center">
-        {false ? (
-          <Check size={14} className="text-success" aria-hidden />
-        ) : (
-          <X size={14} className="text-text-muted" aria-hidden />
-        )}
+        {item.channelCount}
       </span>
 
       <span className="text-xs text-text-secondary tabular-nums">
@@ -132,7 +130,7 @@ function Row({ item, last }: { item: CreatorRow; last: boolean }) {
 export default function AdminCreatorsPage() {
   const { data: profile, loading: profileLoading } = useCurrentProfile();
   const badgeCounts = useAdminBadgeCounts();
-  const [creators, setCreators] = useState<CreatorRow[]>([]);
+  const [creators, setCreators] = useState<CreatorWithChannels[]>([]);
   const [loading, setLoading] = useState(true);
   const [gradeFilter, setGradeFilter] = useState<GradeFilter>('all');
   const [search, setSearch] = useState('');
@@ -146,16 +144,27 @@ export default function AdminCreatorsPage() {
     const supabase = createBrowserSupabaseClient();
     const { data, error } = await supabase
       .from('creators')
-      .select('*')
-      // TODO(rebuild): subscribers moved to creator_channels; order by created_at
+      .select('*, creator_channels(*)')
       .order('created_at', { ascending: false });
 
     if (error) {
       toast.error(`크리에이터 조회 실패: ${error.message}`);
       setCreators([]);
-    } else {
-      setCreators(data ?? []);
+      setLoading(false);
+      return;
     }
+
+    const rows: CreatorWithChannels[] = (data ?? []).map((c) => {
+      const raw = c as unknown as Creator & { creator_channels: CreatorChannel[] | null };
+      const channels = raw.creator_channels ?? [];
+      return {
+        ...(raw as Creator),
+        topGrade: topGradeOf(channels),
+        totalSubscribers: channels.reduce((s, ch) => s + (ch.subscribers ?? 0), 0),
+        channelCount: channels.length,
+      };
+    });
+    setCreators(rows);
     setLoading(false);
   }, []);
 
@@ -173,9 +182,8 @@ export default function AdminCreatorsPage() {
       D: 0,
       E: 0,
     };
-    // TODO(rebuild): grade moved to creator_channels; default all to 'E'
-    for (const _r of creators) {
-      c.E++;
+    for (const r of creators) {
+      if (r.topGrade) c[r.topGrade]++;
     }
     return c;
   }, [creators]);
@@ -183,13 +191,8 @@ export default function AdminCreatorsPage() {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return creators.filter((c) => {
-      // TODO(rebuild): grade moved to creator_channels; treat all as 'E'
-      const grade: Grade = 'E';
-      if (gradeFilter !== 'all' && grade !== gradeFilter) return false;
-      if (q) {
-        const hay = `${c.name}`.toLowerCase();
-        if (!hay.includes(q)) return false;
-      }
+      if (gradeFilter !== 'all' && c.topGrade !== gradeFilter) return false;
+      if (q && !c.name.toLowerCase().includes(q)) return false;
       return true;
     });
   }, [creators, gradeFilter, search]);
@@ -224,7 +227,9 @@ export default function AdminCreatorsPage() {
         <h1 className="text-[22px] font-medium text-text-primary leading-tight mt-1.5">
           크리에이터
         </h1>
-        <p className="text-sm text-text-secondary mt-1">등록된 크리에이터 관리</p>
+        <p className="text-sm text-text-secondary mt-1">
+          등록된 크리에이터 · 등급은 등록 채널 기준 최고 등급
+        </p>
       </header>
 
       <div className="flex items-center gap-3 flex-wrap mb-4">
@@ -252,7 +257,7 @@ export default function AdminCreatorsPage() {
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="이름 또는 핸들로 검색"
+            placeholder="이름으로 검색"
             icon={<Search size={14} aria-hidden />}
           />
         </div>

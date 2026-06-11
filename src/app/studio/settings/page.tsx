@@ -29,7 +29,6 @@ export default function StudioSettingsPage() {
   const { data: profile, loading: profileLoading } = useCurrentProfile();
 
   const [name, setName] = useState('');
-  const [logoUrl, setLogoUrl] = useState('');
   const [saving, setSaving] = useState(false);
 
   const [newPassword, setNewPassword] = useState('');
@@ -41,9 +40,6 @@ export default function StudioSettingsPage() {
   useEffect(() => {
     if (studio) {
       setName(studio.company_name);
-      // logo_url has no backing column in the new schema.
-      // TODO(rebuild): source from a future studio profile table if reintroduced.
-      setLogoUrl('');
     }
   }, [studio]);
 
@@ -154,20 +150,13 @@ export default function StudioSettingsPage() {
       <Card variant="default" padding="lg" className="mb-6">
         <SectionLabel>게임사 프로필</SectionLabel>
 
-        <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="mb-4">
           <Input
             label="게임사 이름"
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="게임사 이름"
-          />
-          <Input
-            label="로고 URL"
-            type="url"
-            value={logoUrl}
-            onChange={(e) => setLogoUrl(e.target.value)}
-            placeholder="https://..."
           />
         </div>
 

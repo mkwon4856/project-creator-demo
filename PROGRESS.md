@@ -186,3 +186,49 @@ Task 10-3에서 외부 의존성(Sentry/Analytics/Resend) 설치로 기존 8건(
 2. 문자열 supabase 쿼리의 컬럼명을 새 스키마로 정렬(profile_id, content_type, platform_urls 등).
 3. 외부 의존성 설치 여부 결정(Sentry/Analytics/Resend).
 4. `transformDbCampaign` 및 데모/스토어 어댑터 새 스키마 재작성.
+
+---
+
+## Task 11 — 데모 가능 상태 완성 (완료, 2026-06-11)
+
+목표: 클라이언트 앞에서 전체 루프 시연(게임사 가입→캠페인 생성→Admin 승인→크리에이터
+가입→채널 등록→지원→콘텐츠 제출→Admin 검수 승인→수익 확인).
+
+### Phase 1 — 전수 감사
+- 코드베이스 전체 `.from('...')` 쿼리 매핑. 새 스키마(db.types.ts) 대비 구 컬럼 사용처 식별.
+- 데모 동선 핵심 페이지(activity/earnings/campaign 상세/admin 대시보드/admin creators)는 재작성,
+  동선 밖 구 스키마 잔존 코드는 `GAPS.md`에 정리(빌드는 정상).
+
+### Phase 2 — 빠진 기능 구현 + 구 페이지 정합 (다크 #0A0A0F / #9B7EC8 / #E5B567 / Arial Black)
+- **creator/activity 전면 재작성** — 내 지원 현황 + 콘텐츠 제출 모달(콘텐츠 타입별 플랫폼 제한,
+  멀티 URL). `submissions` insert(`platform_urls`, `status:'pending'`). 검수 상태/거절 사유 표시.
+  **데모 루프의 빠진 고리.**
+- **creator/earnings 전면 재작성** — `approved` 제출 기준 확정 수익 / `pending` 검수 대기 수익,
+  `payments` 실지급 내역(없으면 "정산 예정"), 원천징수 3.3% 안내.
+- **campaigns/[id] 새 스키마 + public read** — `fetchPublicCampaign`(campaigns.server.ts 신규,
+  RLS로 anon 노출) 사용. 단가/예산 비노출.
+- **admin/page 단순화 재작성** — 메트릭 카드 4개(전체 캠페인/승인 대기/검수 대기/전체 크리에이터)
+  + 바로가기. 구 `AdminOverviewClient`/`ActivityFeed`/Gmv·Tier 차트 사용 제거.
+- **admin/creators** — `creator_channels` 조인으로 등급(최고 등급)/구독자/채널수 실데이터 표시
+  (플레이스홀더 'E'/0 제거, 가짜 컬럼 정리).
+- **공통 수정** — `useAdminBadgeCounts` 검수 카운트 `status:'review'`→`'pending'`,
+  `DemoBanner` studios `user_id`→`profile_id`, `studio/settings` 무동작 로고 URL 필드 제거.
+- AuthForm 회원가입 흐름 확인 — 트리거가 profiles만 생성, AuthForm이 role별 studios/creators 1개
+  insert(새 컬럼만). 이미 정합 상태(Task 10-2). 추가 수정 불필요.
+
+### Phase 3 — 정합 SQL 단일 파일
+- `supabase/migrations/20260611000001_demo_ready.sql` 생성. 새 스키마 전 테이블 + 함수 + RLS.
+- 포함: `handle_new_user`(profiles만, SECURITY DEFINER), `custom_access_token_hook` + auth_admin GRANT,
+  헬퍼 `get_my_role()/get_my_studio_id()/get_my_creator_id()`(SECURITY DEFINER로 RLS 재귀 차단),
+  전 테이블 RLS ENABLE + DROP/재생성 정책(실제 코드 쿼리 기준 — anon campaigns/missions 조회,
+  크리에이터 missions filled 업데이트 허용 등), 역할별 GRANT, 관리자 승격 SQL 주석.
+- 구 `schema.sql`은 구 스키마(user_id/content_url/rate_*)라 superseded — 마이그레이션 상단에
+  fresh 프로젝트 권장 + 구 테이블 드롭 블록(주석) 안내.
+
+### Phase 4 — 데모 준비물
+- `DEMO_GUIDE.md` — 사전 준비(계정 3개 + 관리자 승격 SQL) + 7단계 시연 대본 + 강조 포인트 4개 + 트러블슈팅.
+- `GAPS.md` — 미구현(PG결제/실정산 배치/YouTube API/이메일 알림/잔여예산 환원 로직 등),
+  알려진 제약, 구 스키마 잔존 파일 목록, 피해야 할 시연 동선.
+
+### Phase 5 — 검증
+- `npx tsc --noEmit` **0 errors**. `npm run build` **성공**(33 라우트).

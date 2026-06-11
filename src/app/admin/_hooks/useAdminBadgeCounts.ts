@@ -41,7 +41,7 @@ export function useAdminBadgeCounts(): AdminBadgeCounts {
         supabase
           .from('submissions')
           .select('id', { count: 'exact', head: true })
-          .eq('status', 'review'),
+          .eq('status', 'pending'),
         supabase
           .from('payments')
           .select('id', { count: 'exact', head: true })

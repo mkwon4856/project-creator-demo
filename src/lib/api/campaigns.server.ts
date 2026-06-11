@@ -2,6 +2,7 @@ import { cache } from 'react';
 
 import { createClient } from '@/lib/supabase/server';
 import type { Campaign } from '@/lib/campaigns/types';
+import type { Campaign as DbCampaign, Mission as DbMission } from '@/lib/db.types';
 
 import {
   transformDbCampaign,
@@ -68,6 +69,34 @@ export const fetchCampaignById = cache(async (id: string): Promise<CampaignSeoDa
     brief: (row as { description?: string | null }).description ?? '',
   };
 });
+
+// ─── New-schema public campaign detail (used by /campaigns/[id]) ───
+export type PublicCampaign = DbCampaign & { missions: DbMission[] };
+
+/**
+ * Fetches a single campaign + missions on the NEW schema for public display.
+ * RLS exposes active campaigns (and their missions) to anon, so unauthenticated
+ * visitors can view campaign detail pages. Returns null when not found/visible.
+ */
+export const fetchPublicCampaign = cache(
+  async (id: string): Promise<PublicCampaign | null> => {
+    if (!HAS_SUPABASE_ENV) return null;
+
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from('campaigns')
+      .select('*, missions(*)')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (error) {
+      console.error('fetchPublicCampaign:', error);
+      return null;
+    }
+    if (!data) return null;
+    return data as PublicCampaign;
+  },
+);
 
 /** Live campaign IDs for sitemap generation. */
 export async function fetchLiveCampaignRoutes(): Promise<
