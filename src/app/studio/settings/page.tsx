@@ -2,10 +2,10 @@
 
 import { LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { WorkspaceLayout } from '@/components/layout';
-import { Alert, Button, Card, Input, Textarea, toast } from '@/components/ui';
+import { Alert, Button, Card, Input, toast } from '@/components/ui';
 import { createClient as createBrowserSupabaseClient } from '@/lib/supabase/client';
 import { useCurrentProfile, useCurrentStudio } from '@/lib/supabase/hooks';
 
@@ -25,12 +25,10 @@ function SectionLabel({ children }: { children: string }) {
 
 export default function StudioSettingsPage() {
   const router = useRouter();
-  const descId = useId();
   const { data: studio, loading: studioLoading } = useCurrentStudio();
   const { data: profile, loading: profileLoading } = useCurrentProfile();
 
   const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
   const [logoUrl, setLogoUrl] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -43,9 +41,8 @@ export default function StudioSettingsPage() {
   useEffect(() => {
     if (studio) {
       setName(studio.company_name);
-      // description/logo_url have no backing column in the new schema.
+      // logo_url has no backing column in the new schema.
       // TODO(rebuild): source from a future studio profile table if reintroduced.
-      setDescription('');
       setLogoUrl('');
     }
   }, [studio]);
@@ -171,17 +168,6 @@ export default function StudioSettingsPage() {
             value={logoUrl}
             onChange={(e) => setLogoUrl(e.target.value)}
             placeholder="https://..."
-          />
-        </div>
-
-        <div className="mb-4">
-          <Textarea
-            id={descId}
-            label="소개"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={3}
-            placeholder="게임사 소개"
           />
         </div>
 
