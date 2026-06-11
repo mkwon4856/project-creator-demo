@@ -10,9 +10,6 @@ interface Props {
 }
 
 export function StepReview({ state, onBack, onSubmit, submitting }: Props) {
-  const totalMissions = state.missions.length + state.auto_missions.length
-  const estimatedCreators = totalMissions
-
   return (
     <div className="space-y-6">
       {/* 게임 요약 */}
@@ -38,12 +35,10 @@ export function StepReview({ state, onBack, onSubmit, submitting }: Props) {
                   <span className="text-sm font-medium text-white">
                     {CONTENT_TYPE_LABELS[mission.content_type]} — {mission.allowed_grades.join(', ')}등급
                   </span>
-                  {mission.guide_draft && (
-                    <p className="text-xs text-white/40 mt-1 line-clamp-2">{mission.guide_draft}</p>
+                  {mission.guide_draft.filter(Boolean).length > 0 && (
+                    <p className="text-xs text-white/40 mt-1 line-clamp-2">{mission.guide_draft.filter(Boolean).join(' · ')}</p>
                   )}
-                </div>
-                <span className="text-xs text-white/40">₩{mission.studio_amount.toLocaleString()}</span>
-              </div>
+                </div>              </div>
             </div>
           ))}
 
@@ -55,23 +50,34 @@ export function StepReview({ state, onBack, onSubmit, submitting }: Props) {
                   <span className="text-sm font-medium text-white">
                     {CONTENT_TYPE_LABELS[mission.content_type]} — {mission.allowed_grades.join(', ')}등급
                   </span>
-                </div>
-                <span className="text-xs text-white/40">₩{mission.studio_amount.toLocaleString()}</span>
-              </div>
+                </div>              </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* 예상 결과 */}
-      <div className="bg-[#9B7EC8]/10 border border-[#9B7EC8]/20 rounded-xl p-4 space-y-2">
-        <div className="flex justify-between text-sm">
-          <span className="text-white/50">예상 참여 크리에이터</span>
-          <span className="text-white font-medium">약 {estimatedCreators}명</span>
-        </div>
-        <div className="flex justify-between text-sm">
-          <span className="text-white/50">미션 수</span>
-          <span className="text-white font-medium">{totalMissions}개</span>
+      {/* 예상 결과물 */}
+      <div className="bg-[#9B7EC8]/10 border border-[#9B7EC8]/20 rounded-xl p-4 space-y-3">
+        <div className="text-sm font-medium text-white/70 mb-2">예상 참여 크리에이터</div>
+        {state.missions.map((mission, idx) => (
+          <div key={mission.id} className="flex justify-between text-sm">
+            <span className="text-white/50">
+              {CONTENT_TYPE_LABELS[mission.content_type]} {mission.allowed_grades.join('/')}등급
+            </span>
+            <span className="text-white">약 1명</span>
+          </div>
+        ))}
+        {state.auto_missions.map((mission, idx) => (
+          <div key={mission.id} className="flex justify-between text-sm">
+            <span className="text-white/50">
+              {CONTENT_TYPE_LABELS[mission.content_type]} {mission.allowed_grades.join('/')}등급 (자동)
+            </span>
+            <span className="text-white">약 1명</span>
+          </div>
+        ))}
+        <div className="pt-2 border-t border-white/10 flex justify-between text-sm font-medium">
+          <span className="text-white/70">총 예상 참여</span>
+          <span className="text-white">약 {state.missions.length + state.auto_missions.length}명</span>
         </div>
       </div>
 

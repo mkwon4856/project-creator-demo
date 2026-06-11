@@ -29,7 +29,7 @@ function calcAutoMissions(
         id: crypto.randomUUID(),
         content_type: type,
         allowed_grades: [grade],
-        guide_draft: '',
+        guide_draft: [],
         creator_amount: RATE_MATRIX[grade][type],
         studio_amount: studioAmt,
       })
@@ -100,7 +100,9 @@ export default function NewCampaignPage() {
         allowed_grades: m.allowed_grades,
         creator_amount: m.creator_amount,
         studio_amount: m.studio_amount,
-        guide_draft: m.guide_draft || null,
+        guide_draft: Array.isArray(m.guide_draft)
+          ? (m.guide_draft as string[]).filter(Boolean).join('\n') || null
+          : m.guide_draft || null,
         guide_approved: null,
         is_auto_generated: state.auto_missions.some(a => a.id === m.id),
         status: 'open' as const,

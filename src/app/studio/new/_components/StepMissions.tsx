@@ -14,9 +14,12 @@ interface Props {
 const ALL_GRADES: Grade[] = ['S', 'A', 'B', 'C', 'D', 'E']
 const ALL_TYPES: ContentType[] = ['live', 'longform', 'shortform']
 
-function calcMissionAmount(grades: Grade[], type: ContentType) {
+function calcMissionAmount(grades: Grade[], type: ContentType): number {
   if (!grades.length) return 0
-  return Math.max(...grades.map(g => RATE_MATRIX[g][type]))
+  // 선택된 등급 중 가장 높은 등급의 단가 기준 (슬롯 1개)
+  const gradeOrder: Grade[] = ['S', 'A', 'B', 'C', 'D', 'E']
+  const highestGrade = gradeOrder.find(g => grades.includes(g)) ?? grades[0]
+  return RATE_MATRIX[highestGrade][type]
 }
 
 export function StepMissions({ state, onChange, onNext, onBack }: Props) {
@@ -25,7 +28,7 @@ export function StepMissions({ state, onChange, onNext, onBack }: Props) {
       id: crypto.randomUUID(),
       content_type: 'longform',
       allowed_grades: ['B'],
-      guide_draft: '',
+      guide_draft: [''],
       creator_amount: RATE_MATRIX['B']['longform'],
       studio_amount: toStudioAmount(RATE_MATRIX['B']['longform']),
     }
@@ -116,7 +119,7 @@ export function StepMissions({ state, onChange, onNext, onBack }: Props) {
 
             {/* 등급 선택 */}
             <div>
-              <label className="text-xs text-white/50 mb-2 block">허용 등급 (복수 선택)</label>
+              <label className="text-xs text-white/50 mb-2 block">참여 가능한 크리에이터 등급 (복수 선택)</label>
               <div className="flex flex-wrap gap-2">
                 {ALL_GRADES.map(grade => (
                   <button
@@ -137,13 +140,36 @@ export function StepMissions({ state, onChange, onNext, onBack }: Props) {
             {/* 가이드라인 */}
             <div>
               <label className="text-xs text-white/50 mb-2 block">미션 가이드라인</label>
-              <textarea
-                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#9B7EC8] resize-none"
-                rows={2}
-                placeholder="크리에이터에게 전달할 제작 가이드를 입력하세요"
-                value={mission.guide_draft}
-                onChange={e => updateMission(mission.id, { guide_draft: e.target.value })}
-              />
+              <div className="space-y-2">
+                {(mission.guide_draft as string[]).map((line, lineIdx) => (
+                  <div key={lineIdx} className="flex gap-2 items-center">
+                    <span className="text-xs text-white/30 w-4">{lineIdx + 1}.</span>
+                    <input
+                      className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#9B7EC8]"
+                      placeholder={`가이드 ${lineIdx + 1}`}
+                      value={line}
+                      onChange={e => {
+                        const newGuide = [...(mission.guide_draft as string[])]
+                        newGuide[lineIdx] = e.target.value
+                        updateMission(mission.id, { guide_draft: newGuide })
+                      }}
+                    />
+                    <button
+                      onClick={() => {
+                        const newGuide = (mission.guide_draft as string[]).filter((_, i) => i !== lineIdx)
+                        updateMission(mission.id, { guide_draft: newGuide.length ? newGuide : [''] })
+                      }}
+                      className="text-white/20 hover:text-red-400 text-sm px-1"
+                    >✕</button>
+                  </div>
+                ))}
+                <button
+                  onClick={() => updateMission(mission.id, { guide_draft: [...(mission.guide_draft as string[]), ''] })}
+                  className="text-xs text-[#9B7EC8] hover:text-[#9B7EC8]/80 transition-colors"
+                >
+                  + 가이드 추가
+                </button>
+              </div>
             </div>
 
             {/* 예상 비용 */}

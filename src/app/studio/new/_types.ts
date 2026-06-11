@@ -5,7 +5,7 @@ export interface MissionSlot {
   id: string           // 임시 UI ID
   content_type: ContentType
   allowed_grades: Grade[]
-  guide_draft: string
+  guide_draft: string[]  // 줄 단위 배열
   creator_amount: number   // 크리에이터 수령 단가 (자동계산)
   studio_amount: number    // 게임사 지불 단가 (creator_amount ÷ 0.7)
 }

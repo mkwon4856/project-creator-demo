@@ -83,7 +83,20 @@ creator: `page`, `profile`, `settings`, `activity`, `earnings`, `_components/Rec
 
 ---
 
-## 남은 타입 에러: **8건** (`npx tsc --noEmit` 기준, Task 2·3 후 동일)
+## Task 4 — Wizard 피드백 반영 + AuthForm 수정 (완료, 2026-06-11)
+
+- **4-1** `(auth)/_components/AuthForm.tsx`: studios insert에서 `description` 필드 제거(컬럼 없음).
+- **4-2** `StepMissions`: 등급 레이블 "허용 등급 (복수 선택)" → "참여 가능한 크리에이터 등급 (복수 선택)".
+- **4-3** 미션 가이드라인: `MissionSlot.guide_draft` `string` → `string[]`(줄 단위). textarea → 한 줄씩 추가/삭제 리스트 UI. `addMission` 초기값 `['']`, 자동 미션(`calcAutoMissions`)은 `[]`. DB 저장 시 `filter(Boolean).join('\n') || null`로 변환. `StepReview`의 가이드 표시도 배열 대응(`join(' · ')`).
+- **4-4** `calcMissionAmount`: 선택 등급 중 **최고 등급 1슬롯 단가**만 계산(B+C 합산 → 최고 등급 1명 기준).
+- **4-5** `StepReview`: 미션/자동 카드의 금액(`₩studio_amount`) 표시 제거.
+- **4-6** `StepReview`: 예상 결과물을 미션별 "약 1명" breakdown + 총합으로 교체(미사용 `totalMissions`/`estimatedCreators` 변수 정리).
+
+타입 에러 0건(wizard/auth). 
+
+---
+
+## 남은 타입 에러: **8건** (`npx tsc --noEmit` 기준, Task 2·3·4 후 동일)
 
 전부 **외부 모듈 미설치(TS2307)** — protected 파일이라 미수정:
 

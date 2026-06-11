@@ -77,7 +77,6 @@ export function AuthForm({ mode }: AuthFormProps) {
       const { error: studioErr } = await supabase.from('studios').insert({
         user_id: userId,
         name: trimmedName,
-        description: '',
       });
       if (studioErr) {
         setError(`게임사 프로필 생성에 실패했습니다: ${studioErr.message}`);
