@@ -1,6 +1,5 @@
 import {
   Building2,
-  FileCheck,
   Flag,
   LayoutDashboard,
   LineChart,
@@ -41,16 +40,6 @@ export function getAdminSidebar(
           label: '개요',
           href: '/admin',
           active: isActive('overview'),
-        },
-        {
-          id: 'review',
-          icon: <FileCheck size={16} />,
-          label: '콘텐츠 검수',
-          href: '/admin/review',
-          ...(counts?.review
-            ? { count: counts.review, countVariant: 'urgent' as const }
-            : {}),
-          active: isActive('review'),
         },
         {
           id: 'disputes',
