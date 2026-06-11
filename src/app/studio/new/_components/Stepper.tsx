@@ -1,78 +1,31 @@
-'use client';
-
-import { Check } from 'lucide-react';
-
-import { STEP_LABELS, type WizardStep } from '../_types';
-
-const STEPS: WizardStep[] = [1, 2, 3, 4, 5];
-
-export interface StepperProps {
-  current: WizardStep;
-  onJump?: (step: WizardStep) => void;
+interface Props {
+  current: number  // 1, 2, 3
+  steps: string[]
 }
 
-export function Stepper({ current, onJump }: StepperProps) {
+export function Stepper({ current, steps }: Props) {
   return (
-    <nav
-      aria-label="작성 진행 상황"
-      className="overflow-x-auto border-b border-border bg-bg-elevated"
-    >
-      <ol className="flex items-center gap-0 min-w-max mx-auto px-4 sm:px-6 md:px-8 py-4 md:py-5">
-        {STEPS.map((step, i) => {
-          const done = step < current;
-          const active = step === current;
-          const interactive = Boolean(onJump) && (done || active);
-
-          return (
-            <li key={step} className="flex items-center">
-              <button
-                type="button"
-                onClick={() => interactive && onJump?.(step)}
-                disabled={!interactive}
-                className={[
-                  'flex items-center gap-1.5 sm:gap-2.5 px-1 sm:px-2 py-1 rounded-md transition-colors duration-150 ease-out shrink-0',
-                  interactive ? 'cursor-pointer hover:bg-bg-hover' : 'cursor-default',
-                ].join(' ')}
-                aria-current={active ? 'step' : undefined}
-              >
-                <span
-                  className={[
-                    'inline-flex w-7 h-7 items-center justify-center rounded-full text-[11px] font-medium leading-none',
-                    done && 'bg-primary text-bg',
-                    active && 'bg-primary text-bg ring-2 ring-primary-dim',
-                    !done && !active && 'border border-border bg-surface text-text-secondary',
-                  ]
-                    .filter(Boolean)
-                    .join(' ')}
-                >
-                  {done ? <Check size={14} aria-hidden /> : step}
-                </span>
-                <span
-                  className={[
-                    'text-xs sm:text-sm leading-tight whitespace-nowrap',
-                    done && 'text-text-primary',
-                    active && 'text-primary font-medium',
-                    !done && !active && 'text-text-secondary',
-                  ]
-                    .filter(Boolean)
-                    .join(' ')}
-                >
-                  <span className="sm:hidden">{STEP_LABELS[step]}</span>
-                  <span className="hidden sm:inline">
-                    {step}. {STEP_LABELS[step]}
-                  </span>
-                </span>
-              </button>
-              {i < STEPS.length - 1 && (
-                <span
-                  aria-hidden
-                  className={['mx-1.5 sm:mx-3 inline-block w-6 sm:w-12 h-px shrink-0', step < current ? 'bg-primary' : 'bg-border'].join(' ')}
-                />
-              )}
-            </li>
-          );
-        })}
-      </ol>
-    </nav>
-  );
+    <div className="flex items-center gap-2 mb-8">
+      {steps.map((label, idx) => {
+        const step = idx + 1
+        const done = step < current
+        const active = step === current
+        return (
+          <div key={step} className="flex items-center gap-2">
+            <div className={`flex items-center gap-2 ${active ? 'text-white' : done ? 'text-[#9B7EC8]' : 'text-white/30'}`}>
+              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold transition-all ${
+                active ? 'bg-[#9B7EC8] text-white' : done ? 'bg-[#9B7EC8]/30 text-[#9B7EC8]' : 'bg-white/10 text-white/30'
+              }`}>
+                {done ? '✓' : step}
+              </div>
+              <span className="text-sm hidden sm:block">{label}</span>
+            </div>
+            {idx < steps.length - 1 && (
+              <div className={`flex-1 h-px w-8 mx-1 ${done ? 'bg-[#9B7EC8]/50' : 'bg-white/10'}`} />
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
 }

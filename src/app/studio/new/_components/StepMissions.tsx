@@ -1,157 +1,209 @@
-'use client';
+'use client'
+import { RATE_MATRIX, toStudioAmount } from '@/lib/pricing'
+import { CONTENT_TYPE_LABELS } from '../_types'
+import type { WizardState, MissionSlot } from '../_types'
+import type { ContentType, Grade } from '@/lib/db.types'
 
-import { Film, Radio, Video, type LucideIcon } from 'lucide-react';
-import type { ChangeEvent } from 'react';
-
-import { Input, Switch } from '@/components/ui';
-
-import {
-  MARKET_AVG,
-  MISSIONS_META,
-  TIER_DESCRIPTION,
-  TIERS,
-  type MissionId,
-  type TierKey,
-  type WizardData,
-} from '../_types';
-
-const ICON_MAP: Record<'film' | 'video' | 'radio', LucideIcon> = {
-  film: Film,
-  video: Video,
-  radio: Radio,
-};
-
-interface StepMissionsProps {
-  data: WizardData;
-  onChange: (patch: Partial<WizardData>) => void;
+interface Props {
+  state: WizardState
+  onChange: (patch: Partial<WizardState>) => void
+  onNext: () => void
+  onBack: () => void
 }
 
-function MissionGroup({
-  id,
-  data,
-  onChange,
-}: {
-  id: MissionId;
-  data: WizardData;
-  onChange: (patch: Partial<WizardData>) => void;
-}) {
-  const meta = MISSIONS_META[id];
-  const Icon = ICON_MAP[meta.iconKey];
-  const config = data.missions[id];
-  const enabled = config.enabled;
+const ALL_GRADES: Grade[] = ['S', 'A', 'B', 'C', 'D', 'E']
+const ALL_TYPES: ContentType[] = ['live', 'longform', 'shortform']
 
-  const setEnabled = (next: boolean) => {
-    onChange({
-      missions: {
-        ...data.missions,
-        [id]: { ...config, enabled: next },
-      },
-    });
-  };
+function calcMissionAmount(grades: Grade[], type: ContentType) {
+  if (!grades.length) return 0
+  return Math.max(...grades.map(g => RATE_MATRIX[g][type]))
+}
 
-  const setRate = (tier: TierKey, value: number) => {
+export function StepMissions({ state, onChange, onNext, onBack }: Props) {
+  const addMission = () => {
+    const newMission: MissionSlot = {
+      id: crypto.randomUUID(),
+      content_type: 'longform',
+      allowed_grades: ['B'],
+      guide_draft: '',
+      creator_amount: RATE_MATRIX['B']['longform'],
+      studio_amount: toStudioAmount(RATE_MATRIX['B']['longform']),
+    }
+    onChange({ missions: [...state.missions, newMission] })
+  }
+
+  const updateMission = (id: string, patch: Partial<MissionSlot>) => {
     onChange({
-      missions: {
-        ...data.missions,
-        [id]: {
-          ...config,
-          rates: { ...config.rates, [tier]: value },
-        },
-      },
-    });
-  };
+      missions: state.missions.map(m => {
+        if (m.id !== id) return m
+        const updated = { ...m, ...patch }
+        const amount = calcMissionAmount(updated.allowed_grades, updated.content_type)
+        return { ...updated, creator_amount: amount, studio_amount: toStudioAmount(amount) }
+      })
+    })
+  }
+
+  const removeMission = (id: string) => {
+    onChange({ missions: state.missions.filter(m => m.id !== id) })
+  }
+
+  const toggleGrade = (mission: MissionSlot, grade: Grade) => {
+    const grades = mission.allowed_grades.includes(grade)
+      ? mission.allowed_grades.filter(g => g !== grade)
+      : [...mission.allowed_grades, grade]
+    updateMission(mission.id, { allowed_grades: grades })
+  }
+
+  const usedBudget = state.missions.reduce((sum, m) => sum + m.studio_amount, 0)
+  const remaining = state.total_budget - usedBudget
+  const valid = state.total_budget > 0 && state.missions.length > 0 && state.missions.every(m => m.allowed_grades.length > 0)
 
   return (
-    <div className="flex flex-col">
-      <div
-        className={[
-          'flex items-center gap-3 px-4 py-3.5 rounded-t-lg border',
-          enabled ? 'bg-primary-dim border-primary/30' : 'bg-bg-elevated border-border',
-        ].join(' ')}
-      >
-        <span
-          className={[
-            'inline-flex w-8 h-8 rounded-md items-center justify-center shrink-0',
-            enabled ? 'bg-primary text-bg' : 'bg-surface-hover text-text-secondary',
-          ].join(' ')}
-          aria-hidden
-        >
-          <Icon size={16} />
-        </span>
-        <div className="flex flex-col flex-1 min-w-0">
-          <span
-            className={[
-              'text-sm font-medium leading-tight',
-              enabled ? 'text-text-primary' : 'text-text-secondary',
-            ].join(' ')}
-          >
-            {meta.label}
-          </span>
-          <span className="text-[11px] text-text-secondary">{meta.description}</span>
+    <div className="space-y-6">
+      {/* 총 예산 */}
+      <div>
+        <label className="block text-sm font-medium text-white/70 mb-2">총 예산 *</label>
+        <div className="relative">
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/50">₩</span>
+          <input
+            type="number"
+            className="w-full bg-white/5 border border-white/10 rounded-lg pl-8 pr-4 py-3 text-white focus:outline-none focus:border-[#9B7EC8]"
+            placeholder="10000000"
+            value={state.total_budget || ''}
+            onChange={e => onChange({ total_budget: Number(e.target.value) })}
+          />
         </div>
-        <Switch
-          checked={enabled}
-          onCheckedChange={setEnabled}
-          aria-label={`${meta.label} 사용`}
-        />
       </div>
 
-      <div
-        className={[
-          'grid grid-cols-1 sm:grid-cols-5 border-x border-b border-white/10 rounded-b-lg overflow-hidden',
-          enabled ? '' : 'opacity-40 pointer-events-none',
-        ].join(' ')}
-      >
-        {TIERS.map((tier, i) => (
-          <div
-            key={tier}
-            className={[
-              'flex flex-col gap-1.5 p-3',
-              i < TIERS.length - 1 ? 'sm:border-r border-white/[0.06]' : '',
-            ].join(' ')}
+      {/* 미션 목록 */}
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <label className="text-sm font-medium text-white/70">미션 구성</label>
+          <button
+            onClick={addMission}
+            className="text-sm text-[#9B7EC8] hover:text-[#9B7EC8]/80 transition-colors"
           >
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-text-muted">
-              {tier}티어 <span className="text-text-muted">({TIER_DESCRIPTION[tier]})</span>
-            </span>
-            <Input
-              type="number"
-              min={0}
-              value={config.rates[tier]}
-              onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                setRate(tier, Number(e.target.value) || 0)
-              }
-              icon={<span className="text-xs">₩</span>}
-              suffix="만"
-              aria-label={`${meta.label} ${tier}티어 단가`}
-              containerClassName="[&_input]:text-sm [&_input]:font-medium [&_input]:tabular-nums"
-            />
-            <span className="text-[10px] text-primary tabular-nums">
-              시장 평균 ₩{MARKET_AVG[id][tier]}만
-            </span>
+            + 미션 추가
+          </button>
+        </div>
+
+        {state.missions.map((mission, idx) => (
+          <div key={mission.id} className="bg-white/5 border border-white/10 rounded-xl p-4 space-y-4">
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium text-white">미션 {idx + 1}</span>
+              <button onClick={() => removeMission(mission.id)} className="text-white/30 hover:text-red-400 text-sm">삭제</button>
+            </div>
+
+            {/* 타입 선택 */}
+            <div>
+              <label className="text-xs text-white/50 mb-2 block">콘텐츠 타입</label>
+              <div className="flex gap-2">
+                {ALL_TYPES.map(type => (
+                  <button
+                    key={type}
+                    onClick={() => updateMission(mission.id, { content_type: type })}
+                    className={`px-3 py-1.5 rounded-lg text-sm transition-all ${
+                      mission.content_type === type
+                        ? 'bg-[#9B7EC8] text-white'
+                        : 'bg-white/5 text-white/50 hover:bg-white/10'
+                    }`}
+                  >
+                    {CONTENT_TYPE_LABELS[type]}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 등급 선택 */}
+            <div>
+              <label className="text-xs text-white/50 mb-2 block">허용 등급 (복수 선택)</label>
+              <div className="flex flex-wrap gap-2">
+                {ALL_GRADES.map(grade => (
+                  <button
+                    key={grade}
+                    onClick={() => toggleGrade(mission, grade)}
+                    className={`px-3 py-1.5 rounded-lg text-sm transition-all ${
+                      mission.allowed_grades.includes(grade)
+                        ? 'bg-[#E5B567] text-black font-medium'
+                        : 'bg-white/5 text-white/50 hover:bg-white/10'
+                    }`}
+                  >
+                    {grade}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 가이드라인 */}
+            <div>
+              <label className="text-xs text-white/50 mb-2 block">미션 가이드라인</label>
+              <textarea
+                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#9B7EC8] resize-none"
+                rows={2}
+                placeholder="크리에이터에게 전달할 제작 가이드를 입력하세요"
+                value={mission.guide_draft}
+                onChange={e => updateMission(mission.id, { guide_draft: e.target.value })}
+              />
+            </div>
+
+            {/* 예상 비용 */}
+            {mission.creator_amount > 0 && (
+              <div className="text-xs text-white/40">
+                예상 비용: ₩{mission.studio_amount.toLocaleString()}
+              </div>
+            )}
           </div>
         ))}
-      </div>
-    </div>
-  );
-}
 
-export function StepMissions({ data, onChange }: StepMissionsProps) {
-  return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-1.5">
-        <h2 className="text-[22px] font-medium text-text-primary leading-tight">
-          미션 및 티어 단가 설정
-        </h2>
-        <p className="text-sm text-text-secondary">
-          원하는 콘텐츠 유형을 선택하고 티어별 단가를 설정하세요. 필요 없는 미션은 끄면 됩니다.
-        </p>
+        {state.missions.length === 0 && (
+          <div className="text-center py-8 text-white/30 text-sm border border-dashed border-white/10 rounded-xl">
+            미션을 추가해주세요
+          </div>
+        )}
       </div>
 
-      <div className="flex flex-col gap-5">
-        {(['shortform', 'longform', 'live'] as const).map((id) => (
-          <MissionGroup key={id} id={id} data={data} onChange={onChange} />
-        ))}
+      {/* 잔여 예산 */}
+      {state.total_budget > 0 && (
+        <div className="bg-white/5 rounded-xl p-4 space-y-3">
+          <div className="flex justify-between text-sm">
+            <span className="text-white/50">사용 예산</span>
+            <span className="text-white">₩{usedBudget.toLocaleString()}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span className="text-white/50">잔여 예산</span>
+            <span className={remaining < 0 ? 'text-red-400' : 'text-[#E5B567]'}>
+              ₩{remaining.toLocaleString()}
+            </span>
+          </div>
+          {remaining > 0 && (
+            <label className="flex items-start gap-3 cursor-pointer pt-2 border-t border-white/10">
+              <input
+                type="checkbox"
+                className="mt-0.5"
+                checked={state.auto_spend_remaining}
+                onChange={e => onChange({ auto_spend_remaining: e.target.checked })}
+              />
+              <span className="text-xs text-white/50">
+                잔여 예산을 하위 등급 미션으로 자동 소진합니다
+              </span>
+            </label>
+          )}
+        </div>
+      )}
+
+      <div className="flex gap-3">
+        <button onClick={onBack} className="flex-1 py-3 rounded-lg border border-white/10 text-white/70 hover:bg-white/5 transition-all">
+          ← 이전
+        </button>
+        <button
+          onClick={onNext}
+          disabled={!valid || remaining < 0}
+          className="flex-2 flex-grow py-3 rounded-lg font-bold text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+          style={{ background: (valid && remaining >= 0) ? '#9B7EC8' : undefined }}
+        >
+          다음 →
+        </button>
       </div>
     </div>
-  );
+  )
 }

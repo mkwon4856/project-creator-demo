@@ -62,7 +62,28 @@ creator: `page`, `profile`, `settings`, `activity`, `earnings`, `_components/Rec
 
 ---
 
-## 남은 타입 에러: **8건** (`npx tsc --noEmit` 기준, 104 → 8)
+## Task 3 — 캠페인 생성 Wizard 재개발 (완료, 2026-06-11)
+
+기존 5단계 wizard(`src/app/studio/new/`)를 새 기획 기준 **3단계**로 전면 재작성.
+
+### 작성/교체 (6개)
+- `_types.ts` — `MissionSlot`/`WizardState` + `GENRES`/`CONTENT_TYPE_LABELS`/`GRADE_LABELS` (db.types의 `ContentType`/`Grade` 기반).
+- `_components/StepGame.tsx` (1단계: 게임 정보), `StepMissions.tsx` (2단계: 예산·미션 구성, 등급별 단가 자동계산 + 잔여예산 자동소진), `StepReview.tsx` (3단계: 최종 확인), `Stepper.tsx` (진행 표시).
+- `page.tsx` — 3단계 상태 머신 + `calcAutoMissions`(잔여예산 하위등급 자동배분) + 제출 시 `createCampaign`/`createMissions`(Task 2-4 API) 호출, `useStudio` 훅 사용.
+
+### 삭제 (4개)
+- `_components/`의 `StepBrief.tsx`, `StepBudget.tsx`, `Summary.tsx`, `index.ts` (구 5단계 잔재). 외부 참조 없음(네비게이션 링크 `/studio/new`만 존재).
+
+### 디자인
+다크(`#0A0A0F`) + 우베 보라(`#9B7EC8`) + 골드(`#E5B567`), Tailwind v4, 제목 Arial Black.
+
+### 비고
+- TASK 코드의 미사용 import(`StepMissions`의 `GRADE_LABELS`, `page`의 `ContentType`)는 제외하고 작성.
+- wizard 관련 타입 에러 **0건**. API/훅/타입(Task 2 결과물)과 정상 연결됨.
+
+---
+
+## 남은 타입 에러: **8건** (`npx tsc --noEmit` 기준, Task 2·3 후 동일)
 
 전부 **외부 모듈 미설치(TS2307)** — protected 파일이라 미수정:
 
