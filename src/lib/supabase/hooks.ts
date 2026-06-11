@@ -38,7 +38,7 @@ export function useCreator() {
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) { setLoading(false); return }
-      supabase.from('creators').select('*').eq('profile_id', user.id).single()
+      supabase.from('creators').select('*').eq('profile_id', user.id).maybeSingle()
         .then(({ data }) => { setCreator(data); setLoading(false) })
     })
   }, [])
