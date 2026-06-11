@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { ChevronDown } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { Campaign, Mission } from '@/lib/db.types'
 
@@ -22,6 +23,7 @@ export default function AdminCampaignsPage() {
   const [tab, setTab] = useState<Tab>('pending')
   const [processing, setProcessing] = useState<string | null>(null)
   const [adminNote, setAdminNote] = useState<Record<string, string>>({})
+  const [expanded, setExpanded] = useState<Set<string>>(new Set())
   const supabase = createClient()
 
   useEffect(() => {
@@ -34,6 +36,25 @@ export default function AdminCampaignsPage() {
         setLoading(false)
       })
   }, [])
+
+  // 기본 펼침 상태: pending 탭은 첫 번째 카드만 펼침, 나머지 탭은 전부 접힘
+  useEffect(() => {
+    if (tab === 'pending') {
+      const firstPending = campaigns.find(c => c.status === 'pending')
+      setExpanded(firstPending ? new Set([firstPending.id]) : new Set())
+    } else {
+      setExpanded(new Set())
+    }
+  }, [tab, campaigns])
+
+  const toggleExpanded = (id: string) => {
+    setExpanded(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
 
   const handleApprove = async (campaign: CampaignWithRelations) => {
     setProcessing(campaign.id)
@@ -108,12 +129,19 @@ export default function AdminCampaignsPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {filtered.map(campaign => (
-              <div key={campaign.id} className="bg-white/5 rounded-xl p-5 border border-white/5 space-y-4">
-                {/* 헤더 */}
-                <div className="flex justify-between items-start">
-                  <div>
-                    <div className="font-bold text-white">{campaign.title}</div>
+            {filtered.map(campaign => {
+              const isOpen = expanded.has(campaign.id)
+              return (
+              <div key={campaign.id} className="bg-white/5 rounded-xl border border-white/5 overflow-hidden">
+                {/* 헤더 (항상 표시, 클릭 시 펼침/접힘) */}
+                <button
+                  type="button"
+                  onClick={() => toggleExpanded(campaign.id)}
+                  aria-expanded={isOpen}
+                  className="w-full flex justify-between items-start gap-3 p-5 text-left hover:bg-white/[0.02] transition-colors"
+                >
+                  <div className="min-w-0">
+                    <div className="font-bold text-white truncate">{campaign.title}</div>
                     <div className="text-xs text-white/40 mt-0.5">
                       {campaign.studios?.company_name} · {campaign.game_name}
                     </div>
@@ -121,80 +149,93 @@ export default function AdminCampaignsPage() {
                       총 예산: ₩{campaign.total_budget.toLocaleString()}
                     </div>
                   </div>
-                  <span className={`text-xs px-2 py-1 rounded-full ${
-                    campaign.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
-                    campaign.status === 'active' ? 'bg-[#9B7EC8]/20 text-[#9B7EC8]' :
-                    'bg-white/10 text-white/40'
-                  }`}>
-                    {campaign.status === 'pending' ? '승인 대기' :
-                     campaign.status === 'active' ? '승인됨' : campaign.status}
-                  </span>
-                </div>
-
-                {/* 미션 가이드 */}
-                {campaign.missions.length > 0 && (
-                  <div className="space-y-2">
-                    <div className="text-xs text-white/40 font-medium">미션 가이드 검토</div>
-                    {campaign.missions.map(mission => (
-                      <div key={mission.id} className="bg-white/5 rounded-lg p-3">
-                        <div className="flex gap-2 items-center mb-1">
-                          <span className="text-xs font-medium text-[#9B7EC8]">
-                            {CONTENT_TYPE_LABELS[mission.content_type]}
-                          </span>
-                          <span className="text-xs text-white/30">
-                            {mission.allowed_grades.join('/')}등급
-                          </span>
-                          {mission.is_auto_generated && (
-                            <span className="text-xs text-[#E5B567]/60">자동배분</span>
-                          )}
-                        </div>
-                        {mission.guide_draft ? (
-                          <p className="text-xs text-white/50">{mission.guide_draft}</p>
-                        ) : (
-                          <p className="text-xs text-white/20 italic">가이드 없음</p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Admin 메모 + 액션 (pending만) */}
-                {campaign.status === 'pending' && (
-                  <div className="space-y-3 pt-2 border-t border-white/5">
-                    <input
-                      className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#9B7EC8]"
-                      placeholder="Admin 메모 (홀드 시 게임사에 전달됩니다)"
-                      value={adminNote[campaign.id] ?? ''}
-                      onChange={e => setAdminNote(prev => ({ ...prev, [campaign.id]: e.target.value }))}
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className={`text-xs px-2 py-1 rounded-full ${
+                      campaign.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
+                      campaign.status === 'active' ? 'bg-[#9B7EC8]/20 text-[#9B7EC8]' :
+                      'bg-white/10 text-white/40'
+                    }`}>
+                      {campaign.status === 'pending' ? '승인 대기' :
+                       campaign.status === 'active' ? '승인됨' : campaign.status}
+                    </span>
+                    <ChevronDown
+                      size={18}
+                      className={`text-white/40 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
                     />
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleHold(campaign)}
-                        disabled={processing === campaign.id}
-                        className="flex-1 py-2 rounded-lg text-sm font-medium border border-white/10 text-white/50 hover:bg-white/5 transition-all disabled:opacity-30"
-                      >
-                        홀드 — 수정 요청
-                      </button>
-                      <button
-                        onClick={() => handleApprove(campaign)}
-                        disabled={processing === campaign.id}
-                        className="flex-2 flex-grow py-2 rounded-lg text-sm font-bold text-white transition-all disabled:opacity-30 hover:opacity-90"
-                        style={{ background: '#9B7EC8' }}
-                      >
-                        {processing === campaign.id ? '처리 중...' : '승인하기 ✓'}
-                      </button>
-                    </div>
                   </div>
-                )}
+                </button>
 
-                {/* 승인된 캠페인의 admin_note */}
-                {campaign.status !== 'pending' && campaign.admin_note && (
-                  <div className="text-xs text-white/30 pt-2 border-t border-white/5">
-                    메모: {campaign.admin_note}
+                {/* 상세 (펼침 시에만) */}
+                {isOpen && (
+                  <div className="px-5 pb-5 space-y-4">
+                    {/* 미션 가이드 */}
+                    {campaign.missions.length > 0 && (
+                      <div className="space-y-2">
+                        <div className="text-xs text-white/40 font-medium">미션 가이드 검토</div>
+                        {campaign.missions.map(mission => (
+                          <div key={mission.id} className="bg-white/5 rounded-lg p-3">
+                            <div className="flex gap-2 items-center mb-1">
+                              <span className="text-xs font-medium text-[#9B7EC8]">
+                                {CONTENT_TYPE_LABELS[mission.content_type]}
+                              </span>
+                              <span className="text-xs text-white/30">
+                                {mission.allowed_grades.join('/')}등급
+                              </span>
+                              {mission.is_auto_generated && (
+                                <span className="text-xs text-[#E5B567]/60">자동배분</span>
+                              )}
+                            </div>
+                            {mission.guide_draft ? (
+                              <p className="text-xs text-white/50">{mission.guide_draft}</p>
+                            ) : (
+                              <p className="text-xs text-white/20 italic">가이드 없음</p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Admin 메모 + 액션 (pending만) */}
+                    {campaign.status === 'pending' && (
+                      <div className="space-y-3 pt-2 border-t border-white/5">
+                        <input
+                          className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#9B7EC8]"
+                          placeholder="Admin 메모 (홀드 시 게임사에 전달됩니다)"
+                          value={adminNote[campaign.id] ?? ''}
+                          onClick={e => e.stopPropagation()}
+                          onChange={e => setAdminNote(prev => ({ ...prev, [campaign.id]: e.target.value }))}
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            onClick={e => { e.stopPropagation(); handleHold(campaign) }}
+                            disabled={processing === campaign.id}
+                            className="flex-1 py-2 rounded-lg text-sm font-medium border border-white/10 text-white/50 hover:bg-white/5 transition-all disabled:opacity-30"
+                          >
+                            홀드 — 수정 요청
+                          </button>
+                          <button
+                            onClick={e => { e.stopPropagation(); handleApprove(campaign) }}
+                            disabled={processing === campaign.id}
+                            className="flex-2 flex-grow py-2 rounded-lg text-sm font-bold text-white transition-all disabled:opacity-30 hover:opacity-90"
+                            style={{ background: '#9B7EC8' }}
+                          >
+                            {processing === campaign.id ? '처리 중...' : '승인하기 ✓'}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 승인된 캠페인의 admin_note */}
+                    {campaign.status !== 'pending' && campaign.admin_note && (
+                      <div className="text-xs text-white/30 pt-2 border-t border-white/5">
+                        메모: {campaign.admin_note}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-            ))}
+              )
+            })}
           </div>
         )}
 
