@@ -1,439 +1,277 @@
-'use client';
+'use client'
+import { useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import type { Submission, Mission, Application, Creator, Campaign } from '@/lib/db.types'
 
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
-
-import { WorkspaceLayout } from '@/components/layout';
-import { Badge, Button, Card, Pill, statusToBadgeVariant, toast } from '@/components/ui';
-import type { Grade, PaymentStatus } from '@/lib/db.types';
-import { formatCompactKRW } from '@/lib/formatCurrency';
-import { createClient as createBrowserSupabaseClient } from '@/lib/supabase/client';
-import { useCurrentProfile } from '@/lib/supabase/hooks';
-
-import { getAdminSidebar } from '../_config/sidebar';
-import { useAdminBadgeCounts } from '../_hooks/useAdminBadgeCounts';
-
-const HAS_SUPABASE_ENV =
-  Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
-  Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
-
-const GRID =
-  'grid-cols-[1fr_1.2fr_0.9fr_0.9fr_0.9fr_0.7fr_0.9fr_140px]';
-
-type StatusFilter = 'all' | PaymentStatus;
-
-const STATUS_FILTERS: { id: StatusFilter; label: string }[] = [
-  { id: 'all', label: '전체' },
-  { id: 'pending', label: '대기' },
-  { id: 'processing', label: '처리 중' },
-  { id: 'completed', label: '완료' },
-];
-
-interface PayoutRow {
-  id: string;
-  amount: number;
-  platformFee: number;
-  status: PaymentStatus;
-  paidAt: string | null;
-  reward: number;
-  creatorName: string;
-  creatorGrade: Grade;
-  campaignName: string;
-  developer: string;
+const CONTENT_TYPE_LABELS: Record<string, string> = {
+  live: '라이브',
+  longform: '롱폼',
+  shortform: '숏폼',
 }
 
-function formatDate(s: string | null): string {
-  if (!s) return '—';
-  return new Date(s).toLocaleDateString('ko-KR', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
+type SubmissionWithRelations = Submission & {
+  applications: (Application & {
+    creators: Pick<Creator, 'id' | 'name'> | null
+    campaigns: Pick<Campaign, 'id' | 'title' | 'game_name'> | null
+  }) | null
+  missions: Pick<Mission, 'id' | 'content_type' | 'guide_approved' | 'guide_draft'> | null
 }
 
-const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
-  pending: '대기',
-  processing: '처리 중',
-  completed: '완료',
-};
+type Tab = 'pending' | 'approved' | 'rejected'
 
-function StatusBadge({ status }: { status: PaymentStatus }) {
-  return (
-    <Badge variant={statusToBadgeVariant(status)} size="sm">
-      {PAYMENT_STATUS_LABELS[status]}
-    </Badge>
-  );
-}
+const CHECKLIST_LABELS = [
+  { key: 'review_url_valid', label: 'URL 유효성' },
+  { key: 'review_type_match', label: '미션 타입 일치' },
+  { key: 'review_duration_meet', label: '최소 길이/시간 충족' },
+  { key: 'review_guide_meet', label: '미션 가이드 충족' },
+] as const
 
-function SummaryCard({
-  label,
-  value,
-  sub,
-  highlight = false,
-}: {
-  label: string;
-  value: string;
-  sub?: string;
-  highlight?: boolean;
-}) {
-  return (
-    <Card variant={highlight ? 'featured' : 'default'} padding="lg">
-      <div className="flex flex-col gap-1">
-        <span className="text-xs text-text-secondary">{label}</span>
-        <span
-          className={[
-            'text-2xl font-medium tracking-tight tabular-nums leading-tight',
-            highlight ? 'text-primary' : 'text-text-primary',
-          ].join(' ')}
-        >
-          {value}
-        </span>
-        {sub && <span className="text-xs text-text-secondary">{sub}</span>}
-      </div>
-    </Card>
-  );
-}
-
-function HeaderRow() {
-  return (
-    <div
-      role="row"
-      className={`grid ${GRID} items-center gap-3 px-5 py-3 bg-bg-elevated text-xs font-medium text-text-secondary uppercase`}
-    >
-      <span>크리에이터</span>
-      <span>캠페인</span>
-      <span className="text-right">금액</span>
-      <span className="text-right">수수료</span>
-      <span className="text-right">실수령액</span>
-      <span>상태</span>
-      <span>날짜</span>
-      <span className="text-right">작업</span>
-    </div>
-  );
-}
-
-function Row({
-  item,
-  last,
-  busy,
-  onMarkCompleted,
-}: {
-  item: PayoutRow;
-  last: boolean;
-  busy: boolean;
-  onMarkCompleted: (id: string) => void;
-}) {
-  return (
-    <div
-      role="row"
-      className={[
-        `grid ${GRID} items-center gap-3 px-5 py-3 transition-colors duration-150 ease-out hover:bg-bg-hover`,
-        last ? '' : 'border-b border-border',
-      ].join(' ')}
-    >
-      <div className="flex items-center gap-2 min-w-0">
-        <span className="text-sm text-text-primary truncate">{item.creatorName}</span>
-        <Badge variant="primary" size="sm">
-          {item.creatorGrade}
-        </Badge>
-      </div>
-
-      <div className="flex flex-col min-w-0">
-        <span className="text-sm font-medium text-text-primary truncate">
-          {item.campaignName}
-        </span>
-        <span className="text-[11px] text-text-secondary truncate">{item.developer}</span>
-      </div>
-
-      <span className="text-sm font-medium tabular-nums text-text-primary text-right">
-        {formatCompactKRW(item.reward)}
-      </span>
-
-      <span className="text-sm tabular-nums text-success text-right">
-        +{formatCompactKRW(item.platformFee)}
-      </span>
-
-      <span className="text-sm font-medium tabular-nums text-text-secondary text-right">
-        {formatCompactKRW(item.amount)}
-      </span>
-
-      <StatusBadge status={item.status} />
-
-      <span className="text-xs text-text-secondary tabular-nums">
-        {formatDate(item.paidAt)}
-      </span>
-
-      <div className="flex items-center justify-end">
-        {item.status === 'pending' ? (
-          <Button
-            variant="primary"
-            size="sm"
-            disabled={busy}
-            onClick={() => onMarkCompleted(item.id)}
-          >
-            완료 처리
-          </Button>
-        ) : (
-          <span className="text-[11px] text-text-muted">—</span>
-        )}
-      </div>
-    </div>
-  );
-}
-
-export default function AdminPayoutsPage() {
-  const { data: profile, loading: profileLoading } = useCurrentProfile();
-  const badgeCounts = useAdminBadgeCounts();
-  const [payouts, setPayouts] = useState<PayoutRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [busyId, setBusyId] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
-
-  const fetchPayouts = useCallback(async () => {
-    if (!HAS_SUPABASE_ENV) {
-      setPayouts([]);
-      setLoading(false);
-      return;
-    }
-    const supabase = createBrowserSupabaseClient();
-    const { data, error } = await supabase
-      .from('payments')
-      .select(
-        `
-        id, amount, platform_fee, status, paid_at,
-        creators ( name ),
-        submissions (
-          reward,
-          campaigns ( title, game_name )
-        )
-      `,
-      )
-      .order('paid_at', { ascending: false });
-
-    if (error) {
-      toast.error(`정산 조회 실패: ${error.message}`);
-      setPayouts([]);
-      setLoading(false);
-      return;
-    }
-
-    const rows: PayoutRow[] = (data ?? []).map((p) => {
-      const raw = p as unknown as {
-        id: string;
-        amount: number;
-        platform_fee: number;
-        status: PaymentStatus;
-        paid_at: string | null;
-        creators:
-          | { name?: string }
-          | { name?: string }[]
-          | null;
-        submissions:
-          | {
-              reward?: number;
-              campaigns:
-                | { title?: string; game_name?: string }
-                | { title?: string; game_name?: string }[]
-                | null;
-            }
-          | {
-              reward?: number;
-              campaigns: unknown;
-            }[]
-          | null;
-      };
-
-      const creator = Array.isArray(raw.creators) ? raw.creators[0] : raw.creators;
-      const submission = Array.isArray(raw.submissions)
-        ? raw.submissions[0]
-        : raw.submissions;
-      const campaign = submission
-        ? Array.isArray((submission as { campaigns?: unknown }).campaigns)
-          ? ((submission as { campaigns: { title?: string; game_name?: string }[] })
-              .campaigns[0])
-          : ((submission as { campaigns: { title?: string; game_name?: string } | null })
-              .campaigns)
-        : null;
-
-      // TODO(rebuild): grade moved to creator_channels; default to 'E'
-      const grade: Grade = 'E';
-
-      return {
-        id: raw.id,
-        amount: raw.amount,
-        platformFee: raw.platform_fee,
-        status: raw.status,
-        paidAt: raw.paid_at,
-        reward:
-          (submission as { reward?: number } | null)?.reward ??
-          raw.amount + raw.platform_fee,
-        creatorName: creator?.name ?? '알 수 없음',
-        creatorGrade: grade,
-        campaignName: campaign?.title ?? '알 수 없는 캠페인',
-        developer: campaign?.game_name ?? '',
-      };
-    });
-    setPayouts(rows);
-    setLoading(false);
-  }, []);
+export default function AdminReviewPage() {
+  const [submissions, setSubmissions] = useState<SubmissionWithRelations[]>([])
+  const [loading, setLoading] = useState(true)
+  const [tab, setTab] = useState<Tab>('pending')
+  const [processing, setProcessing] = useState<string | null>(null)
+  const [checks, setChecks] = useState<Record<string, Record<string, boolean>>>({})
+  const [notes, setNotes] = useState<Record<string, string>>({})
+  const supabase = createClient()
 
   useEffect(() => {
-    void fetchPayouts();
-  }, [fetchPayouts]);
+    supabase
+      .from('submissions')
+      .select(`
+        *,
+        applications(*, creators(id, name), campaigns(id, title, game_name)),
+        missions(id, content_type, guide_approved, guide_draft)
+      `)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => {
+        setSubmissions((data ?? []) as SubmissionWithRelations[])
+        setLoading(false)
+      })
+  }, [])
 
-  const summary = useMemo(() => {
-    const totalPayouts = payouts.reduce((sum, p) => sum + p.amount, 0);
-    const platformRevenue = payouts.reduce((sum, p) => sum + p.platformFee, 0);
-    const pending = payouts.filter((p) => p.status === 'pending').length;
-    const completed = payouts.filter((p) => p.status === 'completed').length;
-    return { totalPayouts, platformRevenue, pending, completed };
-  }, [payouts]);
-
-  const counts = useMemo(() => {
-    const c: Record<StatusFilter, number> = {
-      all: payouts.length,
-      pending: summary.pending,
-      processing: payouts.filter((p) => p.status === 'processing').length,
-      completed: summary.completed,
-    };
-    return c;
-  }, [payouts, summary]);
-
-  const filtered = useMemo(() => {
-    if (statusFilter === 'all') return payouts;
-    return payouts.filter((p) => p.status === statusFilter);
-  }, [payouts, statusFilter]);
-
-  const handleMarkCompleted = async (paymentId: string) => {
-    setBusyId(paymentId);
-    try {
-      const supabase = createBrowserSupabaseClient();
-      const { error } = await supabase
-        .from('payments')
-        .update({
-          status: 'completed',
-          paid_at: new Date().toISOString(),
-        })
-        .eq('id', paymentId);
-      if (error) {
-        toast.error(`상태 변경 실패: ${error.message}`);
-        return;
-      }
-      toast.success('정산이 완료 처리되었습니다');
-      await fetchPayouts();
-    } catch (err) {
-      console.error('[ADMIN PAYOUTS] catch error:', err);
-      toast.error(
-        `오류가 발생했습니다: ${err instanceof Error ? err.message : String(err)}`,
-      );
-    } finally {
-      setBusyId(null);
-    }
-  };
-
-  if (profileLoading || loading) {
-    return (
-      <div className="min-h-screen bg-bg-base flex items-center justify-center">
-        <span className="text-text-secondary text-sm">불러오는 중…</span>
-      </div>
-    );
+  const getChecks = (id: string) => checks[id] ?? {
+    review_url_valid: false,
+    review_type_match: false,
+    review_duration_meet: false,
+    review_guide_meet: false,
   }
 
-  const adminName = profile?.email?.trim() || '민석';
-  const initials = adminName.slice(0, 2).toUpperCase();
+  const allChecked = (id: string) => Object.values(getChecks(id)).every(Boolean)
+
+  const handleApprove = async (submission: SubmissionWithRelations) => {
+    setProcessing(submission.id)
+    const c = getChecks(submission.id)
+    await supabase.from('submissions').update({
+      ...c,
+      status: 'approved',
+      admin_note: notes[submission.id] ?? null,
+      reviewed_at: new Date().toISOString(),
+    }).eq('id', submission.id)
+    setSubmissions(prev => prev.map(s => s.id === submission.id ? { ...s, status: 'approved' } : s))
+    setProcessing(null)
+  }
+
+  const handleReject = async (submission: SubmissionWithRelations) => {
+    if (!notes[submission.id]?.trim()) {
+      alert('거절 사유를 입력해주세요')
+      return
+    }
+    setProcessing(submission.id)
+    const c = getChecks(submission.id)
+    await supabase.from('submissions').update({
+      ...c,
+      status: 'rejected',
+      admin_note: notes[submission.id],
+      reviewed_at: new Date().toISOString(),
+    }).eq('id', submission.id)
+    setSubmissions(prev => prev.map(s => s.id === submission.id ? { ...s, status: 'rejected' } : s))
+    setProcessing(null)
+  }
+
+  const filtered = submissions.filter(s => s.status === tab)
+  const pendingCount = submissions.filter(s => s.status === 'pending').length
+
+  if (loading) return (
+    <div className="min-h-screen bg-[#0A0A0F] flex items-center justify-center">
+      <div className="text-white/30">로딩 중...</div>
+    </div>
+  )
 
   return (
-    <WorkspaceLayout
-      persona="admin"
-      userName={adminName}
-      userAvatar={initials}
-      userBadge="관리자"
-      sidebarSections={getAdminSidebar('payouts', {
-        review: badgeCounts.review,
-        payouts: badgeCounts.payouts,
-      })}
-      notificationCount={badgeCounts.notification}
-    >
-      <header className="mb-6">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-primary">
-          관리자 · 정산 지급
-        </span>
-        <h1 className="text-[22px] font-medium text-text-primary leading-tight mt-1.5">
-          정산 지급
+    <div className="min-h-screen bg-[#0A0A0F] px-4 py-8">
+      <div className="max-w-3xl mx-auto space-y-6">
+
+        <h1 className="text-2xl font-black text-white" style={{ fontFamily: 'Arial Black' }}>
+          콘텐츠 검수
         </h1>
-        <p className="text-sm text-text-secondary mt-1">플랫폼 정산 관리</p>
-      </header>
 
-      <section className="mb-9 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        <SummaryCard
-          label="총 지급액"
-          value={formatCompactKRW(summary.totalPayouts)}
-          sub="크리에이터 지급"
-        />
-        <SummaryCard
-          label="플랫폼 매출"
-          value={formatCompactKRW(summary.platformRevenue)}
-          sub="15% 수수료"
-          highlight
-        />
-        <SummaryCard
-          label="대기"
-          value={summary.pending.toString()}
-          sub="지급 대기"
-        />
-        <SummaryCard
-          label="완료"
-          value={summary.completed.toString()}
-          sub="처리된 결제"
-        />
-      </section>
-
-      <div className="flex items-center gap-2 flex-wrap mb-4">
-        {STATUS_FILTERS.map((f) => (
-          <Pill
-            key={f.id}
-            variant={statusFilter === f.id ? 'active' : 'default'}
-            onClick={() => setStatusFilter(f.id)}
-          >
-            {f.label}
-            <span
-              className={[
-                'ml-1.5 tabular-nums',
-                statusFilter === f.id ? 'text-white/70' : 'text-text-muted',
-              ].join(' ')}
+        {/* 탭 */}
+        <div className="flex gap-2">
+          {([
+            { key: 'pending', label: `검수 대기 (${pendingCount})` },
+            { key: 'approved', label: '승인됨' },
+            { key: 'rejected', label: '거절됨' },
+          ] as { key: Tab; label: string }[]).map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => setTab(key)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                tab === key
+                  ? 'bg-[#9B7EC8] text-white'
+                  : 'bg-white/5 text-white/50 hover:bg-white/10'
+              }`}
             >
-              {counts[f.id]}
-            </span>
-          </Pill>
-        ))}
-      </div>
+              {label}
+            </button>
+          ))}
+        </div>
 
-      <Card padding="none" className="overflow-hidden mb-12">
-        <HeaderRow />
+        {/* 검수 목록 */}
         {filtered.length === 0 ? (
-          <div className="px-5 py-16 text-center">
-            <p className="text-sm text-text-primary mb-1">
-              {payouts.length === 0
-                ? '아직 정산 내역이 없습니다.'
-                : '필터에 맞는 정산 내역이 없습니다.'}
-            </p>
-            <p className="text-xs text-text-secondary">
-              {payouts.length === 0
-                ? '콘텐츠가 승인되면 정산 내역이 표시됩니다.'
-                : '다른 상태 필터를 시도해 보세요.'}
-            </p>
+          <div className="bg-white/5 rounded-xl p-8 text-center border border-dashed border-white/10">
+            <p className="text-white/30 text-sm">제출된 콘텐츠가 없습니다</p>
           </div>
         ) : (
-          filtered.map((item, i) => (
-            <Row
-              key={item.id}
-              item={item}
-              last={i === filtered.length - 1}
-              busy={busyId === item.id}
-              onMarkCompleted={handleMarkCompleted}
-            />
-          ))
+          <div className="space-y-4">
+            {filtered.map(submission => (
+              <div key={submission.id} className="bg-white/5 rounded-xl p-5 border border-white/5 space-y-4">
+
+                {/* 헤더 */}
+                <div className="flex justify-between items-start">
+                  <div>
+                    <div className="font-bold text-white">
+                      {submission.applications?.campaigns?.game_name ?? '알 수 없는 게임'}
+                      <span className="text-white/40 font-normal text-sm ml-2">
+                        — {CONTENT_TYPE_LABELS[submission.missions?.content_type ?? ''] ?? ''}
+                      </span>
+                    </div>
+                    <div className="text-xs text-white/40 mt-0.5">
+                      크리에이터: {submission.applications?.creators?.name ?? '알 수 없음'}
+                    </div>
+                  </div>
+                  <span className={`text-xs px-2 py-1 rounded-full ${
+                    submission.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
+                    submission.status === 'approved' ? 'bg-green-500/20 text-green-400' :
+                    'bg-red-500/20 text-red-400'
+                  }`}>
+                    {submission.status === 'pending' ? '검수 대기' :
+                     submission.status === 'approved' ? '승인됨' : '거절됨'}
+                  </span>
+                </div>
+
+                {/* 제출 URL */}
+                <div className="space-y-1">
+                  <div className="text-xs text-white/40">제출 URL</div>
+                  {(submission.platform_urls as { platform: string; url: string }[]).map((pu, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <span className="text-xs text-white/30 w-16">{pu.platform}</span>
+                      <a
+                        href={pu.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-[#9B7EC8] hover:underline truncate flex-1"
+                      >
+                        {pu.url}
+                      </a>
+                      <a
+                        href={pu.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-white/30 hover:text-white transition-colors whitespace-nowrap"
+                      >
+                        ▶ 열기
+                      </a>
+                    </div>
+                  ))}
+                </div>
+
+                {/* 미션 가이드 */}
+                {(submission.missions?.guide_approved || submission.missions?.guide_draft) && (
+                  <div className="bg-white/5 rounded-lg p-3">
+                    <div className="text-xs text-white/40 mb-1">미션 가이드</div>
+                    <p className="text-xs text-white/60">
+                      {submission.missions.guide_approved || submission.missions.guide_draft}
+                    </p>
+                  </div>
+                )}
+
+                {/* 검수 체크리스트 (pending만) */}
+                {submission.status === 'pending' && (
+                  <div className="space-y-3">
+                    <div className="text-xs text-white/40">검수 체크리스트</div>
+                    <div className="space-y-2">
+                      {CHECKLIST_LABELS.map(({ key, label }) => (
+                        <label key={key} className="flex items-center gap-3 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={getChecks(submission.id)[key] ?? false}
+                            onChange={e => setChecks(prev => ({
+                              ...prev,
+                              [submission.id]: {
+                                ...getChecks(submission.id),
+                                [key]: e.target.checked,
+                              }
+                            }))}
+                            className="w-4 h-4 accent-[#9B7EC8]"
+                          />
+                          <span className="text-sm text-white/60">{label}</span>
+                        </label>
+                      ))}
+                    </div>
+
+                    {/* 거절 사유 */}
+                    <input
+                      className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#9B7EC8]"
+                      placeholder="거절 사유 (거절 시 필수)"
+                      value={notes[submission.id] ?? ''}
+                      onChange={e => setNotes(prev => ({ ...prev, [submission.id]: e.target.value }))}
+                    />
+
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleReject(submission)}
+                        disabled={processing === submission.id}
+                        className="flex-1 py-2 rounded-lg text-sm font-medium border border-white/10 text-white/50 hover:bg-white/5 transition-all disabled:opacity-30"
+                      >
+                        거절
+                      </button>
+                      <button
+                        onClick={() => handleApprove(submission)}
+                        disabled={processing === submission.id || !allChecked(submission.id)}
+                        className="flex-grow flex-2 py-2 rounded-lg text-sm font-bold text-white transition-all disabled:opacity-30 hover:opacity-90"
+                        style={{ background: '#9B7EC8' }}
+                      >
+                        {processing === submission.id ? '처리 중...' : '승인 ✓'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* 완료된 검수의 결과 표시 */}
+                {submission.status !== 'pending' && (
+                  <div className="pt-2 border-t border-white/5 space-y-1">
+                    <div className="flex flex-wrap gap-2">
+                      {CHECKLIST_LABELS.map(({ key, label }) => (
+                        <span key={key} className={`text-xs px-2 py-0.5 rounded-full ${
+                          submission[key] ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'
+                        }`}>
+                          {label} {submission[key] ? '✓' : '✗'}
+                        </span>
+                      ))}
+                    </div>
+                    {submission.admin_note && (
+                      <p className="text-xs text-white/30">{submission.admin_note}</p>
+                    )}
+                  </div>
+                )}
+
+              </div>
+            ))}
+          </div>
         )}
-      </Card>
-    </WorkspaceLayout>
-  );
+
+      </div>
+    </div>
+  )
 }

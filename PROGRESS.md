@@ -144,7 +144,20 @@ creator: `page`, `profile`, `settings`, `activity`, `earnings`, `_components/Rec
 
 ---
 
-## 남은 타입 에러: **8건** (`npx tsc --noEmit` 기준, Task 2~8 후 동일)
+## Task 9 — Admin 콘텐츠 검수 페이지 (완료, 2026-06-11)
+
+- `src/app/admin/payouts/page.tsx` 전면 교체: 기존 정산 페이지 → **콘텐츠 검수 페이지**(라우트 `/admin/payouts` 유지, 컴포넌트 `AdminReviewPage`).
+- `submissions(+applications(+creators,+campaigns), +missions)` 조회, 탭(검수대기/승인됨/거절됨) + 대기 건수.
+- `platform_urls` 링크 표시, 미션 가이드 표시.
+- 4개 체크리스트(`review_url_valid`/`type_match`/`duration_meet`/`guide_meet`) — **전부 체크해야 승인 활성화**. 승인→`approved`+체크값+`reviewed_at` 저장, 거절→사유 필수+`rejected`.
+- Task 7(크리에이터 지원/제출) 흐름의 검수 단계. 타입 에러 0건.
+
+### 비고
+- 라우트 경로는 `/admin/payouts` 그대로지만 내용이 "검수"로 바뀜 → 사이드바/내비 라벨이 "정산"으로 남아 있다면 후속 정리 필요(이번 범위 밖).
+
+---
+
+## 남은 타입 에러: **8건** (`npx tsc --noEmit` 기준, Task 2~9 후 동일)
 
 전부 **외부 모듈 미설치(TS2307)** — protected 파일이라 미수정:
 
