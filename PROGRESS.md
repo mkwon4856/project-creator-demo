@@ -119,7 +119,21 @@ creator: `page`, `profile`, `settings`, `activity`, `earnings`, `_components/Rec
 
 ---
 
-## 남은 타입 에러: **8건** (`npx tsc --noEmit` 기준, Task 2~6 후 동일)
+## Task 7 — 크리에이터 캠페인 탐색/지원 페이지 (완료, 2026-06-11)
+
+- `src/app/creator/page.tsx` 전면 교체: 새 스키마 기반 캠페인 탐색·지원(다크 디자인).
+- `useCreator` + `creator_channels`/`campaigns(+missions)`/`applications` 병렬 조회.
+- 내 채널 등급(`creator_channels`)과 미션의 `allowed_grades`·`content_type`을 매칭해 **참여 가능한 캠페인만** 필터, 콘텐츠 타입 필터 제공.
+- `RATE_MATRIX`로 내 수령 예상액 표시. 지원 시 `applications` insert(`status: 'confirmed'`) + 해당 미션 `status: 'filled'` 업데이트, 중복 지원 방지.
+- Task 6(채널 등록)에서 입력된 등급 데이터를 **실제로 소비**하는 첫 화면.
+- 타입 에러 0건.
+
+### 비고
+- TASK 코드 133행에 `new Set(` 괄호 미닫힘 **구문 오류**가 있어 `))]`로 바로잡아 작성(안 고치면 빌드 실패).
+
+---
+
+## 남은 타입 에러: **8건** (`npx tsc --noEmit` 기준, Task 2~7 후 동일)
 
 전부 **외부 모듈 미설치(TS2307)** — protected 파일이라 미수정:
 

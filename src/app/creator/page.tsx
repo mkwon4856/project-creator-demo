@@ -1,171 +1,247 @@
-'use client';
+'use client'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
+import { useCreator } from '@/lib/supabase/hooks'
+import { RATE_MATRIX } from '@/lib/pricing'
+import type { Campaign, Mission, CreatorChannel, Grade, ContentType } from '@/lib/db.types'
 
-import { ArrowRight } from 'lucide-react';
-import Link from 'next/link';
-import { useEffect, useState, type ReactNode } from 'react';
-
-import { PageHeader, WorkspaceLayout } from '@/components/layout';
-import { ProfileCompletion } from '@/components/creator/ProfileCompletion';
-import {
-  WelcomeModal,
-  WELCOME_SEEN_KEY,
-} from '@/components/onboarding/WelcomeModal';
-import { Button, StatCard } from '@/components/ui';
-import type { Creator as DbCreator } from '@/lib/db.types';
-import { CURRENT_CREATOR, type Creator } from '@/lib/mockCreators';
-import { useCurrentCreator } from '@/lib/supabase/hooks';
-
-import { ActivityTable } from './_components/ActivityTable';
-import { CreatorProfileBar } from './_components/CreatorProfileBar';
-import { formatEarningsMoney, useEarningsStats } from './_components/EarningsOverview';
-import { RecommendedCampaigns } from './_components/RecommendedCampaigns';
-import { getCreatorSidebar } from './_config/sidebar';
-
-type CreatorRow = DbCreator;
-
-function rowToCreator(row: CreatorRow): Creator {
-  // TODO(rebuild): source grade/subscribers/avgViews/rating/completedCampaigns/isVerified from creator_channels
-  return {
-    id: row.id,
-    name: row.name,
-    handle: row.name,
-    grade: 'E',
-    emoji: '🐒',
-    subscribers: 0,
-    avgViews: 0,
-    rating: 0,
-    completedCampaigns: 0,
-    isVerified: false,
-    bio: row.bio ?? '',
-  };
+const CONTENT_TYPE_LABELS: Record<ContentType, string> = {
+  live: '라이브',
+  longform: '롱폼',
+  shortform: '숏폼',
 }
 
-function SectionTitle({
-  title,
-  href,
-  cta = '전체 보기',
-}: {
-  title: string;
-  href?: string;
-  cta?: ReactNode;
-}) {
-  return (
-    <div className="flex items-center justify-between gap-3 mb-4">
-      <h2 className="text-lg font-semibold text-text-primary leading-tight">{title}</h2>
-      {href && (
-        <Link href={href}>
-          <Button variant="ghost" size="sm" icon={<ArrowRight size={14} />} iconPosition="right">
-            {cta}
-          </Button>
-        </Link>
-      )}
-    </div>
-  );
-}
+type CampaignWithMissions = Campaign & { missions: Mission[] }
 
-function CreatorDashboardStats() {
-  const { stats, inProgressCount } = useEarningsStats();
-
-  return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
-      <StatCard
-        label="진행 중 활동"
-        value={String(inProgressCount)}
-        sub="제작 중인 캠페인"
-      />
-      <StatCard
-        label="검수 대기"
-        value={String(stats.reviewCount)}
-        sub={stats.reviewCount > 0 ? '검토 대기 중' : '대기 항목 없음'}
-      />
-      <StatCard
-        label="이번 달 수익"
-        value={formatEarningsMoney(stats.thisMonth)}
-        sub={`${stats.thisMonthPaidCount}건 지급`}
-      />
-      <StatCard
-        label="누적 수익"
-        value={formatEarningsMoney(stats.allTime)}
-        sub={`${stats.paidCount}건 완료`}
-      />
-    </div>
-  );
-}
-
-export default function CreatorWorkspacePage() {
-  const { data: row, loading } = useCurrentCreator();
-  const [showWelcome, setShowWelcome] = useState(false);
+export default function CreatorDashboard() {
+  const router = useRouter()
+  const { creator, loading: creatorLoading } = useCreator()
+  const [channels, setChannels] = useState<CreatorChannel[]>([])
+  const [campaigns, setCampaigns] = useState<CampaignWithMissions[]>([])
+  const [applications, setApplications] = useState<{ campaign_id: string; content_type: ContentType }[]>([])
+  const [loading, setLoading] = useState(true)
+  const [applying, setApplying] = useState<string | null>(null)
+  const [filter, setFilter] = useState<ContentType | 'all'>('all')
+  const supabase = createClient()
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if (!window.localStorage.getItem(WELCOME_SEEN_KEY)) {
-      setShowWelcome(true);
-    }
-  }, []);
+    if (!creator) return
+    Promise.all([
+      supabase.from('creator_channels').select('*').eq('creator_id', creator.id),
+      supabase.from('campaigns').select('*, missions(*)').eq('status', 'active').order('created_at', { ascending: false }),
+      supabase.from('applications').select('campaign_id, content_type').eq('creator_id', creator.id),
+    ]).then(([{ data: ch }, { data: cp }, { data: ap }]) => {
+      setChannels(ch ?? [])
+      setCampaigns((cp ?? []) as CampaignWithMissions[])
+      setApplications(ap ?? [])
+      setLoading(false)
+    })
+  }, [creator])
 
-  const closeWelcome = () => {
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem(WELCOME_SEEN_KEY, 'true');
-    }
-    setShowWelcome(false);
-  };
+  // 내 등급 목록
+  const myGrades = channels.map(ch => ({ grade: ch.grade, content_type: ch.content_type }))
 
-  // TODO(rebuild): source connected platforms from creator_channels
-  const connectedPlatforms = 0;
+  // 캠페인 필터링: 내 등급에 맞는 미션이 있는 캠페인만
+  const eligibleCampaigns = campaigns.filter(campaign => {
+    return campaign.missions.some(mission => {
+      const hasGrade = myGrades.some(g =>
+        g.content_type === mission.content_type &&
+        mission.allowed_grades.includes(g.grade)
+      )
+      return hasGrade && mission.status === 'open'
+    })
+  })
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-bg-base flex items-center justify-center">
-        <span className="text-text-secondary text-sm">불러오는 중…</span>
-      </div>
-    );
+  const filteredCampaigns = eligibleCampaigns.filter(campaign => {
+    if (filter === 'all') return true
+    return campaign.missions.some(m => m.content_type === filter && m.status === 'open')
+  })
+
+  // 내 수령 예상 금액 계산
+  const getMyRate = (campaign: CampaignWithMissions, contentType: ContentType): number => {
+    const myGrade = myGrades.find(g => g.content_type === contentType)
+    if (!myGrade) return 0
+    return RATE_MATRIX[myGrade.grade]?.[contentType] ?? 0
   }
 
-  const creator: Creator = row ? rowToCreator(row) : CURRENT_CREATOR;
+  const hasApplied = (campaignId: string, contentType: ContentType) => {
+    return applications.some(a => a.campaign_id === campaignId && a.content_type === contentType)
+  }
+
+  const handleApply = async (campaign: CampaignWithMissions, contentType: ContentType) => {
+    if (!creator) return
+    const key = `${campaign.id}:${contentType}`
+    setApplying(key)
+
+    // 해당 미션 슬롯 찾기
+    const mission = campaign.missions.find(m =>
+      m.content_type === contentType &&
+      m.status === 'open' &&
+      myGrades.some(g => g.content_type === contentType && m.allowed_grades.includes(g.grade))
+    )
+
+    const { error } = await supabase.from('applications').insert({
+      campaign_id: campaign.id,
+      creator_id: creator.id,
+      content_type: contentType,
+      mission_id: mission?.id ?? null,
+      status: 'confirmed',
+    })
+
+    if (!error) {
+      setApplications(prev => [...prev, { campaign_id: campaign.id, content_type: contentType }])
+      // 미션 상태 filled로 업데이트
+      if (mission) {
+        await supabase.from('missions').update({ status: 'filled' }).eq('id', mission.id)
+      }
+    }
+    setApplying(null)
+  }
+
+  if (creatorLoading || loading) return (
+    <div className="min-h-screen bg-[#0A0A0F] flex items-center justify-center">
+      <div className="text-white/30">로딩 중...</div>
+    </div>
+  )
 
   return (
-    <WorkspaceLayout
-      persona="creator"
-      userName={creator.name}
-      userAvatar={creator.emoji}
-      userBadge={`${creator.grade}티어`}
-      sidebarSections={getCreatorSidebar('browse')}
-      notificationCount={3}
-    >
-      <div className="max-w-7xl mx-auto px-4 md:px-6 space-y-10">
-        <PageHeader title="대시보드" />
+    <div className="min-h-screen bg-[#0A0A0F] px-4 py-8">
+      <div className="max-w-2xl mx-auto space-y-6">
 
-        <CreatorProfileBar creator={creator} />
+        {/* 헤더 */}
+        <div className="flex justify-between items-start">
+          <div>
+            <h1 className="text-2xl font-black text-white" style={{ fontFamily: 'Arial Black' }}>
+              참여 가능한 캠페인
+            </h1>
+            {myGrades.length > 0 && (
+              <p className="text-xs text-white/30 mt-1">
+                내 등급: {[...new Set(myGrades.map(g => `${g.grade}(${CONTENT_TYPE_LABELS[g.content_type]})`))].join(' · ')}
+              </p>
+            )}
+          </div>
+          <button
+            onClick={() => router.push('/creator/profile')}
+            className="text-xs text-[#9B7EC8] hover:text-[#9B7EC8]/80 transition-colors"
+          >
+            채널 관리 →
+          </button>
+        </div>
 
-        {row && (
-          <ProfileCompletion
-            displayName={row.name}
-            handle={row.name}
-            bio={row.bio ?? ''}
-            connectedPlatforms={connectedPlatforms}
-            subscribers={0}
-          />
+        {/* 채널 미등록 안내 */}
+        {myGrades.length === 0 && (
+          <div className="bg-[#9B7EC8]/10 border border-[#9B7EC8]/20 rounded-xl p-4">
+            <p className="text-sm text-[#9B7EC8]">채널을 등록해야 캠페인에 참여할 수 있어요</p>
+            <button
+              onClick={() => router.push('/creator/profile')}
+              className="text-xs text-white/50 hover:text-white mt-1 transition-colors"
+            >
+              채널 등록하기 →
+            </button>
+          </div>
         )}
 
-        <CreatorDashboardStats />
+        {/* 필터 */}
+        <div className="flex gap-2">
+          {(['all', 'live', 'longform', 'shortform'] as const).map(f => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={`px-3 py-1.5 rounded-lg text-sm transition-all ${
+                filter === f
+                  ? 'bg-[#9B7EC8] text-white'
+                  : 'bg-white/5 text-white/50 hover:bg-white/10'
+              }`}
+            >
+              {f === 'all' ? '전체' : CONTENT_TYPE_LABELS[f]}
+            </button>
+          ))}
+        </div>
 
-        <section>
-          <SectionTitle title="추천 캠페인" href="/creator" />
-          <RecommendedCampaigns />
-        </section>
+        {/* 캠페인 목록 */}
+        {filteredCampaigns.length === 0 ? (
+          <div className="bg-white/5 rounded-xl p-8 text-center border border-dashed border-white/10">
+            <p className="text-white/30 text-sm">참여 가능한 캠페인이 없습니다</p>
+            <p className="text-white/20 text-xs mt-1">
+              {myGrades.length === 0 ? '채널을 먼저 등록해주세요' : '새로운 캠페인이 열리면 알려드릴게요'}
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {filteredCampaigns.map(campaign => {
+              // 이 캠페인에서 내가 지원 가능한 미션 타입들
+              const eligibleTypes = [...new Set(
+                campaign.missions
+                  .filter(m => m.status === 'open' && myGrades.some(g =>
+                    g.content_type === m.content_type && m.allowed_grades.includes(g.grade)
+                  ))
+                  .map(m => m.content_type)
+              )] as ContentType[]
 
-        <section>
-          <SectionTitle title="최근 활동" href="/creator/activity" />
-          <ActivityTable limit={5} />
-        </section>
+              return (
+                <div key={campaign.id} className="bg-white/5 rounded-xl p-4 border border-white/5">
+                  {/* 캠페인 정보 */}
+                  <div className="flex gap-3 mb-4">
+                    {campaign.thumbnail_url && (
+                      <img src={campaign.thumbnail_url} alt="" className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />
+                    )}
+                    <div>
+                      <div className="font-medium text-white">{campaign.game_name}</div>
+                      <div className="text-xs text-white/40 mt-0.5 line-clamp-2">{campaign.description}</div>
+                    </div>
+                  </div>
+
+                  {/* 지원 가능한 미션 타입별 버튼 */}
+                  <div className="space-y-2">
+                    {eligibleTypes.map(contentType => {
+                      const myRate = getMyRate(campaign, contentType)
+                      const applied = hasApplied(campaign.id, contentType)
+                      const key = `${campaign.id}:${contentType}`
+                      const mission = campaign.missions.find(m =>
+                        m.content_type === contentType && m.status === 'open'
+                      )
+
+                      return (
+                        <div key={contentType} className="flex justify-between items-center bg-white/5 rounded-lg px-3 py-2">
+                          <div>
+                            <span className="text-sm text-white font-medium">
+                              {CONTENT_TYPE_LABELS[contentType]}
+                            </span>
+                            {mission && (
+                              <span className="text-xs text-white/30 ml-2">
+                                {mission.allowed_grades.join('/')}등급 가능
+                              </span>
+                            )}
+                            {myRate > 0 && (
+                              <div className="text-xs text-[#E5B567] mt-0.5">
+                                내 몫 ₩{myRate.toLocaleString()}
+                              </div>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => !applied && handleApply(campaign, contentType)}
+                            disabled={applied || applying === key}
+                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                              applied
+                                ? 'bg-green-500/20 text-green-400 cursor-default'
+                                : 'text-white hover:opacity-90 disabled:opacity-50'
+                            }`}
+                            style={!applied ? { background: '#9B7EC8' } : undefined}
+                          >
+                            {applied ? '지원 완료 ✓' : applying === key ? '지원 중...' : '지원하기'}
+                          </button>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+
       </div>
-
-      <WelcomeModal
-        open={showWelcome}
-        role="creator"
-        userName={creator.name}
-        onClose={closeWelcome}
-      />
-    </WorkspaceLayout>
-  );
+    </div>
+  )
 }
