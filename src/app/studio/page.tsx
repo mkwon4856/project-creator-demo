@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useStudio } from '@/lib/supabase/hooks'
 import { CreditBalance } from '@/components/studio/CreditBalance'
-import { LogoutInline } from '@/components/layout/LogoutInline'
+import { TopNav } from '@/components/layout/TopNav'
 import type { Campaign } from '@/lib/db.types'
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
@@ -48,8 +48,9 @@ export default function StudioDashboard() {
   const totalSpent = completedCampaigns.reduce((sum, c) => sum + c.total_budget, 0)
 
   return (
-    <div className="min-h-screen bg-[#0A0A0F] px-4 py-8">
-      <div className="max-w-4xl mx-auto space-y-8">
+    <div className="min-h-screen bg-[#0A0A0F]">
+      <TopNav role="studio" />
+      <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
 
         {/* 헤더 */}
         <div className="flex justify-between items-start">
@@ -59,16 +60,13 @@ export default function StudioDashboard() {
             </h1>
             <p className="text-white/40 text-sm mt-1">캠페인 현황을 한눈에 확인하세요</p>
           </div>
-          <div className="flex items-center gap-3 shrink-0">
-            <LogoutInline />
-            <button
-              onClick={() => router.push('/studio/new')}
-              className="px-4 py-2 rounded-lg font-bold text-white text-sm transition-all hover:opacity-90"
-              style={{ background: '#9B7EC8' }}
-            >
-              + 캠페인 만들기
-            </button>
-          </div>
+          <button
+            onClick={() => router.push('/studio/new')}
+            className="shrink-0 px-4 py-2 rounded-lg font-bold text-white text-sm transition-all hover:opacity-90"
+            style={{ background: '#9B7EC8' }}
+          >
+            + 캠페인 만들기
+          </button>
         </div>
 
         {/* 크레딧 잔액 */}

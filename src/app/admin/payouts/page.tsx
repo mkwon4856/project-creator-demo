@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { LogoutInline } from '@/components/layout/LogoutInline'
+import { TopNav } from '@/components/layout/TopNav'
 import type { Submission, Mission, Application, Creator, Campaign } from '@/lib/db.types'
 
 const CONTENT_TYPE_LABELS: Record<string, string> = {
@@ -103,15 +103,13 @@ export default function AdminReviewPage() {
   )
 
   return (
-    <div className="min-h-screen bg-[#0A0A0F] px-4 py-8">
-      <div className="max-w-3xl mx-auto space-y-6">
+    <div className="min-h-screen bg-[#0A0A0F]">
+      <TopNav role="admin" />
+      <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
 
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-black text-white" style={{ fontFamily: 'Arial Black' }}>
-            콘텐츠 검수
-          </h1>
-          <LogoutInline />
-        </div>
+        <h1 className="text-2xl font-black text-white" style={{ fontFamily: 'Arial Black' }}>
+          콘텐츠 검수
+        </h1>
 
         {/* 탭 */}
         <div className="flex gap-2">

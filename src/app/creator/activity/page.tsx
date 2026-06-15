@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useCreator } from '@/lib/supabase/hooks'
-import { LogoutInline } from '@/components/layout/LogoutInline'
+import { TopNav } from '@/components/layout/TopNav'
 import { formatHoldRemaining } from '@/lib/credits'
 import type {
   Application,
@@ -119,25 +119,15 @@ export default function CreatorActivityPage() {
   )
 
   return (
-    <div className="min-h-screen bg-[#0A0A0F] px-4 py-8">
-      <div className="max-w-2xl mx-auto space-y-6">
+    <div className="min-h-screen bg-[#0A0A0F]">
+      <TopNav role="creator" />
+      <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
 
-        <div className="flex justify-between items-start">
-          <div>
-            <h1 className="text-2xl font-black text-white" style={{ fontFamily: 'Arial Black' }}>
-              내 지원 현황
-            </h1>
-            <p className="text-xs text-white/30 mt-1">지원한 캠페인과 콘텐츠 제출 상태</p>
-          </div>
-          <div className="flex items-center gap-3 shrink-0">
-            <button
-              onClick={() => router.push('/creator')}
-              className="text-xs text-[#9B7EC8] hover:text-[#9B7EC8]/80 transition-colors"
-            >
-              캠페인 탐색 →
-            </button>
-            <LogoutInline />
-          </div>
+        <div>
+          <h1 className="text-2xl font-black text-white" style={{ fontFamily: 'Arial Black' }}>
+            내 지원 현황
+          </h1>
+          <p className="text-xs text-white/30 mt-1">지원한 캠페인과 콘텐츠 제출 상태</p>
         </div>
 
         {apps.length === 0 ? (

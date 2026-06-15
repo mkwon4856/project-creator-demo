@@ -12,6 +12,9 @@ export type { DemoBannerProps } from './DemoBanner';
 
 export { LogoutButton } from './LogoutButton';
 
+export { TopNav } from './TopNav';
+export type { TopNavRole } from './TopNav';
+
 export { Sidebar } from './Sidebar';
 export type {
   SidebarProps,

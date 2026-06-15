@@ -9,6 +9,7 @@ import { createCampaign, createMissions } from '@/lib/api/campaigns'
 import { toStudioAmount, RATE_MATRIX } from '@/lib/pricing'
 import { createClient } from '@/lib/supabase/client'
 import { useStudio } from '@/lib/supabase/hooks'
+import { TopNav } from '@/components/layout/TopNav'
 import type { WizardState, MissionSlot } from './_types'
 import type { Grade } from '@/lib/db.types'
 
@@ -136,8 +137,9 @@ export default function NewCampaignPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0A0F] px-4 py-8">
-      <div className="max-w-xl mx-auto">
+    <div className="min-h-screen bg-[#0A0A0F]">
+      <TopNav role="studio" />
+      <div className="max-w-xl mx-auto px-4 py-8">
         <h1 className="text-2xl font-black text-white mb-6" style={{ fontFamily: 'Arial Black' }}>
           새 캠페인 만들기
         </h1>
