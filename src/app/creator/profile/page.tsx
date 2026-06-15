@@ -252,6 +252,56 @@ export default function CreatorProfilePage() {
           </button>
         </div>
 
+        {/* 정산 정보 — 자리만 (실제 수집/검증은 세무사 자문 후) */}
+        {/* TODO(정산): 세무사 자문 후 수집 항목 확정 + PIPA 대응 */}
+        <div className="bg-white/5 rounded-xl p-6 border border-white/5 space-y-4 opacity-90">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-medium text-white/70">정산 정보</h2>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#E5B567]/15 text-[#E5B567]">준비 중</span>
+          </div>
+          <p className="text-xs text-white/40 leading-relaxed">
+            정산 정보(예금주, 계좌, 사업자 여부)는 서비스 정식 오픈 시 등록 가능합니다. (준비 중)
+          </p>
+
+          <div>
+            <label className="text-xs text-white/40 mb-2 block">사업자 여부</label>
+            <div className="flex gap-2">
+              {['개인', '개인사업자'].map(t => (
+                <button
+                  key={t}
+                  type="button"
+                  disabled
+                  className="px-3 py-1.5 rounded-lg text-sm bg-white/5 text-white/30 cursor-not-allowed"
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs text-white/40 mb-2 block">예금주</label>
+            <input
+              disabled
+              placeholder="실명 예금주"
+              className="w-full bg-white/[0.03] border border-white/10 rounded-lg px-4 py-3 text-white/30 placeholder-white/20 cursor-not-allowed text-sm"
+            />
+          </div>
+
+          <div>
+            <label className="text-xs text-white/40 mb-2 block">계좌번호</label>
+            <input
+              disabled
+              placeholder="은행 / 계좌번호"
+              className="w-full bg-white/[0.03] border border-white/10 rounded-lg px-4 py-3 text-white/30 placeholder-white/20 cursor-not-allowed text-sm"
+            />
+          </div>
+
+          <p className="text-[11px] text-white/25">
+            ※ 주민등록번호·사업자등록번호 등 민감 정보는 세무사 자문 및 개인정보 처리 절차 확정 후 수집됩니다.
+          </p>
+        </div>
+
       </div>
     </div>
   )

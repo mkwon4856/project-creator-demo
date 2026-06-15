@@ -15,7 +15,7 @@ type SubmissionWithRelations = Submission & {
     creators: Pick<Creator, 'id' | 'name'> | null
     campaigns: Pick<Campaign, 'id' | 'title' | 'game_name'> | null
   }) | null
-  missions: Pick<Mission, 'id' | 'content_type' | 'guide_approved' | 'guide_draft'> | null
+  missions: Pick<Mission, 'id' | 'content_type' | 'guide_approved' | 'guide_draft' | 'creator_amount'> | null
 }
 
 type Tab = 'pending' | 'approved' | 'rejected'
@@ -42,7 +42,7 @@ export default function AdminReviewPage() {
       .select(`
         *,
         applications(*, creators(id, name), campaigns(id, title, game_name)),
-        missions(id, content_type, guide_approved, guide_draft)
+        missions(id, content_type, guide_approved, guide_draft, creator_amount)
       `)
       .order('created_at', { ascending: false })
       .then(({ data }) => {
@@ -69,9 +69,22 @@ export default function AdminReviewPage() {
       status: 'approved',
       admin_note: notes[submission.id] ?? null,
       reviewed_at: now,
-      // 홀드 시작 시점. 실제 지급(payout)은 홀드기간 경과 후 process-payouts에서 처리.
+      // 홀드 시작 시점. 홀드기간 경과 후 process-payouts(accrue)가 available로 전환.
       approved_at: now,
     }).eq('id', submission.id)
+
+    // 검수 승인 즉시 크리에이터 적립 대기(pending)에 반영.
+    // (홀드 종료 시 process-payouts가 pending → available 로 이동)
+    const creatorId = submission.applications?.creators?.id
+    const creatorAmount = submission.missions?.creator_amount ?? 0
+    if (creatorId && creatorAmount > 0) {
+      const { error: pendErr } = await supabase.rpc('add_pending', {
+        p_creator_id: creatorId,
+        p_amount: creatorAmount,
+      })
+      if (pendErr) console.error('add_pending:', pendErr.message)
+    }
+
     setSubmissions(prev => prev.map(s => s.id === submission.id ? { ...s, status: 'approved' } : s))
     setProcessing(null)
   }

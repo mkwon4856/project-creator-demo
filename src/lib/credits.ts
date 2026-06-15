@@ -3,6 +3,18 @@
 // [시연용 임시 변경] 0.0833 = 5분 (실서비스 복구 시 24로 되돌릴 것)
 export const HOLD_DURATION_HOURS = 0.0833
 
+// 최소 출금 금액 (1만원). DB request_withdrawal 함수와 동일하게 유지할 것.
+export const MIN_WITHDRAWAL_AMOUNT = 10000
+
+// 원천징수율 3.3%
+export const WITHHOLDING_RATE = 0.033
+
+// 세전 금액 → 원천징수/실수령 계산 (DB와 동일 규칙: round)
+export function calcWithholding(amount: number): { tax: number; net: number } {
+  const tax = Math.round(amount * WITHHOLDING_RATE)
+  return { tax, net: amount - tax }
+}
+
 // approved_at 기준 홀드 종료 시각
 export function getHoldReleaseTime(approvedAt: string): Date {
   return new Date(new Date(approvedAt).getTime() + HOLD_DURATION_HOURS * 3600 * 1000)
