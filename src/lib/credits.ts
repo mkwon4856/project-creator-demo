@@ -1,6 +1,7 @@
 // 크레딧 홀드 기간 유틸
 // 홀드 기간 (시연 시 이 값만 바꾸면 됨. 실서비스 24)
-export const HOLD_DURATION_HOURS = 24
+// [시연용 임시 변경] 0.0833 = 5분 (실서비스 복구 시 24로 되돌릴 것)
+export const HOLD_DURATION_HOURS = 0.0833
 
 // approved_at 기준 홀드 종료 시각
 export function getHoldReleaseTime(approvedAt: string): Date {
