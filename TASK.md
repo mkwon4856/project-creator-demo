@@ -1,80 +1,137 @@
-# Project Creator — rebuild Task 14
-## 역할별 상단 네비게이션 바 (전역)
+# Project Creator — rebuild Task 15
+## 정산: 조회 시점 자동지급 → 출금 신청식(적립식)으로 변경
 
-배경: 페이지마다 독립형이라 페이지 간 이동 통로가 없음. 크리에이터가 지원 후 콘텐츠 제출 페이지(/creator/activity)를 못 찾는 등 시연 동선이 끊김.
-목표: 게임사/크리에이터/관리자 각 역할의 모든 페이지 상단에 공통 네비게이션 바를 두고, 주요 페이지로 한 번에 이동 가능하게.
+배경: 기획이 "검수 승인 후 홀드 끝나면 자동 지급"에서 "크리에이터 잔액으로 적립 → 본인이 출금 신청 시 지급"으로 변경됨.
+이번 작업 범위(b): 출금 신청 UI + 잔액/적립/출금 흐름만 구현. 정산 정보(주민번호/사업자번호/계좌) 실제 수집 필드는 자리만 잡고 실제 수집/검증은 하지 않는다(세무사 자문 전).
 
-디자인: 다크 #0A0A0F / 우베 #9B7EC8 / 골드 #E5B567 / Arial Black. 상단 고정(sticky), 반투명 배경 + 하단 보더.
-
----
-
-## Phase 1: 공통 네비게이션 컴포넌트
-
-src/components/layout/TopNav.tsx 신규 생성.
-
-요구사항:
-- props로 role('studio' | 'creator' | 'admin')과 현재 경로를 받거나, 내부에서 usePathname()으로 현재 경로 판단
-- 좌측: "Project Creator" 로고 텍스트 (Arial Black, 클릭 시 역할별 홈으로 이동: studio→/studio, creator→/creator, admin→/admin)
-- 중앙/우측: 역할별 메뉴 링크들 (현재 페이지는 활성 표시 — 보라 텍스트 + 하단 보더)
-- 최우측: 로그아웃 (기존 LogoutInline 또는 signOut→/login)
-- sticky top-0, z-50, 배경 bg-[#0A0A0F]/80 backdrop-blur, border-b border-white/10
-- 모바일 대응: 좁으면 메뉴가 줄바꿈되거나 가로 스크롤 (시연은 데스크톱이므로 기본은 가로 정렬)
-
-역할별 메뉴:
-
-studio:
-- 대시보드 → /studio
-- 캠페인 만들기 → /studio/new
-
-creator:
-- 캠페인 탐색 → /creator
-- 내 지원·제출 → /creator/activity
-- 수익 → /creator/earnings
-- 채널 관리 → /creator/profile
-
-admin:
-- 대시보드 → /admin
-- 캠페인 승인 → /admin/campaigns
-- 콘텐츠 검수 → /admin/payouts
-
-활성 상태 판단:
-- 정확히 일치하거나, 하위 경로면 활성 (예: /studio/new 에서 "캠페인 만들기" 활성)
-- /creator 와 /creator/activity 구분 주의 (정확 일치 우선, 그다음 startsWith)
+디자인: 다크 #0A0A0F / #9B7EC8 / #E5B567 / Arial Black
 
 ---
 
-## Phase 2: 각 페이지에 TopNav 배치
+## Phase 0: 현재 상태 진단 (코드 수정 없이 보고)
 
-아래 페이지들의 최상단(기존 제목 위)에 TopNav를 추가하고, 기존에 각 페이지 헤더 우측에 개별로 박아둔 LogoutInline은 제거(중복 방지). 단 페이지 내 고유 액션 버튼(예: studio의 "캠페인 만들기" 버튼)은 TopNav에 메뉴로도 있지만 페이지 내 CTA는 남겨도 됨 — 중복이 어색하면 페이지 내 CTA는 유지하고 헤더의 로그아웃만 제거.
+1. src/lib/credits.ts — HOLD_DURATION_HOURS, payout 관련 함수 현재 내용
+2. src/app/api/credits/process-payouts/route.ts — 현재 "조회 시점 자동 지급" 로직이 어떻게 되어있는지
+3. src/app/creator/earnings/page.tsx — 현재 수익 페이지가 process-payouts를 자동 호출하는지
+4. supabase/migrations/20260611000002_credits.sql — payout_credits 함수, submissions.paid_at 컬럼
+5. payments 테이블 스키마 (net_amount, withholding_tax 등)
 
-대상 페이지:
-- studio: src/app/studio/page.tsx
-- studio/new: src/app/studio/new/page.tsx (위저드지만 상단에 TopNav 추가, "저장 후 나가기"는 유지)
-- creator: src/app/creator/page.tsx
-- creator/activity: src/app/creator/activity/page.tsx
-- creator/earnings: src/app/creator/earnings/page.tsx
-- creator/profile: src/app/creator/profile/page.tsx
-- admin: src/app/admin/page.tsx
-- admin/campaigns: src/app/admin/campaigns/page.tsx
-- admin/payouts: src/app/admin/payouts/page.tsx
-
-배치 방식:
-- 각 페이지의 최상위 컨테이너(min-h-screen bg-[#0A0A0F]) 바로 안쪽 맨 위에 <TopNav role="..." /> 추가
-- 그 아래 기존 콘텐츠(max-w-... mx-auto ...)는 그대로
-- role은 페이지 경로에 맞게 하드코딩(studio 페이지는 "studio" 등)
-
-주의:
-- 각 페이지가 'use client'인지 확인. TopNav도 usePathname/ router 쓰므로 'use client'.
-- 기존 헤더에 있던 로그아웃/채널관리 링크 중 TopNav와 중복되는 건 정리하되, 기능은 유지.
+보고 후 Phase 1~4 진행.
 
 ---
 
-## Phase 3: WorkspaceLayout 기반 페이지 처리
+## Phase 1: DB — 출금 신청 테이블 + 크리에이터 잔액
 
-일부 페이지(admin/creators, admin/studios, studio/settings, creator/settings 등)는 기존 사이드바(WorkspaceLayout)를 씀.
-- 이 페이지들은 사이드바가 이미 있으므로 TopNav를 중복으로 넣지 않는다.
-- 단, 사이드바 메뉴에 위 Phase 1의 역할별 주요 메뉴(특히 creator의 "내 지원·제출", "수익", "채널 관리" / admin의 "캠페인 승인", "콘텐츠 검수")가 빠져 있으면 추가해서, 사이드바 페이지에서도 주요 화면으로 이동 가능하게 한다.
-- 목표: 어느 페이지에 있든 같은 역할의 주요 화면으로 항상 이동 가능.
+supabase/migrations/20260611000003_withdrawals.sql 생성.
+
+### 1-1. creator_balances 테이블 (크리에이터 잔액)
+```sql
+CREATE TABLE IF NOT EXISTS creator_balances (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  creator_id uuid NOT NULL UNIQUE REFERENCES creators(id) ON DELETE CASCADE,
+  available bigint NOT NULL DEFAULT 0 CHECK (available >= 0),  -- 출금 가능 (홀드 끝나고 적립된 금액)
+  pending bigint NOT NULL DEFAULT 0 CHECK (pending >= 0),      -- 적립 대기 (홀드 진행 중)
+  total_earned bigint NOT NULL DEFAULT 0,                      -- 누적 수익
+  total_withdrawn bigint NOT NULL DEFAULT 0,                   -- 누적 출금
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+```
+
+### 1-2. withdrawals 테이블 (출금 신청 내역)
+```sql
+CREATE TABLE IF NOT EXISTS withdrawals (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  creator_id uuid NOT NULL REFERENCES creators(id) ON DELETE CASCADE,
+  amount bigint NOT NULL CHECK (amount > 0),          -- 출금 신청 총액(세전)
+  withholding_tax bigint NOT NULL DEFAULT 0,          -- 원천징수 3.3%
+  net_amount bigint NOT NULL,                         -- 실수령액
+  status text NOT NULL DEFAULT 'requested' CHECK (status IN ('requested','processing','completed','rejected')),
+  requested_at timestamptz DEFAULT now(),
+  processed_at timestamptz,
+  note text
+);
+```
+
+### 1-3. 최소 출금 금액 상수
+- MIN_WITHDRAWAL_AMOUNT = 10000 (1만원) — src/lib/credits.ts에 추가
+
+### 1-4. 함수 (SECURITY DEFINER)
+① accrue_to_balance(p_creator_id uuid, p_amount bigint)
+- creator_balances upsert: pending에서 빼고 available로 이동 (홀드 종료 시 호출)
+- 정확히는: available += amount, pending = GREATEST(0, pending - amount), total_earned는 pending 적립 시점에 이미 더해졌으면 중복 금지
+- 단순화: 이 함수는 "홀드 끝난 금액을 available로 확정"하는 용도. pending -= amount, available += amount
+
+② add_pending(p_creator_id uuid, p_amount bigint)
+- 검수 승인 시 호출. pending += amount, total_earned += amount
+
+③ request_withdrawal(p_creator_id uuid, p_amount bigint)
+- available >= amount 확인, 부족 시 RAISE EXCEPTION '출금 가능 잔액이 부족합니다'
+- amount >= 최소출금액 확인 (함수 인자로 받거나 10000 하드코딩), 미만 시 RAISE EXCEPTION
+- available -= amount
+- withholding = round(amount * 0.033), net = amount - withholding
+- withdrawals insert (status='requested', amount, withholding_tax, net_amount)
+- total_withdrawn += amount
+- 반환: 생성된 withdrawal id
+
+### 1-5. RLS + GRANT
+- creator_balances: 본인만 SELECT
+- withdrawals: 본인만 SELECT, INSERT는 함수로만
+- 함수 GRANT EXECUTE TO authenticated
+
+---
+
+## Phase 2: 검수 승인 → pending 적립 (자동지급 제거)
+
+### 2-1. process-payouts 로직 변경
+src/app/api/credits/process-payouts/route.ts 를 "홀드 종료분을 available로 적립"하는 용도로 변경:
+- 기존: 홀드 끝난 submission을 payout(크리에이터에게 바로 지급) → 제거
+- 변경: approved이고 홀드 종료됐고 아직 balance에 반영 안 된 submission을 찾아서
+  - studio 측: payout_credits(홀드된 게임사 크레딧을 실제 차감 — 이건 유지, 게임사 입장에선 이미 집행 확정)
+  - creator 측: accrue_to_balance(creator_id, creator_amount) — pending → available 이동
+  - submissions.paid_at = now() (=balance 반영 완료 표시로 재사용, 또는 accrued_at 컬럼 신설)
+- 즉 "지급"이 아니라 "출금 가능 잔액으로 전환"
+
+### 2-2. 검수 승인 시 pending 적립
+src/app/admin/payouts/page.tsx handleApprove에서:
+- 기존 approved_at 기록 유지
+- 추가로 add_pending(creator_id, creator_amount) 호출 → 크리에이터 pending(적립 대기)에 즉시 반영
+- (홀드 종료 시 process-payouts가 pending→available로 옮김)
+
+주의: creator_id, creator_amount는 submission→application→mission 조인으로 구함.
+
+---
+
+## Phase 3: 크리에이터 수익/출금 UI
+
+### 3-1. 수익 페이지 재구성 — src/app/creator/earnings/page.tsx
+페이지 진입 시 process-payouts POST 호출(홀드 종료분 available 전환) 후 데이터 로드.
+
+표시:
+- 상단 잔액 카드 3개:
+  - 출금 가능 (available) — 강조, 골드
+  - 적립 대기 (pending) — 회색, "검수 후 24시간 뒤 출금 가능" 안내
+  - 누적 수익 (total_earned) — 작게
+- "출금 신청" 버튼 → WithdrawModal 열기 (available > 0 이고 최소출금액 이상일 때만 활성)
+- 출금 내역 리스트 (withdrawals): 신청일 / 금액(세전) / 원천징수 / 실수령 / 상태
+- 수익 상세(선택): 승인된 submission별 금액 + 상태(적립 대기 / 출금 가능)
+
+### 3-2. WithdrawModal — src/components/creator/WithdrawModal.tsx
+- 출금 가능 잔액 표시
+- 출금 금액 입력 (최소 1만원, 최대 available)
+- "전액 출금" 버튼
+- 원천징수 3.3% 차감 후 실수령액 미리보기 표시
+  - 예: 100,000원 신청 → 원천징수 3,300원 → 실수령 96,700원
+- "출금 신청" → request_withdrawal RPC 호출
+- 성공 시 잔액/내역 새로고침, 모달 닫기
+- 정산 정보(계좌 등) 미입력 시 안내: "출금을 위해 정산 정보 등록이 필요합니다" → 정산 정보 페이지로 유도 (3-3)
+
+### 3-3. 정산 정보 — 자리만 (실제 수집/검증 X)
+src/app/creator/settings/page.tsx 또는 creator/profile에 "정산 정보" 섹션 추가:
+- 안내 문구만: "정산 정보(예금주, 계좌, 사업자 여부)는 서비스 정식 오픈 시 등록 가능합니다. (준비 중)"
+- 입력 필드는 disabled 상태로 자리만 잡기: 사업자 여부(개인/개인사업자), 계좌번호, 예금주
+- 실제 저장/검증 로직은 구현하지 않음 (세무사 자문 후 확정 예정)
+- TODO 주석: // TODO(정산): 세무사 자문 후 수집 항목 확정 + PIPA 대응
 
 ---
 
@@ -82,10 +139,10 @@ admin:
 
 1. npx tsc --noEmit → 0 errors
 2. npm run build → 성공
-3. git add . && git commit -m "feat: role-based top navigation across all pages" && git push origin rebuild
+3. git add . && git commit -m "feat: withdrawal-request settlement model (accrual + withdraw)" && git push origin rebuild
 
 최종 보고:
-- 역할별 네비 메뉴 구성
-- TopNav 들어간 페이지 목록
-- 사이드바 페이지 처리 결과
-- 시연 동선에서 이제 클릭만으로 이동 가능한 경로 (예: 크리에이터 지원 후 "내 지원·제출" 클릭 → 콘텐츠 제출)
+- Phase 0 진단 결과
+- 변경된 흐름 요약 (검수 승인 → pending → 홀드 종료 → available → 출금 신청 → 지급대기)
+- 민석이 실행할 SQL 파일 (20260611000003_withdrawals.sql)
+- 정산 정보 수집이 "자리만" 잡힌 상태이며 세무사 자문 후 구현 예정임을 명시
