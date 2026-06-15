@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useCreator } from '@/lib/supabase/hooks'
+import { LogoutInline } from '@/components/layout/LogoutInline'
 import { formatHoldRemaining } from '@/lib/credits'
 import type {
   Application,
@@ -149,12 +150,15 @@ export default function CreatorEarningsPage() {
             </h1>
             <p className="text-xs text-white/30 mt-1">승인 후 홀드기간 경과 시 자동 지급</p>
           </div>
-          <button
-            onClick={() => router.push('/creator/activity')}
-            className="text-xs text-[#9B7EC8] hover:text-[#9B7EC8]/80 transition-colors"
-          >
-            지원 현황 →
-          </button>
+          <div className="flex items-center gap-3 shrink-0">
+            <button
+              onClick={() => router.push('/creator/activity')}
+              className="text-xs text-[#9B7EC8] hover:text-[#9B7EC8]/80 transition-colors"
+            >
+              지원 현황 →
+            </button>
+            <LogoutInline />
+          </div>
         </div>
 
         {/* 요약 카드 */}

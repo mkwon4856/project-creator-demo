@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { LogoutInline } from '@/components/layout/LogoutInline'
 
 interface Metrics {
   totalCampaigns: number
@@ -49,9 +50,12 @@ export default function AdminOverviewPage() {
     <div className="min-h-screen bg-[#0A0A0F] px-4 py-8">
       <div className="max-w-3xl mx-auto space-y-6">
 
-        <h1 className="text-2xl font-black text-white" style={{ fontFamily: 'Arial Black' }}>
-          관리자 대시보드
-        </h1>
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-black text-white" style={{ fontFamily: 'Arial Black' }}>
+            관리자 대시보드
+          </h1>
+          <LogoutInline />
+        </div>
 
         {/* 메트릭 카드 */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

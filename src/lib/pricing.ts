@@ -20,6 +20,38 @@ export function getMaxRate(grades: Grade[], contentType: ContentType): number {
   return Math.max(...grades.map(g => RATE_MATRIX[g][contentType]))
 }
 
+// 예상 참여 인원 범위 (오픈마켓: 예산 ÷ 1인 단가)
+export interface CreatorRange {
+  min: number
+  max: number
+}
+
+// 주어진 예산으로 허용 등급에 참여 가능한 인원을 범위로 계산.
+// - 최고 등급 단가(=1인 최대비용) → 최소 인원
+// - 최저 등급 단가(=1인 최소비용) → 최대 인원
+export function estimateCreatorRange(
+  budget: number,
+  grades: Grade[],
+  contentType: ContentType
+): CreatorRange {
+  if (budget <= 0 || !grades.length) return { min: 0, max: 0 }
+  // 단가 0(0 나누기) 방지
+  const rates = grades.map(g => RATE_MATRIX[g][contentType]).filter(r => r > 0)
+  if (!rates.length) return { min: 0, max: 0 }
+
+  const maxCostPerPerson = toStudioAmount(Math.max(...rates)) // 최고 단가 → 최소 인원
+  const minCostPerPerson = toStudioAmount(Math.min(...rates)) // 최저 단가 → 최대 인원
+
+  const minPeople = Math.floor(budget / maxCostPerPerson)
+  const maxPeople = Math.floor(budget / minCostPerPerson)
+
+  // min > max 방지 보정
+  return {
+    min: Math.min(minPeople, maxPeople),
+    max: Math.max(minPeople, maxPeople),
+  }
+}
+
 // 구독자 수 → 등급 자동 산정
 export function subscribersToGrade(subscribers: number): Grade {
   if (subscribers >= 2000000) return 'S'

@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useCreator } from '@/lib/supabase/hooks'
+import { LogoutInline } from '@/components/layout/LogoutInline'
 import { subscribersToGrade, PLATFORM_CONTENT_TYPES } from '@/lib/pricing'
 import type { CreatorChannel, Platform, ContentType, Grade } from '@/lib/db.types'
 
@@ -124,9 +125,12 @@ export default function CreatorProfilePage() {
     <div className="min-h-screen bg-[#0A0A0F] px-4 py-8">
       <div className="max-w-2xl mx-auto space-y-8">
 
-        <h1 className="text-2xl font-black text-white" style={{ fontFamily: 'Arial Black' }}>
-          내 채널 관리
-        </h1>
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-black text-white" style={{ fontFamily: 'Arial Black' }}>
+            내 채널 관리
+          </h1>
+          <LogoutInline />
+        </div>
 
         {/* 등록된 채널 목록 */}
         <div className="space-y-3">

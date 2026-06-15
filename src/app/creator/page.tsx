@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useCreator } from '@/lib/supabase/hooks'
+import { LogoutInline } from '@/components/layout/LogoutInline'
 import { RATE_MATRIX } from '@/lib/pricing'
 import type { Campaign, Mission, CreatorChannel, Grade, ContentType } from '@/lib/db.types'
 
@@ -121,12 +122,15 @@ export default function CreatorDashboard() {
               </p>
             )}
           </div>
-          <button
-            onClick={() => router.push('/creator/profile')}
-            className="text-xs text-[#9B7EC8] hover:text-[#9B7EC8]/80 transition-colors"
-          >
-            채널 관리 →
-          </button>
+          <div className="flex items-center gap-3 shrink-0">
+            <button
+              onClick={() => router.push('/creator/profile')}
+              className="text-xs text-[#9B7EC8] hover:text-[#9B7EC8]/80 transition-colors"
+            >
+              채널 관리 →
+            </button>
+            <LogoutInline />
+          </div>
         </div>
 
         {/* 채널 미등록 안내 */}

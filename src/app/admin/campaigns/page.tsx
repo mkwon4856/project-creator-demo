@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { ChevronDown } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { LogoutInline } from '@/components/layout/LogoutInline'
 import type { Campaign, Mission } from '@/lib/db.types'
 
 const CONTENT_TYPE_LABELS: Record<string, string> = {
@@ -115,9 +116,12 @@ export default function AdminCampaignsPage() {
     <div className="min-h-screen bg-[#0A0A0F] px-4 py-8">
       <div className="max-w-3xl mx-auto space-y-6">
 
-        <h1 className="text-2xl font-black text-white" style={{ fontFamily: 'Arial Black' }}>
-          캠페인 승인 관리
-        </h1>
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-black text-white" style={{ fontFamily: 'Arial Black' }}>
+            캠페인 승인 관리
+          </h1>
+          <LogoutInline />
+        </div>
 
         {/* 탭 */}
         <div className="flex gap-2">

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useCreator } from '@/lib/supabase/hooks'
+import { LogoutInline } from '@/components/layout/LogoutInline'
 import { formatHoldRemaining } from '@/lib/credits'
 import type {
   Application,
@@ -128,12 +129,15 @@ export default function CreatorActivityPage() {
             </h1>
             <p className="text-xs text-white/30 mt-1">지원한 캠페인과 콘텐츠 제출 상태</p>
           </div>
-          <button
-            onClick={() => router.push('/creator')}
-            className="text-xs text-[#9B7EC8] hover:text-[#9B7EC8]/80 transition-colors"
-          >
-            캠페인 탐색 →
-          </button>
+          <div className="flex items-center gap-3 shrink-0">
+            <button
+              onClick={() => router.push('/creator')}
+              className="text-xs text-[#9B7EC8] hover:text-[#9B7EC8]/80 transition-colors"
+            >
+              캠페인 탐색 →
+            </button>
+            <LogoutInline />
+          </div>
         </div>
 
         {apps.length === 0 ? (
