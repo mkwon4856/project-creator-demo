@@ -43,7 +43,7 @@ function calcAutoMissions(
 }
 
 const INITIAL: WizardState = {
-  game_name: '', genre: '', description: '', thumbnail_url: '',
+  game_name: '', genre: '', description: '', thumbnail_url: '', deadline: '',
   total_budget: 0, missions: [], auto_spend_remaining: false,
   estimated_creators: 0, remaining_budget: 0, auto_missions: [],
 }
@@ -96,6 +96,7 @@ export default function NewCampaignPage() {
         auto_spend_remaining: state.auto_spend_remaining,
         status: 'pending',
         admin_note: null,
+        deadline: state.deadline || null,
       })
       if (error || !campaign) throw error
 

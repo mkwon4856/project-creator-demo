@@ -56,6 +56,19 @@ export function StepGame({ state, onChange, onNext }: Props) {
         />
       </div>
 
+      <div>
+        <label className="block text-sm font-medium text-white/70 mb-2">모집 마감일</label>
+        <input
+          type="date"
+          className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-[#9B7EC8] [color-scheme:dark]"
+          value={state.deadline}
+          onChange={e => onChange({ deadline: e.target.value })}
+        />
+        <p className="text-xs text-white/30 mt-1.5">
+          크리에이터가 지원할 수 있는 마지막 날이에요. 비워두면 상시 모집으로 표시됩니다.
+        </p>
+      </div>
+
       <button
         onClick={onNext}
         disabled={!valid}

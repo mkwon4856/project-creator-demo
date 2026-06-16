@@ -68,6 +68,7 @@ export interface Campaign {
   auto_spend_remaining: boolean
   status: CampaignStatus
   admin_note: string | null
+  deadline: string | null
   created_at: string
   launched_at: string | null
   completed_at: string | null

@@ -17,6 +17,7 @@ export interface WizardState {
   genre: string
   description: string
   thumbnail_url: string
+  deadline: string
 
   // 2단계
   total_budget: number
