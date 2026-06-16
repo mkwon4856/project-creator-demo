@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useCreator } from '@/lib/supabase/hooks'
 import { TopNav } from '@/components/layout/TopNav'
+import { PlatformIcon } from '@/components/icons/PlatformIcon'
 import { subscribersToGrade, PLATFORM_CONTENT_TYPES } from '@/lib/pricing'
 import type { CreatorChannel, Platform, ContentType, Grade } from '@/lib/db.types'
 
@@ -11,13 +12,6 @@ const PLATFORM_LABELS: Record<Platform, string> = {
   soop: 'SOOP',
   chzzk: 'Chzzk',
   tiktok: 'TikTok',
-}
-
-const PLATFORM_ICONS: Record<Platform, string> = {
-  youtube: '▶',
-  soop: '🟣',
-  chzzk: '🟢',
-  tiktok: '♪',
 }
 
 const CONTENT_TYPE_LABELS: Record<ContentType, string> = {
@@ -42,16 +36,21 @@ export default function CreatorProfilePage() {
   const [channels, setChannels] = useState<CreatorChannel[]>([])
   const [loading, setLoading] = useState(true)
   const [adding, setAdding] = useState(false)
+  const [avatarUrl, setAvatarUrl] = useState('')
+  const [savingAvatar, setSavingAvatar] = useState(false)
+  const [avatarSaved, setAvatarSaved] = useState(false)
   const [form, setForm] = useState({
     platform: 'youtube' as Platform,
     channel_name: '',
     channel_url: '',
     subscribers: '',
+    thumbnail_url: '',
   })
   const supabase = createClient()
 
   useEffect(() => {
     if (!creator) return
+    setAvatarUrl(creator.avatar_url ?? '')
     supabase
       .from('creator_channels')
       .select('*')
@@ -62,6 +61,21 @@ export default function CreatorProfilePage() {
         setLoading(false)
       })
   }, [creator])
+
+  const handleSaveAvatar = async () => {
+    if (!creator) return
+    setSavingAvatar(true)
+    setAvatarSaved(false)
+    const { error } = await supabase
+      .from('creators')
+      .update({ avatar_url: avatarUrl.trim() || null })
+      .eq('id', creator.id)
+    if (!error) {
+      setAvatarSaved(true)
+      setTimeout(() => setAvatarSaved(false), 2000)
+    }
+    setSavingAvatar(false)
+  }
 
   const handleAdd = async () => {
     if (!creator || !form.channel_name || !form.subscribers) return
@@ -80,6 +94,7 @@ export default function CreatorProfilePage() {
       subscribers,
       grade,
       content_type,
+      thumbnail_url: form.thumbnail_url || null,
     }))
 
     const { data, error } = await supabase
@@ -89,7 +104,7 @@ export default function CreatorProfilePage() {
 
     if (!error && data) {
       setChannels(prev => [...data, ...prev])
-      setForm({ platform: 'youtube', channel_name: '', channel_url: '', subscribers: '' })
+      setForm({ platform: 'youtube', channel_name: '', channel_url: '', subscribers: '', thumbnail_url: '' })
     }
     setAdding(false)
   }
@@ -130,6 +145,42 @@ export default function CreatorProfilePage() {
           내 채널 관리
         </h1>
 
+        {/* 대표 이미지 */}
+        <div className="bg-white/5 rounded-xl p-4 border border-white/5">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-full overflow-hidden bg-[#9B7EC8]/20 flex items-center justify-center shrink-0">
+              {avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-2xl font-black text-[#9B7EC8]" style={{ fontFamily: 'Arial Black' }}>
+                  {creator?.name?.charAt(0) ?? '?'}
+                </span>
+              )}
+            </div>
+            <div className="flex-1">
+              <label className="text-xs text-white/50 mb-2 block">대표 이미지 URL</label>
+              <div className="flex gap-2">
+                <input
+                  className="flex-1 bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white placeholder-white/30 focus:outline-none focus:border-[#9B7EC8] text-sm"
+                  placeholder="https://..."
+                  value={avatarUrl}
+                  onChange={e => setAvatarUrl(e.target.value)}
+                />
+                <button
+                  onClick={handleSaveAvatar}
+                  disabled={savingAvatar}
+                  className="px-4 py-2.5 rounded-lg text-sm font-bold text-white transition-all hover:opacity-90 disabled:opacity-40 shrink-0"
+                  style={{ background: '#9B7EC8' }}
+                >
+                  {savingAvatar ? '저장 중…' : avatarSaved ? '저장됨 ✓' : '저장'}
+                </button>
+              </div>
+              <p className="text-xs text-white/20 mt-1.5">게임사 쇼케이스에 노출되는 프로필 이미지예요.</p>
+            </div>
+          </div>
+        </div>
+
         {/* 등록된 채널 목록 */}
         <div className="space-y-3">
           <h2 className="text-sm font-medium text-white/50">등록된 채널</h2>
@@ -145,7 +196,7 @@ export default function CreatorProfilePage() {
                 <div key={key} className="bg-white/5 rounded-xl p-4 border border-white/5">
                   <div className="flex justify-between items-start">
                     <div className="flex items-center gap-3">
-                      <span className="text-2xl">{PLATFORM_ICONS[first.platform]}</span>
+                      <PlatformIcon platform={first.platform} size={32} />
                       <div>
                         <div className="font-medium text-white">{PLATFORM_LABELS[first.platform]}</div>
                         <div className="text-xs text-white/40">{first.channel_name}</div>
@@ -192,13 +243,13 @@ export default function CreatorProfilePage() {
                 <button
                   key={p}
                   onClick={() => setForm(f => ({ ...f, platform: p }))}
-                  className={`px-3 py-1.5 rounded-lg text-sm transition-all ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-all ${
                     form.platform === p
                       ? 'bg-[#9B7EC8] text-white'
                       : 'bg-white/5 text-white/50 hover:bg-white/10'
                   }`}
                 >
-                  {PLATFORM_ICONS[p]} {PLATFORM_LABELS[p]}
+                  <PlatformIcon platform={p} size={16} /> {PLATFORM_LABELS[p]}
                 </button>
               ))}
             </div>
@@ -224,6 +275,16 @@ export default function CreatorProfilePage() {
               placeholder="https://..."
               value={form.channel_url}
               onChange={e => setForm(f => ({ ...f, channel_url: e.target.value }))}
+            />
+          </div>
+
+          <div>
+            <label className="text-xs text-white/50 mb-2 block">채널 썸네일 URL</label>
+            <input
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-[#9B7EC8] text-sm"
+              placeholder="https://... (선택)"
+              value={form.thumbnail_url}
+              onChange={e => setForm(f => ({ ...f, thumbnail_url: e.target.value }))}
             />
           </div>
 

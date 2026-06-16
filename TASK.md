@@ -1,98 +1,106 @@
-# Project Creator — rebuild Task 16
-## 크리에이터 캠페인 탐색 — 게임 카드 갤러리 + 마감일
+# Project Creator — rebuild Task 17
+## 게임사 대시보드 운영 버전 + 크리에이터 쇼케이스 + 콘텐츠 열람
 
-목표: 캠페인 탐색(/creator)을 게임 스토어 카드 갤러리로 업그레이드(v4 레이아웃).
-썸네일 크게 유지 + 미션 줄 컴팩트 + 하단 메타(마감 D-day / 참여 현황 / 예산 소진율).
-
-**제약: 기존 기능(지원/필터/등급 매칭/내 단가 계산)은 그대로. 작업 전 src/app/creator/page.tsx 전체 읽기 + /mnt/skills/public/frontend-design/SKILL.md 읽기.**
+목표: 게임사 로그인 첫 화면을 운영 콘솔 + 영업 쇼케이스로 업그레이드.
+크리에이터 쇼케이스(최상단 강조), 예산 현황, 내 캠페인 운영 현황, 우리 캠페인에 올라온 콘텐츠 열람.
 
 디자인: 다크 #0A0A0F / 우베 #9B7EC8 / 골드 #E5B567 / Arial Black
 
+**제약: 기존 데이터 흐름/기능 로직 깨지지 않게. 작업 전 src/app/studio/page.tsx 전체 읽기 + /mnt/skills/public/frontend-design/SKILL.md 읽기.**
+
 ---
 
-## Phase 0: DB — 캠페인 마감일 컬럼
+## Phase 0: DB — 크리에이터 아바타 컬럼 추가
 
-supabase/migrations/20260611000005_campaign_deadline.sql 생성:
+supabase/migrations/20260611000004_creator_avatar.sql 생성:
 ```sql
-ALTER TABLE campaigns ADD COLUMN IF NOT EXISTS deadline date;
+ALTER TABLE creators ADD COLUMN IF NOT EXISTS avatar_url text;
+ALTER TABLE creator_channels ADD COLUMN IF NOT EXISTS thumbnail_url text;
 ```
 
 ---
 
-## Phase 1: 캠페인 생성 wizard에 마감일 입력 추가
+## Phase 1: 크리에이터 채널 등록에 아바타/썸네일 입력 추가
 
-src/app/studio/new/_components/StepGame.tsx (1단계) 또는 StepMissions.tsx (2단계)에:
-- "모집 마감일" 날짜 입력 추가 (input type="date")
-- _types.ts WizardState에 deadline: string 추가 (기본값 '')
-- page.tsx handleSubmit의 createCampaign 호출에 deadline 포함
-- 마감일은 선택값으로 둬도 되지만, 입력 권장 안내. 미입력 시 null 저장.
-
-createCampaign API/타입(Campaign)에 deadline 필드 반영 (db.types.ts Campaign에 deadline: string | null 추가).
+src/app/creator/profile/page.tsx:
+- 프로필 상단에 "대표 이미지 URL" 입력 → creators.avatar_url 저장
+- 채널 추가 폼에 "채널 썸네일 URL"(선택) → creator_channels.thumbnail_url 저장
+- 기존 채널 등록 로직 유지, 필드만 추가
 
 ---
 
-## Phase 2: 캠페인 탐색 카드 갤러리 — src/app/creator/page.tsx
+## Phase 2: 플랫폼 로고 컴포넌트
 
-기존 로직(myGrades, eligibleCampaigns, getMyRate, hasApplied, handleApply, 미션 filled)은 유지. UI만 카드 그리드로.
-
-### 레이아웃
-- 헤더(기존 유지) + 필터 pill(기존 유지)
-- 카드 그리드: grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5
-
-### 캠페인 카드 (v4)
-1. **썸네일 영역 (높이 약 186px, 카드 상단)**
-   - thumbnail_url 있으면 <img object-cover>, 없으면 게임명 해시 기반 그라데이션 + 게임명 첫 글자(text-5xl font-black text-white/15)
-   - 좌상단: 장르 태그 (검정 반투명 pill)
-   - 우상단: 마감 D-day 뱃지. D-3 이하면 빨강(bg-red-500), 그 외 회색 반투명. deadline 없으면 생략
-   - onError로 이미지 실패 시 그라데이션 fallback
-
-   그라데이션 헬퍼:
-   ```tsx
-   function gameGradient(seed: string): string {
-     const g = ['from-purple-900 via-[#0A0A0F] to-indigo-900','from-rose-900 via-[#0A0A0F] to-purple-900','from-blue-900 via-[#0A0A0F] to-cyan-900','from-amber-900 via-[#0A0A0F] to-orange-900','from-emerald-900 via-[#0A0A0F] to-teal-900','from-fuchsia-900 via-[#0A0A0F] to-purple-900']
-     let h=0; for(let i=0;i<seed.length;i++) h=seed.charCodeAt(i)+((h<<5)-h)
-     return g[Math.abs(h)%g.length]
-   }
-   ```
-
-2. **본문 (썸네일 아래 padding)**
-   - 게임명 (font-bold truncate)
-   - 게임 설명 (text-sm text-white/40, line-clamp-2)
-
-3. **미션 줄들 (컴팩트, 내가 참여 가능한 타입만)**
-   - 각 타입마다 한 줄(높이 약 48px), bg-white/5 rounded:
-     - 좌: 타입명(롱폼/숏폼/라이브) + 그 아래 작게 "B/C/D등급"
-     - 우: "단가" 라벨 + 단가 금액(골드, font-black) — getMyRate로 내 등급 단가
-     - 맨 우: 작은 지원 버튼. 미지원이면 보라 "지원", 이미 지원이면 초록 "완료 ✓"(disabled)
-   - 타입별 독립 지원 (기존 handleApply 그대로, contentType별 호출)
-   - 미션 여러 개면 줄이 쌓임 (카드 높이 자동 증가)
-
-4. **하단 메타 (구분선 아래)**
-   - 좌: "모집 마감" + 날짜(예: 6월 20일) + (D-N). deadline 없으면 "상시 모집"
-   - 우: "참여 현황" + "N명 참여 중" (이 캠페인 applications 개수 — campaigns 조회 시 applications count 함께 가져오거나 별도 카운트)
-   - 진행 바: 예산 소진율 = (total_budget - remaining_budget) / total_budget. 마감 임박(D-3↓)이면 골드, 평소 보라
-   - 진행 바 아래 작게: "예산 N% 소진"
-
-5. **카드 인터랙션**
-   - rounded-2xl, bg-white/5, border border-white/10, overflow-hidden
-   - hover: -translate-y-1, border-[#9B7EC8]/40, transition
-
-### 참여 현황 카운트
-- useActiveCampaigns 또는 캠페인 조회 시 각 캠페인의 applications 개수 필요.
-- campaigns select에 applications(count) 조인하거나, 별도로 applications를 campaign_id로 그룹 카운트해서 맵으로 보유.
-
-### 빈 상태 / 채널 미등록 안내: 기존 유지(게임 톤으로 다듬기)
+src/components/icons/PlatformIcon.tsx 생성:
+- props: platform ('youtube'|'soop'|'chzzk'|'tiktok'), size (기본 20)
+- 각 플랫폼 인라인 SVG 로고:
+  - youtube: 빨강(#FF0000) 라운드 사각 + 흰 플레이 삼각형
+  - tiktok: 검정 배경 원/사각 + 음표 심볼 (단색 가능)
+  - chzzk: 치지직 브랜드 그린(#00FFA3) 배경 + 심볼
+  - soop: SOOP 브랜드 컬러 배경 + 심볼
+- 브랜드 정밀도보다 "한눈에 구분되는 색+심볼"이 목적. 원형/라운드 배경에 플랫폼 색 + 간단 심볼.
+- 적용처: 크리에이터 채널 카드, 게임사 쇼케이스, (있으면) 캠페인 카드 플랫폼 표시. 플랫폼은 텍스트 대신 이 로고 우선.
 
 ---
 
-## Phase 3: 검증
+## Phase 3: 게임사 대시보드 재구성 — src/app/studio/page.tsx
+
+레이아웃 (위→아래):
+
+### 3-1. 헤더
+- "안녕하세요, {company_name}님 👋" (기존 유지), TopNav 유지
+
+### 3-2. 크리에이터 쇼케이스 (최상단 강조 — 영업 포인트)
+- 큰 섹션, 보라 그라데이션 배경(from-[#1a1030] to-[#0A0A0F]), 보라 테두리 rounded-2xl
+- 헤드라인: "Project Creator와 함께하는 크리에이터"
+- 서브: "유튜브·치지직·SOOP·틱톡에서 활동 중인 검증된 크리에이터들"
+- 우측: "총 N명+" (creators 전체 카운트)
+- 크리에이터 카드 가로 스크롤(overflow-x-auto flex gap-4):
+  - creators + creator_channels 조인, 상위 12~15명 (구독자 많은 채널 보유 순 또는 등급 높은 순)
+  - avatar_url 있으면 원형 이미지, 없으면 이름 첫 글자 원형(이름 해시 색)
+  - 이름 + 대표 채널(최다 구독): PlatformIcon + 구독자
+  - 등급 뱃지(S~E) + 콘텐츠 타입
+  - 채널 여러 개면 PlatformIcon 여러 개 나열
+- 빈 데이터(크리에이터 0명)면 섹션은 "곧 다양한 크리에이터가 합류합니다" 정도로 placeholder
+
+### 3-3. 예산 현황
+- 충전 잔액(골드 강조) + 충전 버튼(기존 CreditBalance/ChargeModal 재사용) + 홀딩/누적
+- 요약 카드 3개: 진행 중 캠페인 / 참여 크리에이터(내 캠페인 applications 합) / 올라온 콘텐츠(내 캠페인 submissions 합)
+
+### 3-4. 내 캠페인 (운영 관점)
+- 캠페인별 행: 썸네일(작게) + 게임명 + 상태 뱃지
+  - "참여 N명 · 콘텐츠 제출 M건 · 검수 완료 K건"
+  - 예산 소진율 진행 바 ((total_budget - remaining_budget)/total_budget)
+  - 마감 D-day (deadline 있으면 — Task 16에서 추가됨)
+- 클릭 시 캠페인 상세로
+
+### 3-5. 우리 캠페인에 올라온 콘텐츠 (게임사 열람) ★ 신규
+- 내 캠페인들의 submissions를 카드 그리드로:
+  - 카드: 플랫폼별 그라데이션 썸네일 + 재생 아이콘
+  - 크리에이터 이름 + 콘텐츠 타입 + PlatformIcon
+  - 상태: 검수 완료 ✓(approved) / 검수 중(pending) / 반려(rejected)
+  - approved면 클릭 시 platform_urls 첫 URL을 새 탭(target=_blank)으로 열기
+- 안내: "검수는 Project Creator가 진행합니다. 게임사는 완성된 콘텐츠를 확인할 수 있어요."
+
+---
+
+## Phase 4: 게임사 콘텐츠 열람 권한 (RLS)
+supabase/migrations/20260611000006_studio_view_content.sql 생성:
+- 게임사(studio)가 자기 캠페인(campaigns.studio_id가 본인 studio)의 submissions를 SELECT 가능한 정책
+- 경로: submissions → applications → campaigns(studio_id = get_my_studio_id())
+- applications도 게임사가 자기 캠페인 것 조회 가능해야 카운트/조인이 됨 (정책 확인)
+- 기존 admin/creator 정책 유지, DROP POLICY IF EXISTS로 충돌 방지
+
+---
+
+## Phase 5: 검증
 1. npx tsc --noEmit → 0 errors
 2. npm run build → 성공
-3. git add . && git commit -m "design: campaign browse game card gallery + deadline" && git push origin rebuild
+3. git add . && git commit -m "feat: studio dashboard with creator showcase, platform logos, content viewing" && git push origin rebuild
 
 최종 보고:
-- 추가된 SQL (campaign_deadline)
-- wizard 마감일 입력 위치
-- 카드 구성요소 (썸네일/미션줄/메타)
-- 유지된 기능 확인 (지원/필터/매칭/단가)
-- 민석이 실행할 SQL 안내
+- 추가된 SQL 파일들 (creator_avatar, studio_view_content)
+- 크리에이터 쇼케이스 데이터 소스
+- PlatformIcon 적용 위치
+- 게임사 콘텐츠 열람 동작 방식
+- 민석이 실행할 SQL 안내 (순서대로)

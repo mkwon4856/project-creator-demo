@@ -39,6 +39,7 @@ export interface Creator {
   name: string
   bio: string | null
   business_registration_no: string | null
+  avatar_url: string | null
   created_at: string
 }
 
@@ -51,6 +52,7 @@ export interface CreatorChannel {
   subscribers: number
   grade: Grade
   content_type: ContentType
+  thumbnail_url: string | null
   verified_at: string | null
   created_at: string
 }
