@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useStudio } from '@/lib/supabase/hooks'
@@ -260,9 +261,10 @@ export default function StudioDashboard() {
           ) : (
             <div className="flex gap-4 overflow-x-auto pb-2 -mx-1 px-1">
               {showcase.map(cr => (
-                <div
+                <Link
                   key={cr.id}
-                  className="shrink-0 w-44 bg-white/5 border border-white/10 rounded-xl p-4 flex flex-col items-center text-center"
+                  href={`/creators/${cr.id}`}
+                  className="shrink-0 w-44 bg-white/5 border border-white/10 rounded-xl p-4 flex flex-col items-center text-center cursor-pointer transition-all hover:-translate-y-1 hover:border-[#9B7EC8]/40"
                 >
                   <div
                     className="w-16 h-16 rounded-full overflow-hidden flex items-center justify-center mb-3"
@@ -295,7 +297,7 @@ export default function StudioDashboard() {
                       {cr.platforms.map(p => <PlatformIcon key={p} platform={p} size={16} />)}
                     </div>
                   )}
-                </div>
+                </Link>
               ))}
             </div>
           )}
