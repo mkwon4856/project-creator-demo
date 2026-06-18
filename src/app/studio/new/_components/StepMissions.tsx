@@ -1,5 +1,6 @@
 'use client'
-import { RATE_MATRIX, toStudioAmount } from '@/lib/pricing'
+import { useMemo } from 'react'
+import { RATE_MATRIX, toStudioAmount, estimateParticipants } from '@/lib/pricing'
 import { CONTENT_TYPE_LABELS } from '../_types'
 import type { WizardState, MissionSlot } from '../_types'
 import type { ContentType, Grade } from '@/lib/db.types'
@@ -57,9 +58,18 @@ export function StepMissions({ state, onChange, onNext, onBack }: Props) {
     updateMission(mission.id, { allowed_grades: grades })
   }
 
-  const usedBudget = state.missions.reduce((sum, m) => sum + m.studio_amount, 0)
-  const remaining = state.total_budget - usedBudget
   const valid = state.total_budget > 0 && state.missions.length > 0 && state.missions.every(m => m.allowed_grades.length > 0)
+
+  // 예상 참여 인원 (총예산/미션/등급 변경 시 즉시 갱신)
+  const GRADE_ORDER: Grade[] = ['S', 'A', 'B', 'C', 'D', 'E']
+  const estimate = useMemo(
+    () => estimateParticipants(
+      state.total_budget,
+      state.missions.map(m => ({ content_type: m.content_type, grades: m.allowed_grades })),
+    ),
+    [state.total_budget, state.missions],
+  )
+  const selectedGrades = GRADE_ORDER.filter(g => g in estimate.perGrade)
 
   return (
     <div className="space-y-6">
@@ -172,12 +182,6 @@ export function StepMissions({ state, onChange, onNext, onBack }: Props) {
               </div>
             </div>
 
-            {/* 예상 비용 */}
-            {mission.creator_amount > 0 && (
-              <div className="text-xs text-white/40">
-                예상 비용: ₩{mission.studio_amount.toLocaleString()}
-              </div>
-            )}
           </div>
         ))}
 
@@ -188,31 +192,48 @@ export function StepMissions({ state, onChange, onNext, onBack }: Props) {
         )}
       </div>
 
-      {/* 잔여 예산 */}
-      {state.total_budget > 0 && (
-        <div className="bg-white/5 rounded-xl p-4 space-y-3">
-          <div className="flex justify-between text-sm">
-            <span className="text-white/50">사용 예산</span>
-            <span className="text-white">₩{usedBudget.toLocaleString()}</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-white/50">잔여 예산</span>
-            <span className={remaining < 0 ? 'text-red-400' : 'text-[#E5B567]'}>
-              ₩{remaining.toLocaleString()}
-            </span>
-          </div>
-          {remaining > 0 && (
-            <label className="flex items-start gap-3 cursor-pointer pt-2 border-t border-white/10">
-              <input
-                type="checkbox"
-                className="mt-0.5"
-                checked={state.auto_spend_remaining}
-                onChange={e => onChange({ auto_spend_remaining: e.target.checked })}
-              />
-              <span className="text-xs text-white/50">
-                잔여 예산을 하위 등급 미션으로 자동 소진합니다
-              </span>
-            </label>
+      {/* 예상 참여 크리에이터 */}
+      {state.total_budget > 0 && state.missions.length > 0 && (
+        <div className="rounded-xl border border-[#9B7EC8]/30 bg-gradient-to-br from-[#1a1030] to-[#0A0A0F] p-5">
+          {selectedGrades.length === 0 ? (
+            <p className="text-sm text-white/50 text-center py-2">
+              참여 가능한 등급을 선택하면 예상 인원이 표시됩니다
+            </p>
+          ) : (
+            <>
+              {/* 상단: 총 예상 (균등 배분) */}
+              <div className="flex items-end justify-between gap-4">
+                <div className="min-w-0">
+                  <h3 className="text-base font-black text-white" style={{ fontFamily: 'Arial Black' }}>
+                    예상 참여 크리에이터
+                  </h3>
+                  <p className="text-xs text-white/50 mt-1">선택한 등급에 예산을 고르게 배분할 경우</p>
+                </div>
+                <div className="text-right shrink-0">
+                  <div className="text-3xl font-black text-[#E5B567]" style={{ fontFamily: 'Arial Black' }}>
+                    약 {estimate.equalTotal.toLocaleString()}명
+                  </div>
+                </div>
+              </div>
+
+              {/* 하단: 등급별 단독 참여 시 */}
+              <div className="mt-4 pt-4 border-t border-white/10">
+                <p className="text-xs text-white/40 mb-3">등급별로 참여할 경우</p>
+                <div className="space-y-2">
+                  {selectedGrades.map(g => (
+                    <div key={g} className="flex items-center gap-3">
+                      <span className="w-7 h-7 shrink-0 rounded-full bg-[#E5B567] text-black text-sm font-black flex items-center justify-center" style={{ fontFamily: 'Arial Black' }}>
+                        {g}
+                      </span>
+                      <span className="text-sm text-white/70">{g}등급으로만 참여 시</span>
+                      <span className="ml-auto text-sm font-bold text-white">
+                        약 {(estimate.perGrade[g] ?? 0).toLocaleString()}명
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
           )}
         </div>
       )}
@@ -223,9 +244,9 @@ export function StepMissions({ state, onChange, onNext, onBack }: Props) {
         </button>
         <button
           onClick={onNext}
-          disabled={!valid || remaining < 0}
+          disabled={!valid}
           className="flex-2 flex-grow py-3 rounded-lg font-bold text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-          style={{ background: (valid && remaining >= 0) ? '#9B7EC8' : undefined }}
+          style={{ background: valid ? '#9B7EC8' : undefined }}
         >
           다음 →
         </button>

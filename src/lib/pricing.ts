@@ -52,6 +52,52 @@ export function estimateCreatorRange(
   }
 }
 
+// ── 캠페인 생성 위저드: 예상 참여 인원 추정 ──────────────────────
+// 단가는 creator_amount(크리에이터 수령액 = RATE_MATRIX) 기준으로 계산한다.
+export interface MissionEstimateInput {
+  content_type: ContentType
+  grades: Grade[]
+}
+
+export interface ParticipantEstimate {
+  // 선택 등급에 예산을 고르게 배분했을 때의 총 인원
+  equalTotal: number
+  // 등급별 단독 참여 인원(여러 미션이면 같은 등급끼리 합산), 선택된 등급만 포함
+  perGrade: Partial<Record<Grade, number>>
+}
+
+/**
+ * 총예산과 미션 목록으로 예상 참여 크리에이터 인원을 추정한다.
+ * - 미션별 예산 = 총예산 ÷ 미션 개수 (균등)
+ * - 균등 배분 총 인원: 각 미션에서 (미션예산 ÷ 선택등급수)를 등급 단가로 나눠 floor 후 합산
+ * - 등급별 단독 인원: 각 미션에서 floor(미션예산 ÷ 등급 단가), 같은 등급끼리 미션 간 합산
+ * 0 나누기/빈 선택은 0으로 안전 처리.
+ */
+export function estimateParticipants(
+  totalBudget: number,
+  missions: MissionEstimateInput[],
+): ParticipantEstimate {
+  const empty: ParticipantEstimate = { equalTotal: 0, perGrade: {} }
+  if (totalBudget <= 0 || missions.length === 0) return empty
+
+  const missionBudget = totalBudget / missions.length
+  let equalTotal = 0
+  const perGrade: Partial<Record<Grade, number>> = {}
+
+  for (const m of missions) {
+    if (!m.grades.length) continue
+    const perGradeBudget = missionBudget / m.grades.length
+    for (const g of m.grades) {
+      const rate = RATE_MATRIX[g][m.content_type]
+      if (rate <= 0) continue
+      equalTotal += Math.floor(perGradeBudget / rate)
+      perGrade[g] = (perGrade[g] ?? 0) + Math.floor(missionBudget / rate)
+    }
+  }
+
+  return { equalTotal, perGrade }
+}
+
 // 구독자 수 → 등급 자동 산정
 export function subscribersToGrade(subscribers: number): Grade {
   if (subscribers >= 2000000) return 'S'
