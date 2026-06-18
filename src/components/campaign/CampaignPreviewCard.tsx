@@ -57,7 +57,11 @@ interface Props {
   campaign: CampaignCardCampaign
   /** 미리보기 모드: 금액=총예산, 지원 버튼 비활성, "미리보기" 라벨 */
   preview?: boolean
-  // ── 탐색(인터랙티브) 전용 — preview가 아닐 때 사용 ──
+  /** 게임사 둘러보기 모드: 금액=총예산 + 참여 수, 버튼/지원 없음(정보 표시 전용), 인기 뱃지 */
+  explore?: boolean
+  /** explore 모드에서 게임명 아래 작게 표기할 게임사명 */
+  studioName?: string | null
+  // ── 탐색(인터랙티브) 전용 — preview/explore가 아닐 때 사용 ──
   eligibleTypes?: ContentType[]
   rateFor?: (ct: ContentType) => number
   isApplied?: (ct: ContentType) => boolean
@@ -94,6 +98,8 @@ function CampaignThumb({ campaign }: { campaign: CampaignCardCampaign }) {
 export function CampaignPreviewCard({
   campaign,
   preview = false,
+  explore = false,
+  studioName,
   eligibleTypes = [],
   rateFor,
   isApplied,
@@ -107,8 +113,11 @@ export function CampaignPreviewCard({
     ? Math.round(((campaign.total_budget - campaign.remaining_budget) / campaign.total_budget) * 100)
     : 0
 
-  // 미리보기에서 노출할 미션 타입들 (중복 제거, 정렬)
+  // preview/explore에서 노출할 미션 타입들 (중복 제거, 정렬)
   const previewTypes = TYPE_ORDER.filter(t => campaign.missions.some(m => m.content_type === t))
+  // 총 예산 블록은 preview/explore 모두에서 노출
+  const showBudgetBlock = preview || explore
+  const popular = explore && applicantCount >= 5
 
   return (
     <div className="group flex flex-col rounded-2xl bg-white/5 border border-white/10 overflow-hidden transition-all duration-200 hover:-translate-y-1 hover:border-[#9B7EC8]/40">
@@ -140,17 +149,30 @@ export function CampaignPreviewCard({
             미리보기
           </span>
         )}
+        {/* 인기 뱃지 (참여 5명 이상) */}
+        {popular && (
+          <span
+            className="absolute bottom-2 left-2 px-2 py-0.5 rounded-full text-[10px] font-bold text-black"
+            style={{ background: '#E5B567' }}
+          >
+            🔥 인기
+          </span>
+        )}
       </div>
 
       {/* 본문 */}
       <div className="flex flex-col flex-1 p-4">
         <div className="font-bold text-white truncate">{campaign.game_name}</div>
-        <div className="text-sm text-white/40 mt-1 line-clamp-2 min-h-[2.5rem]">
-          {campaign.description}
-        </div>
+        {explore && studioName ? (
+          <div className="text-xs text-white/40 mt-0.5 truncate">{studioName}</div>
+        ) : (
+          <div className="text-sm text-white/40 mt-1 line-clamp-2 min-h-[2.5rem]">
+            {campaign.description}
+          </div>
+        )}
 
-        {preview ? (
-          /* 미리보기: 미션 타입 뱃지 + 총 예산 + 비활성 지원 버튼 */
+        {showBudgetBlock ? (
+          /* preview/explore: 미션 타입 뱃지 + 총 예산 (+ preview는 비활성 지원 버튼) */
           <>
             <div className="flex items-center gap-2 bg-white/5 rounded-lg px-3 py-2.5 mt-3">
               <div className="flex flex-wrap gap-1.5 min-w-0">
@@ -174,13 +196,15 @@ export function CampaignPreviewCard({
                 </div>
               </div>
             </div>
-            <button
-              type="button"
-              disabled
-              className="w-full mt-3 py-2.5 rounded-lg text-sm font-bold bg-white/10 text-white/30 cursor-not-allowed"
-            >
-              지원하기
-            </button>
+            {preview && (
+              <button
+                type="button"
+                disabled
+                className="w-full mt-3 py-2.5 rounded-lg text-sm font-bold bg-white/10 text-white/30 cursor-not-allowed"
+              >
+                지원하기
+              </button>
+            )}
           </>
         ) : (
           /* 탐색: 참여 가능 미션 타입별 단가 + 지원 버튼 */

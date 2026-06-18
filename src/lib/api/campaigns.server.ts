@@ -135,6 +135,43 @@ export async function fetchActiveCampaigns(
   return { campaigns: (data as PublicCampaignWithStats[]) ?? [], total: count ?? 0 };
 }
 
+// 게임사 둘러보기용: 캠페인 + 미션 + 참여 수 + 게임사명. 참여자 명단은 조회하지 않음(COUNT만).
+export type ExploreCampaign = PublicCampaignWithStats & {
+  studios?: { company_name: string } | { company_name: string }[] | null;
+};
+
+/**
+ * 게임사 둘러보기용: status='active'인 모든 캠페인 + 전체 개수.
+ * 미션 타입, 참여 인원 수(applications COUNT — 명단/이름은 조회하지 않음), 게임사명(studios)을 함께 가져온다.
+ * 정렬은 호출부(클라)에서 참여 많은 순/최신/마감 임박으로 처리. 여기서는 최신순으로 반환.
+ * ★ 참여 크리에이터의 개별 정보는 select에 포함하지 않아 명단이 노출될 수 없다.
+ */
+export async function fetchAllActiveCampaigns(): Promise<{
+  campaigns: ExploreCampaign[];
+  total: number;
+}> {
+  if (!HAS_SUPABASE_ENV) return { campaigns: [], total: 0 };
+
+  const supabase = await createClient();
+  const [{ data, error }, { count }] = await Promise.all([
+    supabase
+      .from('campaigns')
+      .select('*, missions(*), applications(count), studios(company_name)')
+      .eq('status', 'active')
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('campaigns')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'active'),
+  ]);
+
+  if (error) {
+    console.error('fetchAllActiveCampaigns:', error);
+    return { campaigns: [], total: 0 };
+  }
+  return { campaigns: (data as ExploreCampaign[]) ?? [], total: count ?? 0 };
+}
+
 /** Live campaign IDs for sitemap generation. */
 export async function fetchLiveCampaignRoutes(): Promise<
   Array<{ id: string; updatedAt: Date }>
