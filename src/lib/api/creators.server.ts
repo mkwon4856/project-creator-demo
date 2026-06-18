@@ -141,3 +141,78 @@ export const fetchShowcaseCreators = cache(
     return { creators, total: count ?? 0 };
   },
 );
+
+// ─── 게임사 크리에이터 둘러보기용 전체 목록 ───────────────────────
+export type BrowseChannel = {
+  platform: Platform;
+  subscribers: number;
+  grade: Grade;
+  content_type: ContentType;
+};
+
+export type BrowseCreator = {
+  id: string;
+  name: string;
+  avatar_url: string | null;
+  channels: BrowseChannel[]; // 구독자 내림차순
+  topChannel: BrowseChannel; // 대표(최다 구독) 채널
+  platforms: Platform[]; // 보유 플랫폼 전체
+  contentTypes: ContentType[]; // 가능한 콘텐츠 타입 전체
+  totalSubscribers: number;
+};
+
+/**
+ * 게임사 둘러보기용: 채널을 보유한 모든 크리에이터 + 채널 목록을 카드 표시용으로 가공.
+ * 대표 구독자수(최다 구독 채널) 내림차순 정렬. 필터링은 호출부(클라)에서 채널 단위로 수행.
+ * RLS: creators(공개) + creator_channels(authenticated/anon)라 로그인 게임사가 조회 가능.
+ */
+export const fetchAllCreators = cache(
+  async (): Promise<{ creators: BrowseCreator[]; total: number }> => {
+    if (!HAS_SUPABASE_ENV) return { creators: [], total: 0 };
+
+    const supabase = await createClient();
+
+    const [{ count }, { data: creatorRows }, { data: channelRows }] = await Promise.all([
+      supabase.from('creators').select('id', { count: 'exact', head: true }),
+      supabase.from('creators').select('id, name, avatar_url'),
+      supabase
+        .from('creator_channels')
+        .select('creator_id, platform, subscribers, grade, content_type'),
+    ]);
+
+    const channelsByCreator = new Map<string, ShowcaseChannelRow[]>();
+    for (const ch of (channelRows ?? []) as ShowcaseChannelRow[]) {
+      const arr = channelsByCreator.get(ch.creator_id) ?? [];
+      arr.push(ch);
+      channelsByCreator.set(ch.creator_id, arr);
+    }
+
+    const creators = ((creatorRows ?? []) as Pick<Creator, 'id' | 'name' | 'avatar_url'>[])
+      .map((cr): BrowseCreator | null => {
+        const chs = (channelsByCreator.get(cr.id) ?? [])
+          .slice()
+          .sort((a, b) => b.subscribers - a.subscribers)
+          .map((c) => ({
+            platform: c.platform,
+            subscribers: c.subscribers,
+            grade: c.grade,
+            content_type: c.content_type,
+          }));
+        if (chs.length === 0) return null;
+        return {
+          id: cr.id,
+          name: cr.name,
+          avatar_url: cr.avatar_url,
+          channels: chs,
+          topChannel: chs[0],
+          platforms: [...new Set(chs.map((c) => c.platform))] as Platform[],
+          contentTypes: [...new Set(chs.map((c) => c.content_type))] as ContentType[],
+          totalSubscribers: chs.reduce((sum, c) => sum + c.subscribers, 0),
+        };
+      })
+      .filter((c): c is BrowseCreator => c !== null)
+      .sort((a, b) => b.topChannel.subscribers - a.topChannel.subscribers);
+
+    return { creators, total: count ?? 0 };
+  },
+);

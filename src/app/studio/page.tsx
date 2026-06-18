@@ -244,14 +244,22 @@ export default function StudioDashboard() {
                 유튜브·치지직·SOOP·틱톡에서 활동 중인 검증된 크리에이터들
               </p>
             </div>
-            {totalCreators > 0 && (
-              <div className="text-right shrink-0">
-                <div className="text-2xl font-black text-[#E5B567]" style={{ fontFamily: 'Arial Black' }}>
-                  총 {totalCreators}명+
+            <div className="flex flex-col items-end gap-1.5 shrink-0">
+              {totalCreators > 0 && (
+                <div className="text-right">
+                  <div className="text-2xl font-black text-[#E5B567]" style={{ fontFamily: 'Arial Black' }}>
+                    총 {totalCreators}명+
+                  </div>
+                  <div className="text-xs text-white/30 mt-0.5">활동 크리에이터</div>
                 </div>
-                <div className="text-xs text-white/30 mt-0.5">활동 크리에이터</div>
-              </div>
-            )}
+              )}
+              <Link
+                href="/studio/creators"
+                className="text-xs text-[#9B7EC8] hover:text-white transition-colors"
+              >
+                크리에이터 전체 보기 →
+              </Link>
+            </div>
           </div>
 
           {showcase.length === 0 ? (

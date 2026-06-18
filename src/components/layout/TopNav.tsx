@@ -21,6 +21,7 @@ const ROLE_HOME: Record<TopNavRole, string> = {
 const ROLE_MENUS: Record<TopNavRole, NavItem[]> = {
   studio: [
     { label: '대시보드', href: '/studio' },
+    { label: '크리에이터 찾기', href: '/studio/creators' },
     { label: '캠페인 만들기', href: '/studio/new' },
   ],
   creator: [

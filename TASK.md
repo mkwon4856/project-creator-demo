@@ -1,63 +1,78 @@
-# Project Creator — rebuild Task 23
-## 캠페인 생성 3단계(최종 확인)에 크리에이터 노출 미리보기 추가
+# Project Creator — rebuild Task 24
+## 게임사 전용 크리에이터 둘러보기 페이지 (/studio/creators)
 
-목표: 캠페인 생성 위저드 3단계(StepReview/최종 확인)에서, 게임사가 런칭 전에
-"내 캠페인이 크리에이터에게 어떻게 보이는지"를 실제 카드 미리보기로 확인하게 한다.
+목표: 게임사가 플랫폼의 전체 크리에이터를 둘러보고, 등급/콘텐츠 타입으로 필터링하고,
+클릭하면 프로필 상세(/creators/[id])로 가는 페이지. 게임사 로그인 전용.
 
 디자인: 다크 #0A0A0F / 우베 #9B7EC8 / 골드 #E5B567 / Arial Black
+시드 크리에이터 28명 + creator_channels 데이터 활용.
 
 **작업 전 반드시:**
-1. src/app/creator/page.tsx — 크리에이터 탐색 캠페인 카드가 어떻게 렌더되는지 (카드 컴포넌트가 별도 분리돼 있는지, 인라인인지)
-2. 카드가 별도 컴포넌트면 그 파일 (예: src/components/creator/CampaignCard.tsx 등)
-3. src/app/studio/new/ 의 3단계(StepReview) 컴포넌트 + 위저드 상태(WizardState) 구조
-4. /mnt/skills/public/frontend-design/SKILL.md (없으면 skip)
+1. src/app/studio/page.tsx — 쇼케이스에서 크리에이터 카드/조회를 어떻게 하는지 (fetchShowcaseCreators 등)
+2. src/app/creators/[id]/page.tsx + src/lib/api/creators.server.ts — 크리에이터/채널 조회 방식
+3. src/components/icons/PlatformIcon.tsx
+4. src/components/layout/TopNav.tsx — 게임사 네비에 메뉴 추가해야 하므로
+5. /mnt/skills/public/frontend-design/SKILL.md (없으면 skip, 기존 패턴 따름)
 
 ---
 
-## Phase 1: 크리에이터 카드 컴포넌트 재사용 준비
+## Phase 1: 크리에이터 목록 조회 함수
 
-- 크리에이터 탐색(creator/page.tsx)의 캠페인 카드가 **인라인이면**, 재사용 가능한 컴포넌트로 추출:
-  - src/components/campaign/CampaignPreviewCard.tsx (또는 적절한 위치)
-  - props로 캠페인 데이터(게임명, 장르, 썸네일, 미션들, 마감, 참여현황 등)를 받게
-  - 기존 탐색 페이지도 이 컴포넌트를 쓰도록 교체 (동작 동일하게 — 깨지지 않게)
-- 이미 별도 컴포넌트면 그대로 재사용.
+src/lib/api/creators.server.ts (또는 적절한 위치)에 함수 추가:
+- fetchAllCreators(): 모든 creators + 각자의 creator_channels 조인
+- 각 크리에이터마다: id, name, avatar_url, 채널 목록(platform, subscribers, grade, content_type)
+- 대표 등급(최다 구독 채널의 grade), 대표 채널, 총 구독자 등 카드 표시용 가공
+- 정렬: 대표 구독자수 내림차순 (큰 크리에이터 먼저)
 
-**중요: 미리보기와 실제 탐색 카드가 같은 컴포넌트를 쓰도록 한다.** 그래야 "실제로 보이는 모습"과 100% 일치.
-
-### 미리보기 모드 prop 추가
-- CampaignPreviewCard에 `preview?: boolean` prop 추가
-- preview=true일 때:
-  - 금액 표시를 "최대 지급" 대신 **"총 예산"**으로 (총 예산 금액 표시)
-  - "지원하기" 버튼은 비활성(disabled, 흐리게) + 클릭 동작 없음
-  - 카드 하단 또는 위에 작은 라벨 "미리보기" 표시
-- preview 미지정(실제 탐색)일 때: 기존대로 "최대 지급액" + 활성 지원 버튼
+RLS: creators/creator_channels는 게임사(authenticated)가 읽을 수 있으니 로그인 상태에서 동작.
 
 ---
 
-## Phase 2: 3단계(최종 확인)에 미리보기 삽입
+## Phase 2: 크리에이터 둘러보기 페이지 — src/app/studio/creators/page.tsx
 
-StepReview(3단계)에서:
-- 기존 요약(게임 정보, 미션 구성, 예상 참여 인원)은 유지
-- 그 아래 "크리에이터에게 이렇게 보입니다" 섹션 추가:
-  - 헤더 + 서브카피 "크리에이터가 캠페인 탐색에서 보게 될 실제 모습입니다"
-  - 위저드 현재 입력값(WizardState)으로 CampaignPreviewCard를 preview=true로 렌더
-  - 가운데 정렬, 적당한 폭 (실제 카드 1장 크기)
-- 미리보기 카드에 들어갈 데이터는 위저드 상태에서 구성:
-  - 게임명, 장르, 썸네일(있으면), 미션 타입들, 총 예산, 마감일(있으면 "상시 모집"), 참여 현황은 "0명 참여 중"(아직 런칭 전)
+게임사 로그인 보호 라우트 (studio 레이아웃 아래 또는 동일 보호 패턴).
 
-### 총 예산 표시
-- preview 모드 카드의 금액 = WizardState의 총 예산 (total_budget)
-- 표기: "총 예산" 라벨 + 금액 (예: ₩2,000,000 또는 200만원). 기존 만원 포맷 헬퍼 있으면 재사용.
+### 레이아웃
+1. **헤더**: "크리에이터 찾기" + 서브카피 "Project Creator와 함께하는 크리에이터를 둘러보세요" + 총 N명
+2. **필터 바** (2종, 각각 pill 버튼):
+   - 등급: 전체 / S / A / B / C / D / E
+   - 콘텐츠 타입: 전체 / 라이브 / 롱폼 / 숏폼
+   - 두 필터 AND로 적용 (예: "라이브" + "A등급" = 라이브 채널 중 A등급인 채널을 가진 크리에이터)
+   - 필터 매칭은 **채널 단위**: 크리에이터의 채널 중 하나라도 조건 충족하면 노출
+     (예: 침착맨이 유튜브 롱폼S + 치지직 라이브A 보유 → "라이브" 필터에 잡힘)
+3. **크리에이터 카드 그리드**: grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4
+   - 각 카드:
+     - 아바타 (avatar_url, 없으면 이름 첫 글자 원형 + 이름 해시 색)
+     - 이름 (font-bold)
+     - 플랫폼 로고들 (PlatformIcon, 보유 채널 플랫폼 전부)
+     - 대표 등급 뱃지 (S~E)
+     - 대표 채널 구독자 또는 "유튜브 250만 · 치지직 90만" 식 멀티 표기
+     - 가능한 콘텐츠 타입 태그 (라이브/롱폼/숏폼)
+   - 카드 클릭 → /creators/[id]
+   - hover: -translate-y-1, border-[#9B7EC8]/40
+4. **빈 상태**: 필터 결과 0명이면 "조건에 맞는 크리에이터가 없습니다" + 필터 초기화 버튼
+
+### 필터 동작
+- 클라이언트 상태로 필터링 (useState). 전체 목록을 받아서 클라에서 거름 (28명이라 양 적음)
+- 또는 서버에서 전체 받고 useMemo로 필터
 
 ---
 
-## Phase 3: 검증
+## Phase 3: 네비게이션 연결
+- TopNav의 게임사(studio) 메뉴에 "크리에이터 찾기" 항목 추가 → /studio/creators
+- 게임사 대시보드 쇼케이스 섹션 "더 보기" 또는 "전체 보기"가 있으면 → /studio/creators로 연결
+  (없으면 쇼케이스 헤더 우측에 "크리에이터 전체 보기 →" 추가)
+
+---
+
+## Phase 4: 검증
 1. npx tsc --noEmit → 0 errors
 2. npm run build → 성공
-3. git add . && git commit -m "feat: campaign preview card in review step" && git push origin rebuild
+3. git add . && git commit -m "feat: studio creator browsing page with grade/type filters" && git push origin rebuild
 
 최종 보고:
-- 카드 컴포넌트 추출 여부 (재사용 구조)
-- preview 모드에서 총 예산 표시 확인
-- 탐색 페이지 기존 동작 유지 확인
-- 3단계 미리보기 삽입 위치
+- 페이지 경로 + 보호 방식
+- 필터 동작 (등급/타입, 채널 단위 매칭)
+- 카드 구성
+- 네비/쇼케이스 연결 위치
+- 시드 데이터로 몇 명 노출되는지
