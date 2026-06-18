@@ -98,6 +98,36 @@ export const fetchPublicCampaign = cache(
   },
 );
 
+/**
+ * 랜딩 미리보기용: 현재 모집 중(status='active') 캠페인 N개 + 전체 활성 개수.
+ * 새 스키마 기준. RLS "Anyone can read campaigns"로 anon 조회 가능.
+ */
+export async function fetchActiveCampaigns(
+  limit = 6,
+): Promise<{ campaigns: PublicCampaign[]; total: number }> {
+  if (!HAS_SUPABASE_ENV) return { campaigns: [], total: 0 };
+
+  const supabase = await createClient();
+  const [{ data, error }, { count }] = await Promise.all([
+    supabase
+      .from('campaigns')
+      .select('*, missions(*)')
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+      .limit(limit),
+    supabase
+      .from('campaigns')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'active'),
+  ]);
+
+  if (error) {
+    console.error('fetchActiveCampaigns:', error);
+    return { campaigns: [], total: 0 };
+  }
+  return { campaigns: (data as PublicCampaign[]) ?? [], total: count ?? 0 };
+}
+
 /** Live campaign IDs for sitemap generation. */
 export async function fetchLiveCampaignRoutes(): Promise<
   Array<{ id: string; updatedAt: Date }>

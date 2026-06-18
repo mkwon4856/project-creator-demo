@@ -1,7 +1,7 @@
 import { cache } from 'react';
 
 import { createClient } from '@/lib/supabase/server';
-import type { Creator, CreatorChannel } from '@/lib/db.types';
+import type { Creator, CreatorChannel, ContentType, Grade, Platform } from '@/lib/db.types';
 
 const HAS_SUPABASE_ENV =
   Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
@@ -66,5 +66,78 @@ export const fetchPublicCreator = cache(
       channels: (channels ?? []) as PublicCreatorProfile['channels'],
       campaignCount: count ?? 0,
     };
+  },
+);
+
+// ─── 랜딩 쇼케이스용 크리에이터 목록 ───────────────────────────────
+export type ShowcaseCreator = {
+  id: string;
+  name: string;
+  avatar_url: string | null;
+  topChannel: {
+    platform: Platform;
+    subscribers: number;
+    grade: Grade;
+    content_type: ContentType;
+  };
+  platforms: Platform[];
+};
+
+type ShowcaseChannelRow = Pick<
+  CreatorChannel,
+  'creator_id' | 'platform' | 'subscribers' | 'grade' | 'content_type'
+>;
+
+/**
+ * 랜딩 신뢰 요소용: 채널을 보유한 크리에이터를 대표 채널 구독자 기준 상위 N명 반환.
+ * studio 대시보드 쇼케이스와 동일 집계 로직을 서버에서 수행한다.
+ * RLS: creators(anon 공개) + creator_channels(anon 공개)라 비로그인도 조회 가능.
+ */
+export const fetchShowcaseCreators = cache(
+  async (limit = 12): Promise<{ creators: ShowcaseCreator[]; total: number }> => {
+    if (!HAS_SUPABASE_ENV) return { creators: [], total: 0 };
+
+    const supabase = await createClient();
+
+    const [{ count }, { data: creatorRows }, { data: channelRows }] = await Promise.all([
+      supabase.from('creators').select('id', { count: 'exact', head: true }),
+      supabase.from('creators').select('id, name, avatar_url'),
+      supabase
+        .from('creator_channels')
+        .select('creator_id, platform, subscribers, grade, content_type'),
+    ]);
+
+    const channelsByCreator = new Map<string, ShowcaseChannelRow[]>();
+    for (const ch of (channelRows ?? []) as ShowcaseChannelRow[]) {
+      const arr = channelsByCreator.get(ch.creator_id) ?? [];
+      arr.push(ch);
+      channelsByCreator.set(ch.creator_id, arr);
+    }
+
+    const creators = ((creatorRows ?? []) as Pick<Creator, 'id' | 'name' | 'avatar_url'>[])
+      .map((cr): ShowcaseCreator | null => {
+        const chs = (channelsByCreator.get(cr.id) ?? [])
+          .slice()
+          .sort((a, b) => b.subscribers - a.subscribers);
+        if (chs.length === 0) return null;
+        const platforms = [...new Set(chs.map((c) => c.platform))] as Platform[];
+        return {
+          id: cr.id,
+          name: cr.name,
+          avatar_url: cr.avatar_url,
+          topChannel: {
+            platform: chs[0].platform,
+            subscribers: chs[0].subscribers,
+            grade: chs[0].grade,
+            content_type: chs[0].content_type,
+          },
+          platforms,
+        };
+      })
+      .filter((c): c is ShowcaseCreator => c !== null)
+      .sort((a, b) => b.topChannel.subscribers - a.topChannel.subscribers)
+      .slice(0, limit);
+
+    return { creators, total: count ?? 0 };
   },
 );

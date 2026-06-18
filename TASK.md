@@ -1,83 +1,95 @@
-# Project Creator — rebuild Task 19
-## 크리에이터 프로필 상세 페이지 (/creators/[id])
+# Project Creator — rebuild Task 20
+## 랜딩 페이지 (서비스 소개 첫 화면) + 진입 네비게이션
 
-목표: 쇼케이스/탐색에서 크리에이터 카드를 클릭하면 그 크리에이터의 상세 정보를 보는 공개 페이지.
-로그인이랑 별개 — 보이기 전용 시드 크리에이터도 열람 가능해야 함.
+목표: 세 대상(내부팀 / 게임사 / 크리에이터)이 링크로 처음 접속했을 때 "이게 무슨 서비스고,
+나한테 뭐가 좋은지"가 한눈에 잡히는 랜딩 페이지. 지금은 화면이 비어 보여서, 첫인상을 채운다.
 
-디자인: 다크 #0A0A0F / 우베 #9B7EC8 / 골드 #E5B567 / Arial Black
+디자인: 다크 #0A0A0F / 우베 #9B7EC8 / 골드 #E5B567 / Arial Black.
+시드 데이터(크리에이터 28명, 게임 캠페인 6개)가 이미 있으니 실제 데이터를 끌어와 채울 것.
 
-**제약: 작업 전 아래 먼저 읽기**
-1. src/app/studio/page.tsx (쇼케이스 크리에이터 카드가 어떻게 렌더되는지, creators/creator_channels 조회 방식)
-2. src/app/creator/page.tsx (탐색 페이지 구조)
-3. src/components/icons/PlatformIcon.tsx (플랫폼 로고)
-4. db.types.ts 의 creators / creator_channels 타입
-5. /mnt/skills/public/frontend-design/SKILL.md
-
----
-
-## Phase 1: 크리에이터 프로필 상세 페이지
-
-### 라우트
-src/app/creators/[id]/page.tsx 생성 (공개 라우트, 로그인 무관)
-
-### 데이터 조회
-- params.id = creator_id
-- creators 단건 조회 (id, name, avatar_url, bio) — .maybeSingle()
-- creator_channels 조회 (해당 creator_id의 모든 채널: platform, channel_name, subscribers, grade, content_type, thumbnail_url)
-- 없는 id면 notFound() 또는 "크리에이터를 찾을 수 없습니다" 안내
-
-### 레이아웃
-1. **상단 헤더 영역**
-   - 뒤로가기 (또는 TopNav 유지)
-   - 큰 아바타 (avatar_url, 없으면 이름 첫 글자 원형, 이름 해시 색)
-   - 이름 (큰 타이틀, Arial Black)
-   - 대표 등급 뱃지 (최다 구독 채널의 grade, S~E 골드/보라)
-   - 총 구독자 합산 또는 대표 채널 구독자
-   - bio (있으면)
-
-2. **채널 목록 섹션** "보유 채널"
-   - 각 채널을 카드/행으로:
-     - PlatformIcon (플랫폼 로고)
-     - 채널명 + 플랫폼
-     - 구독자 수
-     - 등급 뱃지
-     - 콘텐츠 타입 (라이브/롱폼/숏폼)
-   - 멀티 채널이면 여러 개 나열 (예: 유튜브 롱폼 S + 치지직 라이브 A)
-
-3. **활동 정보 섹션** (있는 데이터로만)
-   - 콘텐츠 타입 요약 (이 크리에이터가 가능한 타입들: 채널 기반 집계)
-   - 등급 분포 (채널별 등급)
-   - 참여 캠페인 수 (이 creator_id의 applications 카운트 — 있으면)
-
-4. **빈 데이터 처리**: bio 없으면 섹션 생략, 채널 없으면 "등록된 채널 없음"
-
-### 디자인 톤
-- 게임 서비스 느낌 유지, 카드 hover 등 일관성
-- 모바일 반응형
+**작업 전 반드시:**
+1. src/app/page.tsx (루트) 현재 내용 확인 — 지금 첫 화면이 랜딩인지, 로그인 리다이렉트인지, 빈 화면인지 파악해서 보고
+2. src/app/studio/page.tsx, src/app/creator/page.tsx — 쇼케이스/카드가 데이터 끌어오는 방식 참고
+3. src/components/icons/PlatformIcon.tsx
+4. src/lib/api/creators.server.ts (fetchPublicCreator 등 — 크리에이터 조회 방식)
+5. /mnt/skills/public/frontend-design/SKILL.md (Linux 경로라 이 머신에 없으면 skip하고, 기존 페이지 디자인 패턴을 그대로 따를 것)
 
 ---
 
-## Phase 2: 카드 클릭 → 프로필로 연결
+## Phase 1: 랜딩 페이지 — src/app/page.tsx (또는 src/app/(marketing)/page.tsx)
 
-### 2-1. 게임사 쇼케이스 (src/app/studio/page.tsx)
-- 크리에이터 쇼케이스 카드를 클릭하면 /creators/[id]로 이동 (Link 또는 router.push)
-- 카드에 cursor-pointer + hover 효과
+현재 루트가 로그인으로 리다이렉트하면, 랜딩을 루트로 두고 로그인은 /login으로 분리.
+이미 로그인된 사용자는 자기 대시보드로 보내되(선택), 비로그인은 랜딩을 보게.
 
-### 2-2. 크리에이터 탐색 (src/app/creator/page.tsx)
-- 만약 탐색 화면에 크리에이터가 보이는 부분이 있으면 동일하게 연결
-- (탐색은 캠페인 위주라 크리에이터 노출이 없으면 skip)
+### 섹션 구성 (위→아래)
 
-주의: 클릭 영역이 "지원하기" 같은 기존 버튼과 안 겹치게. 카드 본문 클릭 → 프로필, 버튼 클릭 → 기존 동작 (stopPropagation).
+**1. 헤더(네비)**
+- 좌: 로고 "Project Creator" (클릭 시 랜딩 최상단)
+- 우: "로그인" 버튼 + "시작하기"(회원가입) 버튼
+- 스크롤 시 상단 고정(sticky), 반투명 배경
+
+**2. 히어로 (첫 화면 꽉 채우기)**
+- 큰 헤드라인 (Arial Black): 예) "게임 마케팅, 크리에이터와 성과로 연결하다"
+- 서브카피: 게임사와 크리에이터를 잇는 성과 기반 마케팅 플랫폼
+- CTA 버튼 2개: "게임사로 시작하기" / "크리에이터로 참여하기" (각각 회원가입/로그인으로)
+- 배경: 다크 + 보라 그라데이션, 미묘한 그리드/글로우 (과하지 않게)
+
+**3. 참여 크리에이터 쇼케이스 (시드 데이터 활용 — 신뢰 요소)**
+- "이미 다양한 크리에이터가 함께합니다" + "총 N명+"
+- creators + creator_channels에서 상위 12명 가로 스크롤 (아바타 + 플랫폼 로고 + 등급)
+- studio 대시보드 쇼케이스 컴포넌트 재활용 가능하면 재활용
+- 카드 클릭 → /creators/[id]
+
+**4. 작동 방식 (3~4단계)**
+- 게임사 관점 / 크리에이터 관점 토글 또는 2열로:
+  - 게임사: ① 캠페인 생성 ② 크리에이터 참여 ③ 콘텐츠 검수 ④ 성과 확인
+  - 크리에이터: ① 캠페인 탐색 ② 지원 ③ 콘텐츠 제작·제출 ④ 정산/출금
+- 아이콘 + 짧은 설명. 깔끔한 스텝 UI
+
+**5. 게임사를 위한 섹션**
+- "당신의 게임을 알릴 준비가 됐나요?"
+- 핵심 가치 3개 카드: 성과 기반 과금 / 검증된 크리에이터 풀 / 운영 자동화
+- 실제 게임 캠페인 썸네일 몇 개 미리보기 (시드 캠페인 6개 중 일부)
+- CTA: "게임사로 시작하기"
+
+**6. 크리에이터를 위한 섹션**
+- "당신의 영향력을 수익으로"
+- 핵심 가치 3개 카드: 등급별 공정 단가 / 자유로운 캠페인 선택 / 투명한 정산(출금 신청식)
+- 단가 예시(등급별 단가 일부 — rate matrix) 또는 인기 캠페인 미리보기
+- CTA: "크리에이터로 참여하기"
+
+**7. (선택) 숫자/신뢰 지표**
+- 참여 크리에이터 수, 진행 캠페인 수 등 (시드 기준 실제 카운트)
+
+**8. 푸터**
+- 서비스명 + 한 줄 소개
+- 링크: 로그인 / 회원가입 / (준비 중인) 이용약관·개인정보처리방침 placeholder
+- 회사: 더플레이 / 문의 이메일 placeholder
+- 카피라이트
+
+### 디자인 원칙
+- 기존 톤 유지, 게임 서비스 느낌
+- 모바일 반응형 필수 (히어로/섹션/쇼케이스 모바일에서 안 깨지게)
+- 과한 애니메이션 자제, 깔끔하게
+- 섹션마다 적절한 여백으로 "비어 보이지 않게" 밀도 확보
+
+---
+
+## Phase 2: 진입 동선 정리
+- 랜딩의 모든 CTA가 정확한 곳으로 연결 (로그인/회원가입)
+- 로그인 후 역할별 대시보드로 가는 흐름 확인 (이미 되어있으면 유지)
+- 로고 클릭 → 랜딩 (비로그인) 또는 대시보드(로그인) — 일관되게
 
 ---
 
 ## Phase 3: 검증
 1. npx tsc --noEmit → 0 errors
 2. npm run build → 성공
-3. git add . && git commit -m "feat: creator profile detail page" && git push origin rebuild
+3. git add . && git commit -m "feat: landing page for studios and creators" && git push origin rebuild
 
 최종 보고:
-- /creators/[id] 페이지 구성
-- 클릭 연결 위치 (쇼케이스 등)
-- 빈 데이터 처리 방식
-- 보이기 전용 크리에이터도 열람되는지 (RLS: creators/creator_channels는 public read라 OK)
+- 기존 루트(/) 상태가 어땠는지 (랜딩/리다이렉트/빈화면)
+- 랜딩 섹션 구성
+- 시드 데이터를 어디에 활용했는지 (쇼케이스/캠페인 미리보기/카운트)
+- CTA 연결 경로
+- 모바일 반응형 처리
