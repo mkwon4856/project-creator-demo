@@ -98,22 +98,29 @@ export const fetchPublicCampaign = cache(
   },
 );
 
+// 랜딩 카드용: 캠페인 + 미션 + 참여 수(applications count). 마감 임박순 정렬.
+export type PublicCampaignWithStats = PublicCampaign & {
+  applications?: { count: number }[];
+};
+
 /**
  * 랜딩 미리보기용: 현재 모집 중(status='active') 캠페인 N개 + 전체 활성 개수.
+ * 마감 임박순(deadline 가까운 순, 마감일 없는 상시 모집은 뒤로) 정렬하고,
+ * 각 캠페인의 미션과 참여 수(applications count)를 함께 가져온다.
  * 새 스키마 기준. RLS "Anyone can read campaigns"로 anon 조회 가능.
  */
 export async function fetchActiveCampaigns(
   limit = 6,
-): Promise<{ campaigns: PublicCampaign[]; total: number }> {
+): Promise<{ campaigns: PublicCampaignWithStats[]; total: number }> {
   if (!HAS_SUPABASE_ENV) return { campaigns: [], total: 0 };
 
   const supabase = await createClient();
   const [{ data, error }, { count }] = await Promise.all([
     supabase
       .from('campaigns')
-      .select('*, missions(*)')
+      .select('*, missions(*), applications(count)')
       .eq('status', 'active')
-      .order('created_at', { ascending: false })
+      .order('deadline', { ascending: true, nullsFirst: false })
       .limit(limit),
     supabase
       .from('campaigns')
@@ -125,7 +132,7 @@ export async function fetchActiveCampaigns(
     console.error('fetchActiveCampaigns:', error);
     return { campaigns: [], total: 0 };
   }
-  return { campaigns: (data as PublicCampaign[]) ?? [], total: count ?? 0 };
+  return { campaigns: (data as PublicCampaignWithStats[]) ?? [], total: count ?? 0 };
 }
 
 /** Live campaign IDs for sitemap generation. */

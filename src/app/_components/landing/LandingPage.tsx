@@ -13,18 +13,19 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import type { CSSProperties } from 'react';
 
 import { PlatformIcon } from '@/components/icons/PlatformIcon';
 import { RATE_MATRIX } from '@/lib/pricing';
 import { SITE_NAME, CONTACT_EMAIL } from '@/lib/siteConfig';
 import type { ContentType, Grade, Platform } from '@/lib/db.types';
 import type { ShowcaseCreator } from '@/lib/api/creators.server';
-import type { PublicCampaign } from '@/lib/api/campaigns.server';
+import type { PublicCampaignWithStats } from '@/lib/api/campaigns.server';
 
 interface LandingPageProps {
   creators: ShowcaseCreator[];
   creatorTotal: number;
-  campaigns: PublicCampaign[];
+  campaigns: PublicCampaignWithStats[];
   campaignTotal: number;
 }
 
@@ -68,6 +69,33 @@ function gameGradient(seed: string): string {
 function won(amount: number): string {
   return `${(amount / 10000).toLocaleString()}만`;
 }
+
+// 원 → "N만원" / "N,NNN만원" (캠페인 최대 지급액 표기)
+function formatManwon(amount: number): string {
+  return `${Math.round(amount / 10000).toLocaleString()}만원`;
+}
+
+// 마감까지 남은 일수 (D-day). deadline 없으면 null.
+function daysUntil(deadline: string | null): number | null {
+  if (!deadline) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const d = new Date(`${deadline}T00:00:00`);
+  d.setHours(0, 0, 0, 0);
+  return Math.round((d.getTime() - today.getTime()) / 86_400_000);
+}
+
+function formatDeadline(deadline: string): string {
+  const d = new Date(`${deadline}T00:00:00`);
+  return `${d.getMonth() + 1}월 ${d.getDate()}일`;
+}
+
+// 미션 타입 뱃지 색 (라이브=보라 / 롱폼=골드 / 숏폼=#7c3aed)
+const MISSION_BADGE: Record<ContentType, { label: string; style: CSSProperties }> = {
+  live: { label: '라이브', style: { background: '#9B7EC8', color: '#fff' } },
+  longform: { label: '롱폼', style: { background: '#E5B567', color: '#0A0A0F' } },
+  shortform: { label: '숏폼', style: { background: '#7c3aed', color: '#fff' } },
+};
 
 // ─── 네비게이션 ──────────────────────────────────────────────────
 function NavBar() {
@@ -229,6 +257,155 @@ function ShowcaseSection({ creators, total }: { creators: ShowcaseCreator[]; tot
   );
 }
 
+// ─── 진행 중인 캠페인 (간소화 카드) ──────────────────────────────
+function CampaignCard({ campaign }: { campaign: PublicCampaignWithStats }) {
+  const missions = campaign.missions ?? [];
+  // 모집 미션 타입 (중복 제거, 표시는 라이브→롱폼→숏폼 순)
+  const ORDER: ContentType[] = ['live', 'longform', 'shortform'];
+  const types = ORDER.filter((t) => missions.some((m) => m.content_type === t));
+  // 최대 지급액 = missions creator_amount 최댓값
+  const maxAmount = missions.reduce((max, m) => Math.max(max, m.creator_amount ?? 0), 0);
+  const dday = daysUntil(campaign.deadline);
+  const urgent = dday !== null && dday <= 3;
+  const participants = campaign.applications?.[0]?.count ?? 0;
+
+  return (
+    <Link
+      href={`/campaigns/${campaign.id}`}
+      className="group flex flex-col rounded-2xl bg-white/5 border border-white/10 overflow-hidden transition-all hover:-translate-y-1 hover:border-[#9B7EC8]/40"
+    >
+      {/* 썸네일 */}
+      <div className="relative h-[150px] overflow-hidden">
+        {campaign.thumbnail_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={campaign.thumbnail_url} alt="" className="w-full h-full object-cover" />
+        ) : (
+          <div
+            className={`w-full h-full bg-gradient-to-br ${gameGradient(campaign.game_name)} flex items-center justify-center`}
+          >
+            <span className="text-5xl font-black text-white/15" style={{ fontFamily: 'Arial Black' }}>
+              {campaign.game_name.charAt(0)}
+            </span>
+          </div>
+        )}
+        {campaign.genre && (
+          <span className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-sm text-[11px] font-medium text-white/90">
+            {campaign.genre}
+          </span>
+        )}
+        {dday !== null && (
+          <span
+            className={`absolute top-3 right-3 px-2.5 py-1 rounded-full text-[11px] font-bold ${
+              urgent ? 'bg-red-500 text-white' : 'bg-black/50 backdrop-blur-sm text-white/80'
+            }`}
+          >
+            {dday < 0 ? '마감' : dday === 0 ? 'D-DAY' : `D-${dday}`}
+          </span>
+        )}
+      </div>
+
+      {/* 본문 */}
+      <div className="flex flex-col flex-1 p-4">
+        <div className="font-black text-white truncate" style={{ fontFamily: 'Arial Black' }}>
+          {campaign.game_name}
+        </div>
+
+        {/* 모집 미션 + 최대 지급 */}
+        <div className="flex items-end justify-between gap-3 mt-3">
+          <div className="min-w-0">
+            <div className="text-[11px] text-white/30 mb-1.5">모집 미션</div>
+            <div className="flex flex-wrap gap-1.5">
+              {types.length > 0 ? (
+                types.map((t) => (
+                  <span
+                    key={t}
+                    className="text-[11px] font-bold px-2 py-0.5 rounded-full"
+                    style={MISSION_BADGE[t].style}
+                  >
+                    {MISSION_BADGE[t].label}
+                  </span>
+                ))
+              ) : (
+                <span className="text-[11px] text-white/30">미션 준비 중</span>
+              )}
+            </div>
+          </div>
+          <div className="text-right shrink-0">
+            <div className="text-[11px] text-white/30 mb-0.5">최대 지급</div>
+            <div className="text-lg font-black text-[#E5B567]" style={{ fontFamily: 'Arial Black' }}>
+              {maxAmount > 0 ? `최대 ${formatManwon(maxAmount)}` : '—'}
+            </div>
+          </div>
+        </div>
+
+        {/* 하단 메타 */}
+        <div className="mt-auto pt-3 border-t border-white/10 flex justify-between items-start text-[11px]">
+          <div>
+            <div className="text-white/30">모집 마감</div>
+            <div className="text-white/70 font-medium mt-0.5">
+              {campaign.deadline ? (
+                <>
+                  {formatDeadline(campaign.deadline)}
+                  {dday !== null && dday >= 0 && (
+                    <span className={urgent ? 'text-red-400' : 'text-white/40'}> · D-{dday}</span>
+                  )}
+                </>
+              ) : (
+                '상시 모집'
+              )}
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-white/30">참여 현황</div>
+            <div className="text-white/70 font-medium mt-0.5">{participants}명 참여 중</div>
+          </div>
+        </div>
+
+        {/* CTA */}
+        <div className="mt-3 text-center py-2.5 rounded-xl font-bold text-white text-sm transition-all group-hover:opacity-90"
+          style={{ background: '#9B7EC8' }}
+        >
+          지원하러 가기
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function ActiveCampaignsSection({ campaigns }: { campaigns: PublicCampaignWithStats[] }) {
+  const router = useRouter();
+  // 마감 임박순으로 이미 정렬되어 옴 → 상위 3개
+  const top = campaigns.slice(0, 3);
+  if (top.length === 0) return null;
+
+  return (
+    <section className="max-w-6xl mx-auto px-4 py-16">
+      <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
+        <div>
+          <h2 className="text-2xl font-black text-white" style={{ fontFamily: 'Arial Black' }}>
+            지금 진행 중인 캠페인
+          </h2>
+          <p className="text-sm text-white/50 mt-1.5">
+            어떤 게임이 열려 있고 최대 얼마를 받는지 바로 확인하세요
+          </p>
+        </div>
+        <button
+          onClick={() => router.push('/login')}
+          className="text-sm text-[#9B7EC8] hover:text-white transition-colors shrink-0"
+        >
+          전체 보기 →
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        {top.map((c) => (
+          <CampaignCard key={c.id} campaign={c} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
 // ─── 작동 방식 ───────────────────────────────────────────────────
 function FlowColumn({
   title,
@@ -330,7 +507,7 @@ function ValueCard({
 }
 
 // ─── 게임사 섹션 ─────────────────────────────────────────────────
-function StudioSection({ campaigns }: { campaigns: PublicCampaign[] }) {
+function StudioSection() {
   const router = useRouter();
   return (
     <section className="max-w-6xl mx-auto px-4 py-16">
@@ -361,45 +538,6 @@ function StudioSection({ campaigns }: { campaigns: PublicCampaign[] }) {
           desc="캠페인 모집·매칭·검수·정산까지 한 흐름으로 처리됩니다."
         />
       </div>
-
-      {campaigns.length > 0 && (
-        <>
-          <h3 className="text-sm font-medium text-white/50 mt-10 mb-3">
-            지금 진행 중인 게임 캠페인
-          </h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            {campaigns.map((c) => (
-              <Link
-                key={c.id}
-                href={`/campaigns/${c.id}`}
-                className="group rounded-xl overflow-hidden bg-white/5 border border-white/10 transition-all hover:-translate-y-1 hover:border-[#9B7EC8]/40"
-              >
-                <div className="relative aspect-square overflow-hidden">
-                  {c.thumbnail_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={c.thumbnail_url} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <div
-                      className={`w-full h-full bg-gradient-to-br ${gameGradient(c.game_name)} flex items-center justify-center`}
-                    >
-                      <span
-                        className="text-3xl font-black text-white/20"
-                        style={{ fontFamily: 'Arial Black' }}
-                      >
-                        {c.game_name.charAt(0)}
-                      </span>
-                    </div>
-                  )}
-                </div>
-                <div className="p-2.5">
-                  <div className="text-xs font-medium text-white truncate">{c.game_name}</div>
-                  {c.genre && <div className="text-[11px] text-white/30 truncate">{c.genre}</div>}
-                </div>
-              </Link>
-            ))}
-          </div>
-        </>
-      )}
 
       <div className="mt-8">
         <button
@@ -585,8 +723,9 @@ export function LandingPage({
       <NavBar />
       <HeroSection />
       <ShowcaseSection creators={creators} total={creatorTotal} />
+      <ActiveCampaignsSection campaigns={campaigns} />
       <HowItWorksSection />
-      <StudioSection campaigns={campaigns} />
+      <StudioSection />
       <CreatorSection />
       <TrustStats creatorTotal={creatorTotal} campaignTotal={campaignTotal} />
       <Footer />
