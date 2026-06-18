@@ -1,5 +1,6 @@
 'use client'
 import { estimateCreatorRange, type CreatorRange } from '@/lib/pricing'
+import { CampaignPreviewCard, type CampaignCardCampaign } from '@/components/campaign/CampaignPreviewCard'
 import { CONTENT_TYPE_LABELS } from '../_types'
 import type { WizardState } from '../_types'
 
@@ -36,6 +37,22 @@ export function StepReview({ state, onBack, onSubmit, submitting }: Props) {
   // 총 예상 참여
   const totalMin = missionRanges.reduce((s, r) => s + r.range.min, 0) + autoCount
   const totalMax = missionRanges.reduce((s, r) => s + r.range.max, 0) + autoCount
+
+  // 크리에이터 탐색에서 보일 모습 — 위저드 입력값으로 구성 (아직 런칭 전이라 참여 0명/미소진)
+  const previewCampaign: CampaignCardCampaign = {
+    game_name: state.game_name,
+    genre: state.genre || null,
+    description: state.description || null,
+    thumbnail_url: state.thumbnail_url || null,
+    deadline: state.deadline || null,
+    total_budget: state.total_budget,
+    remaining_budget: state.total_budget,
+    missions: state.missions.map(m => ({
+      content_type: m.content_type,
+      allowed_grades: m.allowed_grades,
+    })),
+    applications: [{ count: 0 }],
+  }
 
   return (
     <div className="space-y-6">
@@ -105,6 +122,15 @@ export function StepReview({ state, onBack, onSubmit, submitting }: Props) {
         <div className="pt-2 border-t border-white/10 flex justify-between text-sm font-medium">
           <span className="text-white/70">총 예상 참여</span>
           <span className="text-white">{formatRange({ min: totalMin, max: totalMax })}</span>
+        </div>
+      </div>
+
+      {/* 크리에이터에게 이렇게 보입니다 (미리보기) */}
+      <div>
+        <label className="text-sm font-medium text-white/70 block">크리에이터에게 이렇게 보입니다</label>
+        <p className="text-xs text-white/40 mt-1 mb-3">크리에이터가 캠페인 탐색에서 보게 될 실제 모습입니다</p>
+        <div className="max-w-xs mx-auto">
+          <CampaignPreviewCard campaign={previewCampaign} preview />
         </div>
       </div>
 
