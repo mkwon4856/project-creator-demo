@@ -3,14 +3,11 @@
 import { Search } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { WorkspaceLayout } from '@/components/layout';
+import { TopNav } from '@/components/layout/TopNav';
 import { Badge, Card, Input, Pill, toast } from '@/components/ui';
 import type { Grade, Creator, CreatorChannel } from '@/lib/db.types';
 import { createClient as createBrowserSupabaseClient } from '@/lib/supabase/client';
 import { useCurrentProfile } from '@/lib/supabase/hooks';
-
-import { getAdminSidebar } from '../_config/sidebar';
-import { useAdminBadgeCounts } from '../_hooks/useAdminBadgeCounts';
 
 const HAS_SUPABASE_ENV =
   Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
@@ -128,8 +125,7 @@ function Row({ item, last }: { item: CreatorWithChannels; last: boolean }) {
 }
 
 export default function AdminCreatorsPage() {
-  const { data: profile, loading: profileLoading } = useCurrentProfile();
-  const badgeCounts = useAdminBadgeCounts();
+  const { loading: profileLoading } = useCurrentProfile();
   const [creators, setCreators] = useState<CreatorWithChannels[]>([]);
   const [loading, setLoading] = useState(true);
   const [gradeFilter, setGradeFilter] = useState<GradeFilter>('all');
@@ -205,21 +201,10 @@ export default function AdminCreatorsPage() {
     );
   }
 
-  const adminName = profile?.email?.trim() || '민석';
-  const initials = adminName.slice(0, 2).toUpperCase();
-
   return (
-    <WorkspaceLayout
-      persona="admin"
-      userName={adminName}
-      userAvatar={initials}
-      userBadge="관리자"
-      sidebarSections={getAdminSidebar('creators', {
-        review: badgeCounts.review,
-        payouts: badgeCounts.payouts,
-      })}
-      notificationCount={badgeCounts.notification}
-    >
+    <div className="min-h-screen bg-[#0A0A0F]">
+      <TopNav role="admin" />
+      <div className="max-w-5xl mx-auto px-4 py-8">
       <header className="mb-6">
         <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-primary">
           관리자 · 디렉터리
@@ -284,6 +269,7 @@ export default function AdminCreatorsPage() {
           ))
         )}
       </Card>
-    </WorkspaceLayout>
+      </div>
+    </div>
   );
 }

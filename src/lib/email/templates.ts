@@ -38,14 +38,14 @@ function emailLayout(title: string, body: string, buttonLabel: string, buttonHre
 }
 
 export function applicationReceivedEmail(campaignName: string): { subject: string; html: string } {
-  const href = `${getSiteUrl()}/studio/applicants`;
+  const href = `${getSiteUrl()}/studio`;
   return {
     subject: `[${SITE_NAME}] 새 캠페인 지원 — ${campaignName}`,
     html: emailLayout(
       '새로운 크리에이터가 캠페인에 지원했습니다',
       `<p style="margin:0 0 12px;"><strong>${campaignName}</strong> 캠페인에 새 지원이 접수되었습니다.</p>
-       <p style="margin:0;">지원자 목록에서 상세 내용을 확인하고 승인 여부를 결정해주세요.</p>`,
-      '지원자 보기',
+       <p style="margin:0;">대시보드에서 캠페인 현황을 확인해주세요.</p>`,
+      '대시보드 보기',
       href,
     ),
   };
@@ -70,7 +70,7 @@ export function applicationResultEmail(
 }
 
 export function submissionReceivedEmail(campaignName: string): { subject: string; html: string } {
-  const href = `${getSiteUrl()}/studio/review`;
+  const href = `${getSiteUrl()}/admin/payouts`;
   return {
     subject: `[${SITE_NAME}] 새 콘텐츠 제출 — ${campaignName}`,
     html: emailLayout(

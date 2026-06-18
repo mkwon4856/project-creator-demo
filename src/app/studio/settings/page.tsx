@@ -4,12 +4,10 @@ import { LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-import { WorkspaceLayout } from '@/components/layout';
+import { TopNav } from '@/components/layout/TopNav';
 import { Alert, Button, Card, Input, toast } from '@/components/ui';
 import { createClient as createBrowserSupabaseClient } from '@/lib/supabase/client';
 import { useCurrentProfile, useCurrentStudio } from '@/lib/supabase/hooks';
-
-import { getStudioSidebar } from '../_config/sidebar';
 
 const HAS_SUPABASE_ENV =
   Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
@@ -123,13 +121,9 @@ export default function StudioSettingsPage() {
   }
 
   return (
-    <WorkspaceLayout
-      persona="studio"
-      userName={studio?.company_name ?? '테스트 게임사 1'}
-      userAvatar="🎮"
-      userBadge="게임사"
-      sidebarSections={getStudioSidebar('settings')}
-    >
+    <div className="min-h-screen bg-[#0A0A0F]">
+      <TopNav role="studio" />
+      <div className="max-w-2xl mx-auto px-4 py-8">
       <header className="mb-6">
         <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-primary">
           게임사 · 설정
@@ -254,6 +248,7 @@ export default function StudioSettingsPage() {
           </Button>
         </div>
       </Card>
-    </WorkspaceLayout>
+      </div>
+    </div>
   );
 }

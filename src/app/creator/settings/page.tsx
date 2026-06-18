@@ -4,13 +4,10 @@ import { LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
-import { WorkspaceLayout } from '@/components/layout';
+import { TopNav } from '@/components/layout/TopNav';
 import { Button, Card, Input, toast } from '@/components/ui';
-import { CURRENT_CREATOR } from '@/lib/mockCreators';
 import { createClient as createBrowserSupabaseClient } from '@/lib/supabase/client';
-import { useCurrentCreator, useCurrentProfile } from '@/lib/supabase/hooks';
-
-import { getCreatorSidebar } from '../_config/sidebar';
+import { useCurrentProfile } from '@/lib/supabase/hooks';
 
 const HAS_SUPABASE_ENV =
   Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
@@ -26,7 +23,6 @@ function SectionLabel({ children }: { children: string }) {
 
 export default function CreatorSettingsPage() {
   const router = useRouter();
-  const { data: creator, loading: creatorLoading } = useCurrentCreator();
   const { data: profile, loading: profileLoading } = useCurrentProfile();
 
   const [newPassword, setNewPassword] = useState('');
@@ -77,7 +73,7 @@ export default function CreatorSettingsPage() {
     router.push('/login');
   };
 
-  if (creatorLoading || profileLoading) {
+  if (profileLoading) {
     return (
       <div className="min-h-screen bg-bg-base flex items-center justify-center">
         <span className="text-text-secondary text-sm">불러오는 중…</span>
@@ -85,18 +81,10 @@ export default function CreatorSettingsPage() {
     );
   }
 
-  const userName = creator?.name || CURRENT_CREATOR.name;
-  // TODO(rebuild): grade now derives from creator_channels
-  const userBadge = `${creator ? 'E' : CURRENT_CREATOR.grade}티어`;
-
   return (
-    <WorkspaceLayout
-      persona="creator"
-      userName={userName}
-      userAvatar={CURRENT_CREATOR.emoji}
-      userBadge={userBadge}
-      sidebarSections={getCreatorSidebar('settings')}
-    >
+    <div className="min-h-screen bg-[#0A0A0F]">
+      <TopNav role="creator" />
+      <div className="max-w-2xl mx-auto px-4 py-8">
       <header className="mb-6">
         <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-primary">
           크리에이터 · 설정
@@ -214,6 +202,7 @@ export default function CreatorSettingsPage() {
           </Button>
         </div>
       </Card>
-    </WorkspaceLayout>
+      </div>
+    </div>
   );
 }

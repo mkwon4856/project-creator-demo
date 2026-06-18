@@ -3,15 +3,12 @@
 import { Search } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { WorkspaceLayout } from '@/components/layout';
+import { TopNav } from '@/components/layout/TopNav';
 import { Card, Input, toast } from '@/components/ui';
 import type { Studio } from '@/lib/db.types';
 import { formatCompactKRW } from '@/lib/formatCurrency';
 import { createClient as createBrowserSupabaseClient } from '@/lib/supabase/client';
 import { useCurrentProfile } from '@/lib/supabase/hooks';
-
-import { getAdminSidebar } from '../_config/sidebar';
-import { useAdminBadgeCounts } from '../_hooks/useAdminBadgeCounts';
 
 type StudioRow = Studio;
 
@@ -100,8 +97,7 @@ function Row({ item, last }: { item: StudioWithCounts; last: boolean }) {
 }
 
 export default function AdminStudiosPage() {
-  const { data: profile, loading: profileLoading } = useCurrentProfile();
-  const badgeCounts = useAdminBadgeCounts();
+  const { loading: profileLoading } = useCurrentProfile();
   const [studios, setStudios] = useState<StudioWithCounts[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -175,21 +171,10 @@ export default function AdminStudiosPage() {
     );
   }
 
-  const adminName = profile?.email?.trim() || '민석';
-  const initials = adminName.slice(0, 2).toUpperCase();
-
   return (
-    <WorkspaceLayout
-      persona="admin"
-      userName={adminName}
-      userAvatar={initials}
-      userBadge="관리자"
-      sidebarSections={getAdminSidebar('studios', {
-        review: badgeCounts.review,
-        payouts: badgeCounts.payouts,
-      })}
-      notificationCount={badgeCounts.notification}
-    >
+    <div className="min-h-screen bg-[#0A0A0F]">
+      <TopNav role="admin" />
+      <div className="max-w-5xl mx-auto px-4 py-8">
       <header className="mb-6">
         <span className="text-[10px] font-semibold uppercase tracking-[0.08em] text-primary">
           관리자 · 디렉터리
@@ -236,6 +221,7 @@ export default function AdminStudiosPage() {
           ))
         )}
       </Card>
-    </WorkspaceLayout>
+      </div>
+    </div>
   );
 }
