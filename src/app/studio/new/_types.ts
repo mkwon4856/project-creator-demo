@@ -7,7 +7,7 @@ export interface MissionSlot {
   allowed_grades: Grade[]
   guide_draft: string[]  // 줄 단위 배열
   creator_amount: number   // 크리에이터 수령 단가 (자동계산)
-  studio_amount: number    // 게임사 지불 단가 (creator_amount ÷ 0.7)
+  studio_amount: number    // 게임사 지불 단가 (creator_amount ÷ 0.85)
 }
 
 // Wizard 전체 상태

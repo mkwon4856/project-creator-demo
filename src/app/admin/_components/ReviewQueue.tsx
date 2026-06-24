@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { Badge, Button, statusToBadgeVariant, toast } from '@/components/ui';
 import type { Grade } from '@/lib/db.types';
 import { formatCompactKRW } from '@/lib/formatCurrency';
+import { PLATFORM_FEE_RATE } from '@/lib/pricing';
 import {
   useAppStore,
   type ActivityMission,
@@ -353,7 +354,7 @@ export function ReviewQueue() {
         return;
       }
 
-      const platformFee = Math.round(reward * 0.15);
+      const platformFee = Math.round(reward * PLATFORM_FEE_RATE);
       const { error: payError } = await supabase.from('payments').insert({
         submission_id: submissionId,
         creator_id: creatorId,

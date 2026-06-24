@@ -10,9 +10,14 @@ export const RATE_MATRIX: Record<Grade, Record<ContentType, number>> = {
   E: { live:  200000, longform:  300000, shortform: 100000 },
 }
 
-// 크리에이터 수령 → 게임사 지불 역산 (÷0.7, 플랫폼 수수료 30%)
+// 플랫폼 서비스 수수료율 (게임사 결제액 기준). 수수료 관련 계산은 모두 이 상수를 참조한다.
+export const PLATFORM_FEE_RATE = 0.15
+// 크리에이터 수령 비율 (= 1 - 수수료율 = 0.85)
+export const CREATOR_SHARE_RATE = 1 - PLATFORM_FEE_RATE
+
+// 크리에이터 수령 → 게임사 지불 역산 (÷0.85, 플랫폼 수수료 15%)
 export function toStudioAmount(creatorAmount: number): number {
-  return Math.round(creatorAmount / 0.7)
+  return Math.round(creatorAmount / CREATOR_SHARE_RATE)
 }
 
 // 허용 등급 중 최고 단가 반환
